@@ -1,0 +1,84 @@
+// Use DBML to define your database structure
+// Docs: https://dbml.dbdiagram.io/docs
+
+Table usuarios {
+  id_usuario integer [primary key]
+  correo_inicio_sesion varchar [unique, not null]
+  contrasenia varchar [not null]
+  eliminado boolean
+  estado char [not null]
+  ultimo_inicio_sesion timestamp
+  fecha_creacion timestamp [default: `now()`]
+  metadata json 
+}
+
+Table usuarios_contacto {
+  id_contacto integer [primary key]
+  id_usuario integer [not null, ref: > usuarios.id_usuario]
+  tipo_contacto integer
+  valor varchar [not null, note: 'Numero o Correo']
+  principal boolean
+  verificado boolean
+}
+
+Table usuarios_perfil {
+  id_perfil integer [primary key]
+  id_usuario integer [not null, ref: - usuarios.id_usuario]
+  nombres varchar [not null]
+  apellidos varchar [not null]
+  dui varchar [unique, note: 'Documento Unico de Identidad']
+  genero char(1)
+  fecha_nacimiento date
+}
+
+Table catalogo.paises {
+  id_pais integer [primary key]
+  nombre_pais varchar [not null]
+}
+
+Table catalogo.departamentos {
+  id_departamento integer [primary key]
+  id_pais integer [not null, ref: > catalogo.paises.id_pais]
+  nombre_departamento varchar [not null]
+}
+
+Table catalogo.municipios {
+  id_municipio integer [primary key]
+  id_departamento integer [not null, ref: > catalogo.departamentos.id_departamento]
+  nombre_municipio varchar [not null]
+}
+
+Table usuarios_direccion {
+  id_direccion integer [primary key]
+  id_usuario integer [not null, ref: > usuarios.id_usuario]
+  id_municipio integer [not null, ref: > catalogo.municipios.id_municipio]
+  direccion_linea_1 varchar [not null]
+  codigo_postal int
+  tipo_direccion char
+  fecha_creacion timestamp [default: `now()`]
+  metadata json
+}
+
+Table core.categorias {
+  id_categoria integer [primary key]
+  id_categoria_padre integer [ref: > core.categorias.id_categoria, note: 'Si es NULL, es categoría principal']
+  nombre_categoria varchar [not null]
+  descripccion varchar
+  fecha_creacion timestamp [default: `now()`]
+}
+
+Table core.marcas {
+  id_marca integer [primary key]
+  nombre_marca varchar [not null]
+
+}
+
+Table core.productos {
+  id_producto integer [primary key]
+  id_categoria integer [ref: > core.categorias.id_categoria]
+  nombre_producto varchar [not null]
+  descripcion_producto varchar [not null]
+  stock_disponible integer [default: 0]
+  estado char [default: 'A']
+  fecha_creacion timestamp [default: `now()`]
+}
