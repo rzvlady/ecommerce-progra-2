@@ -70,15 +70,79 @@ Table core.categorias {
 Table core.marcas {
   id_marca integer [primary key]
   nombre_marca varchar [not null]
-
+  fecha_creacion timestamp [default: `now()`]
 }
 
 Table core.productos {
   id_producto integer [primary key]
-  id_categoria integer [ref: > core.categorias.id_categoria]
+  id_categoria integer [not null, ref: > core.categorias.id_categoria]
+  id_marca integer [not null, ref: > core.marcas.id_marca]
   nombre_producto varchar [not null]
   descripcion_producto varchar [not null]
   stock_disponible integer [default: 0]
   estado char [default: 'A']
   fecha_creacion timestamp [default: `now()`]
+}
+
+// ==========================================
+// Modulo de Ventas y Pedidos
+// ==========================================
+
+Table core.pedidos {
+  id_pedido integer [primary key, increment]
+  id_usuario integer [not null, ref: > usuarios.id_usuario]
+  id_direccion integer [not null, ref: > usuarios_direccion.id_direccion]
+  estado_pedido varchar [not null, default: 'PENDIENTE', note: 'PENDIENTE, PAGADO, ENVIADO, ENTREGADO, CANCELADO']
+  total numeric(10,2) [not null]
+  fecha_creacion timestamptz [default: `now()`]
+}
+
+Table core.detalles_pedido {
+  id_detalle integer [primary key, increment]
+  id_pedido integer [not null, ref: > core.pedidos.id_pedido]
+  id_producto integer [not null, ref: > core.productos.id_producto]
+  cantidad integer [not null]
+  precio_unitario numeric(10,2) [not null]
+  subtotal numeric(10,2) [not null, note: 'cantidad * precio_unitario']
+}
+
+// ==========================================
+// Modulo de Pagos (Simulacion de Pasarela)
+// ==========================================
+
+Table core.pagos {
+  id_pago integer [primary key, increment]
+  id_pedido integer [unique, not null, ref: - core.pedidos.id_pedido] // Relacion 1 a 1
+  metodo_pago varchar [not null, note: 'TARJETA_CREDITO, PAYPAL, TRANSFERENCIA']
+  monto numeric(10,2) [not null]
+  estado_transaccion varchar [not null, default: 'PROCESANDO', note: 'PROCESANDO, APROBADO, RECHAZADO']
+  fecha_pago timestamptz [default: `now()`]
+}
+
+// ==========================================
+// Modulo de Despacho (Logistica)
+// ==========================================
+
+Table core.envios {
+  id_envio integer [primary key, increment]
+  id_pedido integer [unique, not null, ref: - core.pedidos.id_pedido] // Relacion 1 a 1
+  empresa_transporte varchar
+  numero_seguimiento varchar
+  estado_envio varchar [not null, default: 'PREPARANDO', note: 'PREPARANDO, EN_TRANSITO, ENTREGADO']
+  fecha_despacho timestamptz
+  fecha_entrega timestamptz
+}
+
+// ==========================================
+// Modulo de Inventario en Tiempo Real
+// ==========================================
+
+Table core.movimientos_inventario {
+  id_movimiento integer [primary key, increment]
+  id_producto integer [not null, ref: > core.productos.id_producto]
+  tipo_movimiento varchar [not null, note: 'ENTRADA, SALIDA']
+  cantidad integer [not null]
+  motivo varchar [not null, note: 'COMPRA_PROVEEDOR, VENTA, AJUSTE, DEVOLUCION']
+  fecha_movimiento timestamptz [default: `now()`]
+  id_pedido integer [ref: > core.pedidos.id_pedido, note: 'Opcional, vincula la salida de stock con una venta específica']
 }
