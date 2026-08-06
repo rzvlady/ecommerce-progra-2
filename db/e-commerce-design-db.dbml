@@ -1,7 +1,7 @@
 // Use DBML to define your database structure
 // Docs: https://dbml.dbdiagram.io/docs
 
-Table usuarios {
+Table seguridad.usuarios {
   id_usuario integer [primary key]
   correo_inicio_sesion varchar [unique, not null]
   contrasenia varchar [not null]
@@ -12,18 +12,18 @@ Table usuarios {
   metadata json 
 }
 
-Table usuarios_contacto {
+Table seguridad.usuarios_contacto {
   id_contacto integer [primary key]
-  id_usuario integer [not null, ref: > usuarios.id_usuario]
+  id_usuario integer [not null, ref: > seguridad.usuarios.id_usuario]
   tipo_contacto integer
   valor varchar [not null, note: 'Numero o Correo']
   principal boolean
   verificado boolean
 }
 
-Table usuarios_perfil {
+Table seguridad.usuarios_perfil {
   id_perfil integer [primary key]
-  id_usuario integer [not null, ref: - usuarios.id_usuario]
+  id_usuario integer [not null, ref: - seguridad.usuarios.id_usuario]
   nombres varchar [not null]
   apellidos varchar [not null]
   dui varchar [unique, note: 'Documento Unico de Identidad']
@@ -48,9 +48,9 @@ Table catalogo.municipios {
   nombre_municipio varchar [not null]
 }
 
-Table usuarios_direccion {
+Table seguridad.usuarios_direccion {
   id_direccion integer [primary key]
-  id_usuario integer [not null, ref: > usuarios.id_usuario]
+  id_usuario integer [not null, ref: > seguridad.usuarios.id_usuario]
   id_municipio integer [not null, ref: > catalogo.municipios.id_municipio]
   direccion_linea_1 varchar [not null]
   codigo_postal int
@@ -67,7 +67,7 @@ Table core.categorias {
   fecha_creacion timestamp [default: `now()`]
 }
 
-Table core.marcas {
+Table catalogo.marcas {
   id_marca integer [primary key]
   nombre_marca varchar [not null]
   fecha_creacion timestamp [default: `now()`]
@@ -76,12 +76,13 @@ Table core.marcas {
 Table core.productos {
   id_producto integer [primary key]
   id_categoria integer [not null, ref: > core.categorias.id_categoria]
-  id_marca integer [not null, ref: > core.marcas.id_marca]
+  id_marca integer [not null, ref: > catalogo.marcas.id_marca]
   nombre_producto varchar [not null]
   descripcion_producto varchar [not null]
   stock_disponible integer [default: 0]
   estado char [default: 'A']
   fecha_creacion timestamp [default: `now()`]
+  metadata jsonb
 }
 
 // ==========================================
@@ -90,8 +91,8 @@ Table core.productos {
 
 Table core.pedidos {
   id_pedido integer [primary key, increment]
-  id_usuario integer [not null, ref: > usuarios.id_usuario]
-  id_direccion integer [not null, ref: > usuarios_direccion.id_direccion]
+  id_usuario integer [not null, ref: > seguridad.usuarios.id_usuario]
+  id_direccion integer [not null, ref: > seguridad.usuarios_direccion.id_direccion]
   estado_pedido varchar [not null, default: 'PENDIENTE', note: 'PENDIENTE, PAGADO, ENVIADO, ENTREGADO, CANCELADO']
   total numeric(10,2) [not null]
   fecha_creacion timestamptz [default: `now()`]
