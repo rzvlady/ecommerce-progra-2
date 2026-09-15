@@ -8,6 +8,7 @@ import java.time.LocalDate;
 public class UsuarioPerfil {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_perfil")
     private Integer idPerfil;
 

@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 public class UsuarioContacto {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_contacto")
     private Integer idContacto;
 
