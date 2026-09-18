@@ -4,6 +4,8 @@ import com.sv.grupo1.ecommerce.entities.catalogo.Marca;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -14,6 +16,9 @@ public class Producto {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_producto")
     private Integer idProducto;
+
+    @Column(name = "codigo_sku", nullable = false, unique = true)
+    private String codigoSku;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_categoria", nullable = false)
@@ -42,9 +47,22 @@ public class Producto {
     @Column(name = "metadata", columnDefinition = "jsonb")
     private String metadata;
 
+    @Column(name = "precio_venta", precision = 12, scale = 2, nullable = false)
+    private BigDecimal precioVenta;
+
+    @Column(name = "precio_costo", precision = 12, scale = 2)
+    private BigDecimal precioCosto;
+
     public Producto() {}
 
     // Getters y Setters
+
+    public BigDecimal getPrecioVenta() {return this.precioVenta;}
+    public void setPrecioVenta(BigDecimal precioVenta) {this.precioVenta = precioVenta;}
+    public BigDecimal getPrecioCosto() {return this.precioCosto;}
+    public void setPrecioCosto(BigDecimal precioCosto) {this.precioCosto = precioCosto;}
+    public String getCodigoSku() {return this.codigoSku;}
+    public void setCodigoSku(String codigoSku) {this.codigoSku = codigoSku;}
     public Integer getIdProducto() { return idProducto; }
     public void setIdProducto(Integer idProducto) { this.idProducto = idProducto; }
     public Categoria getCategoria() { return categoria; }
