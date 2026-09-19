@@ -83,6 +83,7 @@ CREATE TABLE "core"."productos" (
   "nombre_producto" varchar NOT NULL,
   "descripcion_producto" varchar NOT NULL,
   "stock_disponible" integer DEFAULT 0,
+  "stock_minimo" integer DEFAULT 0,
   "estado" char DEFAULT 'A',
   "fecha_creacion" timestamp DEFAULT (now()),
   "metadata" jsonb

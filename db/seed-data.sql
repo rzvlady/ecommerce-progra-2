@@ -72,23 +72,24 @@ INSERT INTO core.categorias (id_categoria, id_categoria_padre, nombre_categoria,
   (4, NULL, 'Hogar',             'Electrodomésticos y artículos para el hogar'),
   (5, 4,    'Electrodomésticos', 'Línea blanca y pequeños electrodomésticos');
 
--- stock_disponible queda con valores variados (incluye 0 y stock muy bajo)
--- a propósito, para poder probar la futura alerta de stock bajo.
-INSERT INTO core.productos (id_producto, id_categoria, id_marca, nombre_producto, descripcion_producto, stock_disponible, estado, metadata) VALUES
-  (1,  2, 4, 'Laptop HP Pavilion 15',            'Laptop 15", Intel Core i5, 8GB RAM, 512GB SSD',            18, 'A', '{"color": "plata", "garantia_meses": 12}'),
-  (2,  2, 1, 'Monitor Samsung 24" Full HD',      'Monitor LED 24 pulgadas, 1920x1080, 75Hz',                  3, 'A', NULL),
-  (3,  2, 5, 'Mouse inalámbrico Logitech M170',  'Mouse óptico inalámbrico, USB 2.4GHz',                     42, 'A', NULL),
-  (4,  2, 5, 'Teclado Logitech K380',            'Teclado inalámbrico multi-dispositivo Bluetooth',           0, 'A', NULL),
-  (5,  3, 1, 'Samsung Galaxy A54',               'Smartphone 128GB, cámara triple 50MP, 5G',                  7, 'A', NULL),
-  (6,  3, 6, 'Xiaomi Redmi Note 13',             'Smartphone 256GB, pantalla AMOLED 120Hz',                   2, 'A', NULL),
-  (7,  3, 1, 'Cargador rápido Samsung 25W',      'Cargador USB-C de carga rápida 25W',                       65, 'A', NULL),
-  (8,  1, 3, 'Audífonos Sony WH-1000XM4',        'Audífonos inalámbricos con cancelación de ruido',           1, 'A', NULL),
-  (9,  1, 3, 'Parlante Sony SRS-XB13',           'Parlante Bluetooth portátil resistente al agua',           24, 'A', NULL),
-  (10, 1, 2, 'Smart TV LG 50" 4K UHD',           'Televisor LED 4K con WebOS y HDR10',                        5, 'A', NULL),
-  (11, 5, 2, 'Refrigeradora LG 14 pies',         'Refrigeradora No Frost, dispensador de agua',               4, 'A', NULL),
-  (12, 5, 1, 'Lavadora Samsung 18kg',            'Lavadora carga superior, digital inverter',                 0, 'A', NULL),
-  (13, 5, 2, 'Microondas LG 1.5 pies',           'Horno microondas con grill, 1000W',                        11, 'A', NULL),
-  (14, 2, 4, 'Impresora HP DeskJet 2720',        'Impresora multifuncional a color con WiFi',                 9, 'A', NULL);
+-- stock_disponible y stock_minimo quedan con valores variados (incluye stock
+-- en 0 y varios ya por debajo del mínimo) a propósito, para poder probar la
+-- alerta de stock bajo con casos reales.
+INSERT INTO core.productos (id_producto, id_categoria, id_marca, nombre_producto, descripcion_producto, stock_disponible, stock_minimo, estado, metadata) VALUES
+  (1,  2, 4, 'Laptop HP Pavilion 15',            'Laptop 15", Intel Core i5, 8GB RAM, 512GB SSD',            18,  5, 'A', '{"color": "plata", "garantia_meses": 12}'),
+  (2,  2, 1, 'Monitor Samsung 24" Full HD',      'Monitor LED 24 pulgadas, 1920x1080, 75Hz',                  3,  5, 'A', NULL),
+  (3,  2, 5, 'Mouse inalámbrico Logitech M170',  'Mouse óptico inalámbrico, USB 2.4GHz',                     42, 10, 'A', NULL),
+  (4,  2, 5, 'Teclado Logitech K380',            'Teclado inalámbrico multi-dispositivo Bluetooth',           0,  5, 'A', NULL),
+  (5,  3, 1, 'Samsung Galaxy A54',               'Smartphone 128GB, cámara triple 50MP, 5G',                  7,  5, 'A', NULL),
+  (6,  3, 6, 'Xiaomi Redmi Note 13',             'Smartphone 256GB, pantalla AMOLED 120Hz',                   2,  5, 'A', NULL),
+  (7,  3, 1, 'Cargador rápido Samsung 25W',      'Cargador USB-C de carga rápida 25W',                       65, 20, 'A', NULL),
+  (8,  1, 3, 'Audífonos Sony WH-1000XM4',        'Audífonos inalámbricos con cancelación de ruido',           1,  3, 'A', NULL),
+  (9,  1, 3, 'Parlante Sony SRS-XB13',           'Parlante Bluetooth portátil resistente al agua',           24,  8, 'A', NULL),
+  (10, 1, 2, 'Smart TV LG 50" 4K UHD',           'Televisor LED 4K con WebOS y HDR10',                        5,  5, 'A', NULL),
+  (11, 5, 2, 'Refrigeradora LG 14 pies',         'Refrigeradora No Frost, dispensador de agua',               4,  5, 'A', NULL),
+  (12, 5, 1, 'Lavadora Samsung 18kg',            'Lavadora carga superior, digital inverter',                 0,  3, 'A', NULL),
+  (13, 5, 2, 'Microondas LG 1.5 pies',           'Horno microondas con grill, 1000W',                        11,  5, 'A', NULL),
+  (14, 2, 4, 'Impresora HP DeskJet 2720',        'Impresora multifuncional a color con WiFi',                 9,  4, 'A', NULL);
 
 -- ==========================================================================
 -- core: pedidos y su detalle (montos en USD, moneda oficial de El Salvador)
