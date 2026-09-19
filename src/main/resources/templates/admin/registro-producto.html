@@ -50,6 +50,15 @@
                         </div>
 
                         <div class="row">
+                            <!-- Campo Descripción -->
+                            <div class="col-12 mb-3">
+                                <label for="descripcionProducto" class="form-label">Descripción</label>
+                                <textarea id="descripcionProducto" class="form-control" rows="2" th:field="*{descripcionProducto}"></textarea>
+                                <div class="text-danger mt-1" th:if="${#fields.hasErrors('descripcionProducto')}" th:errors="*{descripcionProducto}"></div>
+                            </div>
+                        </div>
+
+                        <div class="row">
                             <!-- Campo Precio -->
                             <div class="col-md-6 mb-3">
                                 <label for="precioCosto" class="form-label">Precio Costo ($)</label>

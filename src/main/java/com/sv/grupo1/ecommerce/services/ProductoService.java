@@ -30,6 +30,7 @@ public class ProductoService {
         Producto producto = new Producto();
         producto.setCodigoSku(dto.getSku());
         producto.setNombreProducto(dto.getNombreProducto());
+        producto.setDescripcionProducto(dto.getDescripcionProducto());
         producto.setPrecioVenta(dto.getPrecioCosto());
         producto.setStockDisponible(dto.getStockDisponible());
         producto.setStockMinimo(dto.getStockMinimo());

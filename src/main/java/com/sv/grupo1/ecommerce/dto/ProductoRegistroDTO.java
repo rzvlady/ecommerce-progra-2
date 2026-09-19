@@ -13,6 +13,9 @@ public class ProductoRegistroDTO {
     @NotBlank(message = "El nombre es obligatorio")
     private String nombreProducto;
 
+    @NotBlank(message = "La descripción es obligatoria")
+    private String descripcionProducto;
+
     @NotNull(message = "El precio es obligatorio")
     @Min(value = 0, message = "El precio no puede ser negativo")
     private BigDecimal precioCosto;
@@ -36,6 +39,8 @@ public class ProductoRegistroDTO {
     public void setSku(String sku) {this.sku = sku;}
     public String getNombreProducto() {return this.nombreProducto;}
     public void setNombreProducto(String nombreProducto) {this.nombreProducto = nombreProducto;}
+    public String getDescripcionProducto() {return this.descripcionProducto;}
+    public void setDescripcionProducto(String descripcionProducto) {this.descripcionProducto = descripcionProducto;}
     public BigDecimal getPrecioCosto() {return this.precioCosto;}
     public void setPrecioCosto(BigDecimal precio) {this.precioCosto = precio;}
     public Integer getStockDisponible() {return this.stockDisponible;}
