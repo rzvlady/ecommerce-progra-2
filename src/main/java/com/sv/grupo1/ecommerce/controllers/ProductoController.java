@@ -49,4 +49,10 @@ public class ProductoController {
 
         return "admin/registro-producto";
     }
+
+    @GetMapping("/alertas-stock")
+    public String mostrarAlertasStock(Model model) {
+        model.addAttribute("productos", productoService.listarProductosConStockBajo());
+        return "admin/alertas-stock";
+    }
 }
