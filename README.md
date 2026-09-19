@@ -30,6 +30,7 @@ src/main/resources/
 db/
 ├── schema-ecommerce.sql                    # DDL: crea los esquemas seguridad, catalogo y core
 ├── migracion-productos-sku-precio.sql      # agrega codigo_sku/precio_venta/precio_costo a core.productos
+├── migracion-productos-id-identity.sql     # hace que id_producto se autogenere (igual que pedidos, pagos, etc.)
 ├── seed-data.sql                           # datos de prueba (re-ejecutable)
 └── e-commerce-design-db.dbml               # modelo fuente para dbdiagram.io
 ```
@@ -43,10 +44,11 @@ La base de datos usa tres esquemas: `seguridad` (usuarios y datos asociados), `c
    ```
    createdb ecommerce_progra2_db
    ```
-3. Cargar el esquema y la migración:
+3. Cargar el esquema y las migraciones:
    ```
    psql -U postgres -d ecommerce_progra2_db -f db/schema-ecommerce.sql
    psql -U postgres -d ecommerce_progra2_db -f db/migracion-productos-sku-precio.sql
+   psql -U postgres -d ecommerce_progra2_db -f db/migracion-productos-id-identity.sql
    ```
 4. (Opcional) Poblar con datos de prueba — re-ejecutable, vacía sus propias tablas antes de insertar:
    ```
