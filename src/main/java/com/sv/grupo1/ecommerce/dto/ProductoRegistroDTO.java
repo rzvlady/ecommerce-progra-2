@@ -21,6 +21,10 @@ public class ProductoRegistroDTO {
     @Min(value = 0, message = "El stock no puede ser negativo")
     private Integer stockDisponible;
 
+    @NotNull(message = "El stock mínimo es obligatorio")
+    @Min(value = 0, message = "El stock mínimo no puede ser negativo")
+    private Integer stockMinimo;
+
     @NotNull(message = "Debe seleccionar una categoría")
     private Integer idCategoria;
 
@@ -36,6 +40,8 @@ public class ProductoRegistroDTO {
     public void setPrecioCosto(BigDecimal precio) {this.precioCosto = precio;}
     public Integer getStockDisponible() {return this.stockDisponible;}
     public void setStockDisponible(Integer stockDisponible) {this.stockDisponible = stockDisponible;}
+    public Integer getStockMinimo() {return this.stockMinimo;}
+    public void setStockMinimo(Integer stockMinimo) {this.stockMinimo = stockMinimo;}
     public Integer getIdCategoria() {return this.idCategoria;}
     public void setIdCategoria(Integer idCategoria) {this.idCategoria = idCategoria;}
     public Integer getIdMarca() {return this.idMarca;}
