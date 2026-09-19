@@ -28,8 +28,10 @@ src/main/resources/
 └── templates/            # vistas Thymeleaf (admin/...)
 
 db/
-├── schema-ecommerce.sql        # DDL: crea los esquemas seguridad, catalogo y core
-└── e-commerce-design-db.dbml   # modelo fuente para dbdiagram.io
+├── schema-ecommerce.sql                    # DDL: crea los esquemas seguridad, catalogo y core
+├── migracion-productos-sku-precio.sql      # agrega codigo_sku/precio_venta/precio_costo a core.productos
+├── seed-data.sql                           # datos de prueba (re-ejecutable)
+└── e-commerce-design-db.dbml               # modelo fuente para dbdiagram.io
 ```
 
 La base de datos usa tres esquemas: `seguridad` (usuarios y datos asociados), `catalogo` (país, departamento, municipio, marca) y `core` (productos, pedidos, pagos, envíos, movimientos de inventario).
@@ -41,11 +43,16 @@ La base de datos usa tres esquemas: `seguridad` (usuarios y datos asociados), `c
    ```
    createdb ecommerce_progra2_db
    ```
-3. Cargar el esquema:
+3. Cargar el esquema y la migración:
    ```
    psql -U postgres -d ecommerce_progra2_db -f db/schema-ecommerce.sql
+   psql -U postgres -d ecommerce_progra2_db -f db/migracion-productos-sku-precio.sql
    ```
-4. Variables de entorno (opcionales — ver [application.properties](src/main/resources/application.properties)):
+4. (Opcional) Poblar con datos de prueba — re-ejecutable, vacía sus propias tablas antes de insertar:
+   ```
+   psql -U postgres -d ecommerce_progra2_db -f db/seed-data.sql
+   ```
+5. Variables de entorno (opcionales — ver [application.properties](src/main/resources/application.properties)):
 
    | Variable | Default |
    |---|---|
