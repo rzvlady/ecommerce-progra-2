@@ -7,6 +7,8 @@ import com.sv.grupo1.ecommerce.dto.ProductoRegistroDTO;
 import com.sv.grupo1.ecommerce.entities.core.Producto;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class ProductoService {
 
@@ -42,5 +44,9 @@ public class ProductoService {
         producto.setMarca(marca);
 
         productoRepository.save(producto);
+    }
+
+    public List<Producto> listarProductosConStockBajo() {
+        return productoRepository.findProductosConStockBajo();
     }
 }
