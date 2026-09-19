@@ -30,6 +30,7 @@ public class ProductoService {
         producto.setNombreProducto(dto.getNombreProducto());
         producto.setPrecioVenta(dto.getPrecioCosto());
         producto.setStockDisponible(dto.getStockDisponible());
+        producto.setStockMinimo(dto.getStockMinimo());
 
         //Se buscan las entidades para asociarlas
         var categoria = categoriaRepository.findById(dto.getIdCategoria())
