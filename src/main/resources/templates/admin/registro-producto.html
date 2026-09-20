@@ -50,6 +50,15 @@
                         </div>
 
                         <div class="row">
+                            <!-- Campo Descripción -->
+                            <div class="col-12 mb-3">
+                                <label for="descripcionProducto" class="form-label">Descripción</label>
+                                <textarea id="descripcionProducto" class="form-control" rows="2" th:field="*{descripcionProducto}"></textarea>
+                                <div class="text-danger mt-1" th:if="${#fields.hasErrors('descripcionProducto')}" th:errors="*{descripcionProducto}"></div>
+                            </div>
+                        </div>
+
+                        <div class="row">
                             <!-- Campo Precio -->
                             <div class="col-md-6 mb-3">
                                 <label for="precioCosto" class="form-label">Precio Costo ($)</label>
@@ -63,6 +72,15 @@
                                 <label for="stockDisponible" class="form-label">Stock Inicial</label>
                                 <input type="number" id="stockDisponible" class="form-control" th:field="*{stockDisponible}">
                                 <div class="text-danger mt-1" th:if="${#fields.hasErrors('stockDisponible')}" th:errors="*{stockDisponible}"></div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Campo Stock Mínimo -->
+                            <div class="col-md-6 mb-3">
+                                <label for="stockMinimo" class="form-label">Stock Mínimo (alerta)</label>
+                                <input type="number" id="stockMinimo" class="form-control" th:field="*{stockMinimo}">
+                                <div class="text-danger mt-1" th:if="${#fields.hasErrors('stockMinimo')}" th:errors="*{stockMinimo}"></div>
                             </div>
                         </div>
 

@@ -37,6 +37,9 @@ public class Producto {
     @Column(name = "stock_disponible")
     private Integer stockDisponible;
 
+    @Column(name = "stock_minimo")
+    private Integer stockMinimo;
+
     @Column(name = "estado", length = 1)
     private Character estado;
 
@@ -75,6 +78,8 @@ public class Producto {
     public void setDescripcionProducto(String descripcionProducto) { this.descripcionProducto = descripcionProducto; }
     public Integer getStockDisponible() { return stockDisponible; }
     public void setStockDisponible(Integer stockDisponible) { this.stockDisponible = stockDisponible; }
+    public Integer getStockMinimo() { return stockMinimo; }
+    public void setStockMinimo(Integer stockMinimo) { this.stockMinimo = stockMinimo; }
     public Character getEstado() { return estado; }
     public void setEstado(Character estado) { this.estado = estado; }
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }

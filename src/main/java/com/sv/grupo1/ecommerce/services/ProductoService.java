@@ -7,6 +7,8 @@ import com.sv.grupo1.ecommerce.dto.ProductoRegistroDTO;
 import com.sv.grupo1.ecommerce.entities.core.Producto;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class ProductoService {
 
@@ -28,8 +30,10 @@ public class ProductoService {
         Producto producto = new Producto();
         producto.setCodigoSku(dto.getSku());
         producto.setNombreProducto(dto.getNombreProducto());
+        producto.setDescripcionProducto(dto.getDescripcionProducto());
         producto.setPrecioVenta(dto.getPrecioCosto());
         producto.setStockDisponible(dto.getStockDisponible());
+        producto.setStockMinimo(dto.getStockMinimo());
 
         //Se buscan las entidades para asociarlas
         var categoria = categoriaRepository.findById(dto.getIdCategoria())
@@ -41,5 +45,9 @@ public class ProductoService {
         producto.setMarca(marca);
 
         productoRepository.save(producto);
+    }
+
+    public List<Producto> listarProductosConStockBajo() {
+        return productoRepository.findProductosConStockBajo();
     }
 }
