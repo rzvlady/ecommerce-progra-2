@@ -15,34 +15,35 @@ import java.time.format.DateTimeFormatter;
 // Tarea ejecutada en segundo plano para monitorear stock sin bloquear peticiones HTTP
 // Justificación Punto 5 (Uso de programación concurrente / Hilos)
 @Component
-public class StockMonitorTask implements Runnable {
+public class StockMonitorTask {
+
     private static final DateTimeFormatter FORMATO_HORA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
     private static final Logger log = LoggerFactory.getLogger(StockMonitorTask.class);
 
     private final ProductoRepository productoRepository;
-    // Colección en memoria segura ante hilos (thread-safe) para retener las alertas
-    private final List<Producto> productosBajoStockAlertados = new CopyOnWriteArrayList<>();
+
+    // Recurso compartido en memoria: visible de forma segura para todos los hilos
+    private volatile List<Producto> productosBajoStockAlertados = List.of();
 
     public StockMonitorTask(ProductoRepository productoRepository) {
         this.productoRepository = productoRepository;
     }
-    // Hilo programado que escanea periódicamente el inventario cada 60 segundos
-    @Override
-    @Scheduled(fixedRate = 60000)
-    public void run() {
-        String horaEjecucion = LocalDateTime.now().format(FORMATO_HORA);
-        log.info("[Monitor Hilo: {}] [{}] Iniciando escaneo de inventario...", Thread.currentThread().getName(), horaEjecucion);
 
-        // Consulta en base de datos de productos que alcanzaron o rebasaron su stock mínimo
+    // Proceso en segundo plano ejecutado en un hilo separado cada 60 segundos
+    @Scheduled(fixedRate = 60000)
+    public void escanearInventario() {
+        String horaEjecucion = LocalDateTime.now().format(FORMATO_HORA);
+        log.info("[Monitor Hilo: {}] [{}] Iniciando escaneo de inventario...",
+                Thread.currentThread().getName(), horaEjecucion);
+
         List<Producto> productosCriticos = productoRepository.findProductosConStockBajo();
 
-        // Actualización concurrente de la colección en memoria
-        productosBajoStockAlertados.clear();
-        productosBajoStockAlertados.addAll(productosCriticos);
+        // Actualización atómica en memoria (evita ventanas inconsistentes de lectura)
+        this.productosBajoStockAlertados = List.copyOf(productosCriticos);
 
-        // Notificación en logs y detalle de productos críticos detectados por el hilo
         if (!productosBajoStockAlertados.isEmpty()) {
-            log.warn("[{}] [ALERTA STOCK] Se detectaron {} productos con nivel crítico.", horaEjecucion, productosBajoStockAlertados.size());
+            log.warn("[{}] [ALERTA STOCK] Se detectaron {} productos con nivel crítico.",
+                    horaEjecucion, productosBajoStockAlertados.size());
             for (Producto p : productosBajoStockAlertados) {
                 log.warn("-> Producto: '{}' | SKU: {} | Stock Actual: {} | Stock Mínimo: {}",
                         p.getNombreProducto(),
@@ -55,8 +56,8 @@ public class StockMonitorTask implements Runnable {
         }
     }
 
-    // Acceso de solo lectura a la colección en memoria para desacoplar el controlador de la base de datos
+    // Acceso de lectura para el Controller (hilos web de Tomcat)
     public List<Producto> getProductosBajoStockAlertados() {
-        return Collections.unmodifiableList(productosBajoStockAlertados);
+        return productosBajoStockAlertados;
     }
 }
