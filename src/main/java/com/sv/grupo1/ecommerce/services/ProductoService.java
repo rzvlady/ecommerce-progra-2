@@ -7,17 +7,21 @@ import com.sv.grupo1.ecommerce.dto.ProductoRegistroDTO;
 import com.sv.grupo1.ecommerce.entities.core.Producto;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class ProductoService {
 
     private final ProductoRepository productoRepository;
     private final CategoriaRepository categoriaRepository;
     private final MarcaRepository marcaRepository;
+    private final StockMonitorTask stockMonitorTask;
 
-    public ProductoService(ProductoRepository productoRepository, CategoriaRepository categoriaRepository, MarcaRepository marcaRepository) {
+    public ProductoService(ProductoRepository productoRepository, CategoriaRepository categoriaRepository, MarcaRepository marcaRepository, StockMonitorTask stockMonitorTask) {
         this.productoRepository = productoRepository;
         this.categoriaRepository = categoriaRepository;
         this.marcaRepository = marcaRepository;
+        this.stockMonitorTask = stockMonitorTask;
     }
 
     public void registrarProducto(ProductoRegistroDTO dto) {
@@ -28,8 +32,10 @@ public class ProductoService {
         Producto producto = new Producto();
         producto.setCodigoSku(dto.getSku());
         producto.setNombreProducto(dto.getNombreProducto());
+        producto.setDescripcionProducto(dto.getDescripcionProducto());
         producto.setPrecioVenta(dto.getPrecioCosto());
         producto.setStockDisponible(dto.getStockDisponible());
+        producto.setStockMinimo(dto.getStockMinimo());
 
         //Se buscan las entidades para asociarlas
         var categoria = categoriaRepository.findById(dto.getIdCategoria())
@@ -41,5 +47,9 @@ public class ProductoService {
         producto.setMarca(marca);
 
         productoRepository.save(producto);
+    }
+
+    public List<Producto> listarProductosConStockBajo() {
+        return stockMonitorTask.getProductosBajoStockAlertados();
     }
 }
