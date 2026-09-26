@@ -1,11 +1,13 @@
 package com.sv.grupo1.ecommerce.entities.core;
 
+import java.io.Serializable;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "envios", schema = "core")
-public class Envio {
+public class Envio implements Serializable{
+    private static final long serialVersionUID=1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
