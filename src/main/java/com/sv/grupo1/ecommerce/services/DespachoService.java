@@ -1,5 +1,6 @@
 package com.sv.grupo1.ecommerce.services;
 
+import com.sv.grupo1.ecommerce.entities.core.Envio;
 import org.springframework.stereotype.Service;
 import java.io.FileOutputStream;
 import java.io.IOException;
