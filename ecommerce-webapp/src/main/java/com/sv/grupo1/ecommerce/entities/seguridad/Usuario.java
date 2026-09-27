@@ -37,6 +37,12 @@ public class Usuario {
     @Column(name = "metadata", columnDefinition = "json")
     private String metadata;
 
+    @Column(name = "token_reinicio")
+    private String tokenReinicio;
+
+    @Column(name = "expiracion_token")
+    private LocalDateTime expiracionToken;
+
     public Usuario() {}
 
     // Getters y Setters
@@ -56,4 +62,8 @@ public class Usuario {
     public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
     public String getMetadata() { return metadata; }
     public void setMetadata(String metadata) { this.metadata = metadata; }
+    public String getTokenReinicio() { return tokenReinicio; }
+    public void setTokenReinicio(String tokenReinicio) { this.tokenReinicio = tokenReinicio; }
+    public LocalDateTime getExpiracionToken() { return expiracionToken; }
+    public void setExpiracionToken(LocalDateTime expiracionToken) { this.expiracionToken = expiracionToken; }
 }
