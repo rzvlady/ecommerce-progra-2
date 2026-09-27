@@ -1,0 +1,54 @@
+{
+  "info": {
+    "_postman_id": "660f2578-15dc-4685-bfe8-28efd4990fa3",
+    "name": "uees-progra-jvm",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "9025418"
+  },
+  "item": [
+    {
+      "name": "mock-gateway-api",
+      "item": [
+        {
+          "name": "create-payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "test-001"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n\t\"merchantOrderId\": \"ORD-100\",\r\n\t\"amount\": 25.50,\r\n\t\"currency\": \"USD\",\r\n\t\"cardNumber\": \"4532015112834242\",\r\n\t\"cardHolderName\": \"TEST USER\",\r\n\t\"cardExpirationDate\": \"12/28\",\r\n\t\"cvv\": \"123\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8081/mock-gateway/v1/payments",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "mock-gateway",
+                "v1",
+                "payments"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

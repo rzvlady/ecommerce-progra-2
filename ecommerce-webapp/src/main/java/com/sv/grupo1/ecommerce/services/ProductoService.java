@@ -15,11 +15,13 @@ public class ProductoService {
     private final ProductoRepository productoRepository;
     private final CategoriaRepository categoriaRepository;
     private final MarcaRepository marcaRepository;
+    private final StockMonitorTask stockMonitorTask;
 
-    public ProductoService(ProductoRepository productoRepository, CategoriaRepository categoriaRepository, MarcaRepository marcaRepository) {
+    public ProductoService(ProductoRepository productoRepository, CategoriaRepository categoriaRepository, MarcaRepository marcaRepository, StockMonitorTask stockMonitorTask) {
         this.productoRepository = productoRepository;
         this.categoriaRepository = categoriaRepository;
         this.marcaRepository = marcaRepository;
+        this.stockMonitorTask = stockMonitorTask;
     }
 
     public void registrarProducto(ProductoRegistroDTO dto) {
@@ -48,6 +50,6 @@ public class ProductoService {
     }
 
     public List<Producto> listarProductosConStockBajo() {
-        return productoRepository.findProductosConStockBajo();
+        return stockMonitorTask.getProductosBajoStockAlertados();
     }
 }
