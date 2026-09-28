@@ -7,4 +7,5 @@ import java.util.Optional;
 public interface UsuarioRepository extends JpaRepository<Usuario, Integer>{
     Optional<Usuario> findByCorreoInicioSesion(String correoInicioSesion);
     Optional<Usuario> findByTokenReinicio(String tokenReinicio);
+	boolean existsByCorreoInicioSesionIgnoreCase(String correoInicioSesion);
 }
