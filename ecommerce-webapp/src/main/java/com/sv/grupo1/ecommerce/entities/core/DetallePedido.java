@@ -3,8 +3,8 @@ package com.sv.grupo1.ecommerce.entities.core;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 
-@Entity
-@Table(name = "detalles_pedido", schema = "core")
+//@Entity
+//@Table(name = "detalles_pedido", schema = "core")
 public class DetallePedido {
 
     @Id

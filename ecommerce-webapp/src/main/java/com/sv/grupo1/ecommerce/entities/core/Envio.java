@@ -4,8 +4,8 @@ import java.io.Serializable;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 
-@Entity
-@Table(name = "envios", schema = "core")
+//@Entity
+//@Table(name = "envios", schema = "core")
 public class Envio implements Serializable{
     private static final long serialVersionUID=1L;
 

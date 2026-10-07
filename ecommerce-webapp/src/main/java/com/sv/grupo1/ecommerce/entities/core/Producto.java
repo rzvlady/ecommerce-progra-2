@@ -8,8 +8,8 @@ import org.hibernate.type.SqlTypes;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "productos", schema = "core")
+//@Entity
+//@Table(name = "productos", schema = "core")
 public class Producto {
 
     @Id

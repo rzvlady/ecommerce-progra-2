@@ -3,8 +3,8 @@ package com.sv.grupo1.ecommerce.entities.catalogo;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "marcas", schema = "catalogo")
+//@Entity
+//@Table(name = "marcas", schema = "catalogo")
 public class Marca {
 
     @Id

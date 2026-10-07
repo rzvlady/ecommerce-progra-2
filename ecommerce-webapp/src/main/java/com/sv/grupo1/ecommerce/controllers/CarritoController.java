@@ -9,11 +9,11 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/carrito")
+//@RestController
+//@RequestMapping("/api/carrito")
 public class CarritoController {
 
-    @Autowired
+    //@Autowired
     private CarritoService carritoService;
 
     // En un caso real idCliente vendría del token de seguridad (JWT) o Sesión, aquí lo simulamos por Header

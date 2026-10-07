@@ -4,8 +4,8 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
-@Entity
-@Table(name = "pagos", schema = "core")
+//@Entity
+//@Table(name = "pagos", schema = "core")
 public class Pago {
 
     @Id

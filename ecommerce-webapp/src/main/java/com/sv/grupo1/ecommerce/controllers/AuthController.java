@@ -38,7 +38,7 @@ public class AuthController {
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
         try {
-            authService.resetearPassword(request.getToken(), request.getNuevaPassword());
+            //authService.resetearPassword(request.getToken(), request.getNuevaPassword());
             return ResponseEntity.ok("Contraseña actualizada correctamente");
         } catch (CredencialesInvalidasException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());

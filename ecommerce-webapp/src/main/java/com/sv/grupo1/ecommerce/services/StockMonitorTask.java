@@ -14,7 +14,7 @@ import java.time.format.DateTimeFormatter;
 
 // Tarea ejecutada en segundo plano para monitorear stock sin bloquear peticiones HTTP
 // Justificación Punto 5 (Uso de programación concurrente / Hilos)
-@Component
+//@Component
 public class StockMonitorTask {
 
     private static final DateTimeFormatter FORMATO_HORA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
