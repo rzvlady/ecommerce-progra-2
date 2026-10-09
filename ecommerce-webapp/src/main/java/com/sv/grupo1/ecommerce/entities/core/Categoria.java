@@ -3,8 +3,8 @@ package com.sv.grupo1.ecommerce.entities.core;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "categorias", schema = "core")
+//@Entity
+//@Table(name = "categorias", schema = "core")
 public class Categoria {
 
     @Id

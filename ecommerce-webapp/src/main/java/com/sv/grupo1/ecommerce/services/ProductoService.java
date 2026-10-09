@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-@Service
+//@Service
 public class ProductoService {
 
     private final ProductoRepository productoRepository;
@@ -38,15 +38,15 @@ public class ProductoService {
         producto.setStockMinimo(dto.getStockMinimo());
 
         //Se buscan las entidades para asociarlas
-        var categoria = categoriaRepository.findById(dto.getIdCategoria())
-                .orElseThrow(() -> new IllegalArgumentException("Categoría no encontrada"));
-        var marca = marcaRepository.findById(dto.getIdMarca())
-                .orElseThrow(() -> new IllegalArgumentException("Marca no encontrada"));
+        //var categoria = categoriaRepository.findById(dto.getIdCategoria())
+                //.orElseThrow(() -> new IllegalArgumentException("Categoría no encontrada"));
+        //var marca = marcaRepository.findById(dto.getIdMarca())
+                //.orElseThrow(() -> new IllegalArgumentException("Marca no encontrada"));
 
-        producto.setCategoria(categoria);
-        producto.setMarca(marca);
+        //producto.setCategoria(categoria);
+        //producto.setMarca(marca);
 
-        productoRepository.save(producto);
+        //productoRepository.save(producto);
     }
 
     public List<Producto> listarProductosConStockBajo() {

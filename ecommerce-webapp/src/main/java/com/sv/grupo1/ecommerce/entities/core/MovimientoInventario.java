@@ -3,8 +3,8 @@ package com.sv.grupo1.ecommerce.entities.core;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 
-@Entity
-@Table(name = "movimientos_inventario", schema = "core")
+//@Entity
+//@Table(name = "movimientos_inventario", schema = "core")
 public class MovimientoInventario {
 
     @Id

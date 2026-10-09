@@ -30,7 +30,7 @@
                     <!-- Formulario conectado al DTO -->
                     <!-- th:action apunta a la ruta del @PostMapping en tu controlador -->
                     <!-- th:object vincula el formulario al objeto 'productoDTO' -->
-                    <form th:action="@{/admin/productos/guardar}" th:object="${productoDTO}" method="post">
+                    <form th:action="@{/templates/pages/admin/productos/guardar}" th:object="${productoDTO}" method="post">
 
                         <div class="row">
                             <!-- Campo SKU -->

@@ -6,8 +6,8 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
-@Entity
-@Table(name = "pedidos", schema = "core")
+//@Entity
+//@Table(name = "pedidos", schema = "core")
 public class Pedido {
 
     @Id
