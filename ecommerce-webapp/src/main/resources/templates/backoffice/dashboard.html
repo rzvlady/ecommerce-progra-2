@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{backoffice/fragments/head :: head('Dashboard')}">
+</head>
+
+<body>
+<div th:replace="~{backoffice/layout/admin :: layout(
+            'Dashboard',
+            'dashboard',
+            ~{::pageContent}
+        )}">
+
+    <th:block th:fragment="pageContent">
+
+        <!-- Encabezado de la página -->
+        <div class="mb-4">
+            <h2 class="h4 fw-bold">Resumen general</h2>
+            <p class="text-secondary mb-0">
+                Bienvenido al panel administrativo de tu tienda.
+            </p>
+        </div>
+
+        <!-- Indicadores -->
+        <div class="row g-3 mb-4">
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-secondary small">
+                            Ventas del día
+                        </div>
+                        <div class="fs-3 fw-bold">$0.00</div>
+                        <i class="bi bi-currency-dollar text-primary"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-secondary small">
+                            Pedidos pendientes
+                        </div>
+                        <div class="fs-3 fw-bold">0</div>
+                        <i class="bi bi-cart text-warning"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-secondary small">
+                            Productos registrados
+                        </div>
+                        <div class="fs-3 fw-bold">0</div>
+                        <i class="bi bi-box-seam text-success"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-secondary small">
+                            Clientes registrados
+                        </div>
+                        <div class="fs-3 fw-bold">0</div>
+                        <i class="bi bi-people text-info"></i>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Contenido provisional -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <h3 class="h5">Actividad reciente</h3>
+                <p class="text-secondary mb-0">
+                    Aquí mostraremos los últimos pedidos y movimientos
+                    cuando conectemos el dashboard con la base de datos.
+                </p>
+            </div>
+        </div>
+
+    </th:block>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js"
+        integrity="sha384-G/EV+4j2dNv+tEPo3++6LCgdCROaejBqfUeNjuKAiuXbjrxilcCdDz6ZAVfHWe1Y"
+        crossorigin="anonymous">
+</script>
+
+</body>
+</html>

@@ -1,0 +1,47 @@
+<header th:fragment="topbar(titulo)"
+        xmlns:th="http://www.thymeleaf.org"
+        class="topbar bg-white border-bottom px-3 px-lg-4">
+
+    <div class="d-flex align-items-center gap-3 h-100">
+
+        <button class="btn btn-outline-secondary d-lg-none"
+                type="button"
+                data-bs-toggle="offcanvas"
+                data-bs-target="#sidebar"
+                aria-controls="sidebar"
+                aria-label="Abrir menú">
+            <i class="bi bi-list fs-5"></i>
+        </button>
+
+        <h1 class="h5 mb-0" th:text="${titulo}">Dashboard</h1>
+
+        <div class="dropdown ms-auto">
+            <button class="btn btn-light dropdown-toggle"
+                    type="button"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                <i class="bi bi-person-circle me-1"></i>
+                Administrador
+            </button>
+
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <a class="dropdown-item"
+                       th:href="@{/admin/perfil}">
+                        <i class="bi bi-person me-2"></i>
+                        Mi perfil
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item"
+                       th:href="@{/logout}">
+                        <i class="bi bi-box-arrow-right me-2"></i>
+                        Cerrar sesión
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+</header>

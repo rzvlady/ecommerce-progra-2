@@ -1,0 +1,88 @@
+<aside th:fragment="sidebar(activePage)"
+       xmlns:th="http://www.thymeleaf.org"
+       class="sidebar offcanvas-lg offcanvas-start"
+       tabindex="-1"
+       id="sidebar"
+       aria-label="Menú administrativo">
+
+    <div class="offcanvas-header border-bottom border-secondary">
+        <h5 class="offcanvas-title">Mi tienda</h5>
+
+        <button type="button"
+                class="btn-close btn-close-white d-lg-none"
+                data-bs-dismiss="offcanvas"
+                data-bs-target="#sidebar"
+                aria-label="Cerrar menú">
+        </button>
+    </div>
+
+    <div class="offcanvas-body d-flex flex-column p-3">
+
+        <a th:href="@{/admin}"
+           class="brand text-decoration-none mb-4">
+            <i class="bi bi-bag-check-fill me-2"></i>
+            Commerce Admin
+        </a>
+
+        <span class="menu-title">GENERAL</span>
+
+        <nav class="nav flex-column mt-2 mb-4">
+            <a th:href="@{/backoffice/dashboard}"
+               class="nav-link"
+               th:classappend="${activePage == 'dashboard'} ? ' active' : ''">
+                <i class="bi bi-grid-1x2-fill"></i>
+                Dashboard
+            </a>
+        </nav>
+
+        <span class="menu-title">GESTIÓN COMERCIAL</span>
+
+        <nav class="nav flex-column mt-2">
+
+            <a th:href="@{/admin/productos}"
+               class="nav-link"
+               th:classappend="${activePage == 'productos'} ? ' active' : ''">
+                <i class="bi bi-box-seam"></i>
+                Productos
+            </a>
+
+            <a th:href="@{/admin/categorias}"
+               class="nav-link"
+               th:classappend="${activePage == 'categorias'} ? ' active' : ''">
+                <i class="bi bi-tags"></i>
+                Categorías
+            </a>
+
+            <a th:href="@{/admin/inventario}"
+               class="nav-link"
+               th:classappend="${activePage == 'inventario'} ? ' active' : ''">
+                <i class="bi bi-clipboard-data"></i>
+                Inventario
+            </a>
+
+            <a th:href="@{/admin/pedidos}"
+               class="nav-link"
+               th:classappend="${activePage == 'pedidos'} ? ' active' : ''">
+                <i class="bi bi-cart3"></i>
+                Pedidos
+            </a>
+
+            <a th:href="@{/admin/clientes}"
+               class="nav-link"
+               th:classappend="${activePage == 'clientes'} ? ' active' : ''">
+                <i class="bi bi-people"></i>
+                Clientes
+            </a>
+        </nav>
+
+        <div class="mt-auto pt-4">
+            <hr class="border-secondary">
+
+            <a th:href="@{/admin/configuracion}" class="nav-link">
+                <i class="bi bi-gear"></i>
+                Configuración
+            </a>
+        </div>
+
+    </div>
+</aside>

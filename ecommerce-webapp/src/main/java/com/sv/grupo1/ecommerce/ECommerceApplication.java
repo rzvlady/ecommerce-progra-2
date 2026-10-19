@@ -8,10 +8,17 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
+@ComponentScan(
+		basePackages = {
+				"com.sv.grupo1.ecommerce",
+				"com.sv.grupo1.backoffice"
+		}
+)
 public class ECommerceApplication {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ECommerceApplication.class);

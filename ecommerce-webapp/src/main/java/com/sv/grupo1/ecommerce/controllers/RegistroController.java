@@ -2,7 +2,6 @@ package com.sv.grupo1.ecommerce.controllers;
 
 import com.sv.grupo1.ecommerce.dto.RegistroUsuarioDTO;
 import com.sv.grupo1.ecommerce.services.UsuarioService;
-import com.sv.grupo1.ecommerce.services.impl.UsuarioServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -20,7 +19,7 @@ public class RegistroController {
     private static final Logger LOG = LoggerFactory.getLogger(RegistroController.class);
     private final UsuarioService usuarioService;
 
-    public  RegistroController(UsuarioServiceImpl usuarioService) {
+    public  RegistroController(UsuarioService usuarioService) {
         this.usuarioService = usuarioService;
     }
 

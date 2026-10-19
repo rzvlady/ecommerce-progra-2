@@ -1,0 +1,144 @@
+:root {
+    --sidebar-bg: #172033;
+    --sidebar-hover: #2c4167;
+    --sidebar-text: #c5cede;
+    --sidebar-muted: #94a3b8;
+    --page-bg: #f5f7fb;
+
+    /* Reemplaza la fuente principal de Bootstrap */
+    --bs-font-sans-serif: 'JetBrains Mono', monospace;
+    --bs-body-font-family: var(--bs-font-sans-serif);
+}
+
+body {
+    margin: 0;
+    background-color: var(--page-bg);
+    color: #1e293b;
+}
+
+/* Estructura principal */
+
+.admin-layout {
+    min-height: 100vh;
+}
+
+.admin-main {
+    min-width: 0;
+}
+
+.topbar {
+    height: 68px;
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+}
+
+.main-content {
+    min-height: calc(100vh - 68px);
+}
+
+/* Sidebar */
+
+.sidebar {
+    --bs-offcanvas-width: 260px;
+
+    width: 260px;
+    flex-shrink: 0;
+    background-color: var(--sidebar-bg);
+    color: #fff;
+}
+
+.brand {
+    display: block;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.brand:hover {
+    color: #fff;
+}
+
+.menu-title {
+    color: var(--sidebar-muted);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+}
+
+.sidebar .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    margin-bottom: 4px;
+    border-radius: 8px;
+    color: var(--sidebar-text);
+    transition: background-color 0.2s ease;
+}
+
+.sidebar .nav-link i {
+    width: 22px;
+    font-size: 1.05rem;
+}
+
+.sidebar .nav-link:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar .nav-link.active {
+    color: #fff;
+    background-color: var(--sidebar-hover);
+}
+
+/* Móviles */
+
+@media (max-width: 991.98px) {
+    .sidebar {
+        width: var(--bs-offcanvas-width);
+    }
+}
+
+/* ===== Sidebar: tema oscuro ===== */
+
+.sidebar {
+    background-color: #111827 !important;
+    color: #ffffff;
+}
+
+.sidebar .offcanvas-header {
+    border-color: #374151 !important;
+}
+
+.sidebar .brand {
+    color: #ffffff;
+}
+
+.sidebar .menu-title {
+    color: #9ca3af;
+}
+
+.sidebar .nav-link {
+    color: #cbd5e1;
+    background-color: transparent;
+}
+
+.sidebar .nav-link:hover {
+    color: #ffffff;
+    background-color: #263449;
+}
+
+.sidebar .nav-link.active {
+    color: #ffffff;
+    background-color: #2563eb;
+}
+
+.sidebar .nav-link i {
+    color: inherit;
+}
+
+.sidebar hr {
+    border-color: #4b5563 !important;
+    opacity: 0.7;
+}

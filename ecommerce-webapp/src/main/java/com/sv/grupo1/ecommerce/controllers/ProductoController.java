@@ -3,13 +3,11 @@ package com.sv.grupo1.ecommerce.controllers;
 import com.sv.grupo1.ecommerce.dto.ProductoRegistroDTO;
 import com.sv.grupo1.ecommerce.services.ProductoService;
 import jakarta.validation.Valid;
-import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 /*
  * @author Miguel-A-Serrano
