@@ -2,6 +2,7 @@ CREATE DATABASE ecommerce_progra2_db;
 
 CREATE SCHEMA seguridad;
 CREATE SCHEMA catalogo;
+CREATE SCHEMA core;
 
 CREATE TABLE IF NOT EXISTS catalogo.paises (
 	id_pais 				INTEGER GENERATED ALWAYS AS IDENTITY,
@@ -76,4 +77,41 @@ CREATE TABLE IF NOT EXISTS seguridad.usuarios_direccion (
 	CONSTRAINT pk_usuarios_direccion PRIMARY KEY(id_direccion),
 	CONSTRAINT fk_usuarios_direccion_to_usuarios FOREIGN KEY(id_usuario) REFERENCES seguridad.usuarios(id_usuario),
 	CONSTRAINT fk_usuarios_direccion_to_municipios FOREIGN KEY(id_municipio) REFERENCES catalogo.municipios(id_municipio)
+);
+
+CREATE TABLE IF NOT EXISTS catalogo.marcas (
+	id_marca 				INTEGER GENERATED ALWAYS AS IDENTITY,
+	nombre_marca 			VARCHAR NOT NULL,
+	descripcion_marca		VARCHAR(255),
+	estado 					CHAR(1) NOT NULL DEFAULT 'A',
+	fecha_creacion 			TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT pk_marcas PRIMARY KEY(id_marca)
+);
+
+CREATE TABLE IF NOT EXISTS catalogo.categorias (
+	id_categoria 			INTEGER GENERATED ALWAYS AS IDENTITY,
+	id_categoria_padre 		INTEGER,
+	nombre_categoria 		VARCHAR NOT NULL,
+	descripcion_categoria 	VARCHAR(255),
+	estado 					CHAR(1) NOT NULL DEFAULT 'A',
+	fecha_creacion 			TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT pk_categorias PRIMARY KEY(id_categoria),
+	CONSTRAINT fk_categorias_to_categorias FOREIGN KEY(id_categoria_padre) REFERENCES catalogo.categorias(id_categoria)
+);
+
+CREATE TABLE IF NOT EXISTS core.productos (
+	id_producto 			INTEGER GENERATED ALWAYS AS IDENTITY,
+	id_categoria 			INTEGER NOT NULL,
+	id_marca 				INTEGER NOT NULL,
+	nombre_producto 		VARCHAR(100) NOT NULL,
+	descripcion_producto 	VARCHAR(255) NOT NULL,
+	stock_disponible 		INTEGER DEFAULT 0,
+	stock_minimo 			INTEGER DEFAULT 0,
+	estado 					CHAR(1) NOT NULL DEFAULT 'A',
+	fecha_creacion 			TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+	metadata 				JSONB,
+	CONSTRAINT pk_productos PRIMARY KEY(id_producto),
+	CONSTRAINT fk_productos_to_categorias FOREIGN KEY(id_categoria) REFERENCES catalogo.categorias(id_categoria),
+	CONSTRAINT fk_productos_to_marcas FOREIGN KEY(id_marca) REFERENCES catalogo.marcas(id_marca),
+	CONSTRAINT chk_productos_stock_disponible CHECK (stock_disponible >= 0)
 );
