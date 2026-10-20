@@ -1,16 +1,11 @@
 package com.sv.grupo1.ecommerce.dto;
 
-/*
-* @author ivandiaz-007
-*/
-public class RegistroUsuarioDTO {
+public class UsuarioRegistroDTO {
 
     private String correoInicioSesion;
     private String contrasenia;
-    private String confirmarContrasenia;
 
-    public RegistroUsuarioDTO() {
-        /* Constructor Vacio */
+    public UsuarioRegistroDTO() {
     }
 
     public String getCorreoInicioSesion() {
@@ -27,13 +22,5 @@ public class RegistroUsuarioDTO {
 
     public void setContrasenia(String contrasenia) {
         this.contrasenia = contrasenia;
-    }
-
-    public String getConfirmarContrasenia() {
-        return confirmarContrasenia;
-    }
-
-    public void setConfirmarContrasenia(String confirmarContrasenia) {
-        this.confirmarContrasenia = confirmarContrasenia;
     }
 }

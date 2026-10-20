@@ -11,11 +11,8 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-/*
- * @author Miguel-A-Serrano
- * */
-//@Controller
-//@RequestMapping("/admin/productos")
+@Controller
+@RequestMapping("/admin/productos")
 public class ProductoController {
 
     private final ProductoService productoService;
@@ -28,7 +25,7 @@ public class ProductoController {
     public String mostrarFormulario(Model model) {
         // La clave debe coincidir exactamente con th:object="${productoDTO}"
         model.addAttribute("productoDTO", new ProductoRegistroDTO());
-        return "pages/admin/registro-producto";
+        return "admin/registro-producto";
     }
 
     @PostMapping("/guardar")
@@ -38,7 +35,7 @@ public class ProductoController {
             Model model) {
 
         if (result.hasErrors()) {
-            return "pages/admin/registro-producto";
+            return "admin/registro-producto";
         }
 
         try {
@@ -50,12 +47,12 @@ public class ProductoController {
             model.addAttribute("mensajeError", e.getMessage());
         }
 
-        return "pages/admin/registro-producto";
+        return "admin/registro-producto";
     }
 
     @GetMapping("/alertas-stock")
     public String mostrarAlertasStock(Model model) {
         model.addAttribute("productos", productoService.listarProductosConStockBajo());
-        return "pages/admin/alertas-stock";
+        return "admin/alertas-stock";
     }
 }

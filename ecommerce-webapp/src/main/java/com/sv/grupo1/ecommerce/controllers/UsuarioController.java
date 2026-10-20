@@ -1,29 +1,35 @@
 package com.sv.grupo1.ecommerce.controllers;
 
-import com.sv.grupo1.ecommerce.dto.RegistroUsuarioDTO;
-import com.sv.grupo1.ecommerce.services.impl.UsuarioServiceImpl;
+import com.sv.grupo1.ecommerce.dto.UsuarioRegistroDTO;
+import com.sv.grupo1.ecommerce.services.UsuarioService;
+import jakarta.validation.Valid;
+import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
-//@Controller
-//@RequestMapping("/usuarios")
+@Controller
+@RequestMapping("/usuarios")
 public class UsuarioController {
 
-    private final UsuarioServiceImpl usuarioService;
+    private final UsuarioService usuarioService;
 
-    public UsuarioController(UsuarioServiceImpl usuarioService) {
+    public UsuarioController(UsuarioService usuarioService) {
         this.usuarioService = usuarioService;
     }
 
     @GetMapping("/registro")
     public String mostrarFormularioRegistro(Model model) {
-        model.addAttribute("usuarioDTO", new RegistroUsuarioDTO());
+        model.addAttribute("usuarioDTO", new UsuarioRegistroDTO());
         return "usuarios/registro";
     }
 
-    /*@PostMapping("/registrar")
+    @PostMapping("/registrar")
     public String registrarUsuario(
-            @Valid @ModelAttribute("usuarioDTO") RegistroUsuarioDTO dto,
+            @Valid @ModelAttribute("usuarioDTO") UsuarioRegistroDTO dto,
             BindingResult result,
             Model model) {
 
@@ -44,7 +50,7 @@ public class UsuarioController {
 
             model.addAttribute(
                     "usuarioDTO",
-                    new RegistroUsuarioDTO()
+                    new UsuarioRegistroDTO()
             );
 
         } catch (IllegalArgumentException e) {
@@ -55,5 +61,5 @@ public class UsuarioController {
         }
 
         return "usuarios/registro";
-    }*/
+    }
 }
