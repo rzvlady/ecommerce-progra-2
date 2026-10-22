@@ -142,3 +142,269 @@ body {
     border-color: #4b5563 !important;
     opacity: 0.7;
 }
+
+/* ===== Tablas y Componentes CRUD Backoffice ===== */
+
+.table-admin thead th {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748b;
+    background-color: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0.85rem 1rem;
+    white-space: nowrap;
+}
+
+.table-admin tbody td {
+    padding: 0.85rem 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.85rem;
+}
+
+.table-admin tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.sku-badge {
+    display: inline-block;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: #1e40af;
+    background-color: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+.product-desc-truncate {
+    max-width: 280px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ===== Modal de Producto bien segmentado, con scroll interno y footer fijo ===== */
+@media (min-width: 768px) {
+    .modal-producto-dialog {
+        max-width: 820px;
+    }
+}
+
+.modal-confirm-dialog {
+    max-width: 440px;
+}
+
+.modal-header-admin {
+    background-color: #111827;
+    color: #ffffff;
+    flex-shrink: 0;
+}
+
+.modal-header-admin .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.modal-body-segmented {
+    background-color: #f8fafc;
+    padding: 1.35rem 1.5rem;
+    max-height: calc(100vh - 210px);
+    overflow-y: auto;
+}
+
+.modal-footer-sticky {
+    background-color: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+.modal-section-card {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 1.25rem 1.35rem;
+    margin-bottom: 1.15rem;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.modal-section-card:last-child {
+    margin-bottom: 0;
+}
+
+.modal-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #475569;
+    margin-bottom: 1rem;
+    padding-bottom: 0.65rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.modal-section-title i {
+    color: #2563eb;
+    font-size: 0.95rem;
+}
+
+/* ===== Input en mayúsculas ===== */
+.input-uppercase {
+    text-transform: uppercase;
+}
+
+.input-uppercase::placeholder {
+    text-transform: none;
+}
+
+/* ===== Bloques individuales para carga de fotografías ===== */
+.image-slot-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.image-slot-label {
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #475569;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.image-slot-box {
+    position: relative;
+    height: 125px;
+    border: 2px dashed #cbd5e1;
+    border-radius: 10px;
+    background-color: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    padding: 0.5rem;
+    text-align: center;
+}
+
+.image-slot-box:hover {
+    border-color: #2563eb;
+    background-color: #eff6ff;
+}
+
+.image-slot-box.has-image {
+    border-style: solid;
+    border-color: #bfdbfe;
+    background-color: #ffffff;
+    padding: 0;
+}
+
+.image-slot-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.image-slot-remove {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: rgba(15, 23, 42, 0.75);
+    color: #ffffff;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    cursor: pointer;
+    z-index: 2;
+    transition: background-color 0.15s ease;
+}
+
+.image-slot-remove:hover {
+    background-color: #dc2626;
+}
+
+/* ===== Alert flotante con timeout (Toast Alert) ===== */
+.floating-alert-container {
+    position: fixed;
+    top: 82px;
+    right: 24px;
+    z-index: 1085;
+    max-width: 420px;
+    width: calc(100% - 48px);
+    pointer-events: none;
+}
+
+.floating-alert {
+    pointer-events: auto;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.18);
+    animation: slideInRightAlert 0.25s ease-out;
+}
+
+@keyframes slideInRightAlert {
+    from {
+        opacity: 0;
+        transform: translateX(24px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ===== Integración visual de Select2 con JetBrains Mono y Bootstrap 5 ===== */
+.select2-container--bootstrap-5 .select2-selection {
+    font-family: var(--bs-font-sans-serif);
+    font-size: 0.875rem;
+    min-height: 38px;
+    border-color: #dee2e6;
+    border-radius: 0.375rem;
+}
+
+.select2-container--bootstrap-5 .select2-dropdown {
+    font-family: var(--bs-font-sans-serif);
+    font-size: 0.85rem;
+    border-color: #cbd5e1;
+    box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.08);
+}
+
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+    color: #1e293b;
+    line-height: 1.5;
+}
+
+.is-invalid + .select2-container--bootstrap-5 .select2-selection {
+    border-color: var(--bs-form-invalid-border-color) !important;
+}
+
+/* ===== Buscador de tabla y paginación ===== */
+.table-search-wrapper {
+    min-width: 270px;
+}
+
+.pagination .page-link {
+    font-size: 0.8rem;
+    color: #334155;
+    border-color: #e2e8f0;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
+}

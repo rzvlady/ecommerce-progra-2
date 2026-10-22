@@ -18,7 +18,7 @@
 
     <div class="offcanvas-body d-flex flex-column p-3">
 
-        <a th:href="@{/admin}"
+        <a th:href="@{/backoffice/dashboard}"
            class="brand text-decoration-none mb-4">
             <i class="bi bi-bag-check-fill me-2"></i>
             Commerce Admin
@@ -39,7 +39,7 @@
 
         <nav class="nav flex-column mt-2">
 
-            <a th:href="@{/admin/productos}"
+            <a th:href="@{/backoffice/productos}"
                class="nav-link"
                th:classappend="${activePage == 'productos'} ? ' active' : ''">
                 <i class="bi bi-box-seam"></i>
