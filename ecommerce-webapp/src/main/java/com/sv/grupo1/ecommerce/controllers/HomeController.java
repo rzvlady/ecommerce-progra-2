@@ -11,6 +11,11 @@ public class HomeController {
 
     @GetMapping("/")
     public String index() {
+        return "ecommerce/pages/index";
+    }
+
+    @GetMapping("/old/inicio")
+    public String indexOld() {
         return "index";
     }
 }

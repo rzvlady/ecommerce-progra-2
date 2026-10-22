@@ -1,0 +1,122 @@
+<header th:fragment="navbar"
+        xmlns:th="http://www.thymeleaf.org"
+        xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+        class="store-header">
+
+    <div class="container py-3">
+        <div class="row align-items-center g-3">
+
+            <!-- Marca -->
+            <div class="col-7 col-lg-3">
+                <a th:href="@{/}" class="store-brand">
+                    <i class="bi bi-bag-check-fill"></i>
+                    E-COMMERCE
+                </a>
+            </div>
+
+            <!-- Buscador: solo visual por ahora -->
+            <div class="col-lg-6 d-none d-lg-block">
+                <form th:action="@{/}" method="get" role="search">
+                    <div class="input-group">
+                        <input type="search"
+                               class="form-control"
+                               placeholder="¿Qué estás buscando?"
+                               aria-label="Buscar productos">
+
+                        <button type="button"
+                                class="btn btn-primary"
+                                aria-label="Buscar">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Acciones del usuario -->
+            <div class="col-5 col-lg-3">
+                <div class="d-flex justify-content-end align-items-center gap-3">
+
+                    <a sec:authorize="isAnonymous()"
+                       th:href="@{/inicio-sesion}"
+                       class="header-action">
+                        <i class="bi bi-person-circle"></i>
+                        <span class="d-none d-xl-inline">Iniciar sesión</span>
+                    </a>
+
+                    <a sec:authorize="isAuthenticated()"
+                       th:href="@{/}"
+                       class="header-action">
+                        <i class="bi bi-person-check"></i>
+                        <span class="d-none d-xl-inline">Mi cuenta</span>
+                    </a>
+
+                    <form sec:authorize="isAuthenticated()"
+                          th:action="@{/cerrar-sesion}"
+                          method="post"
+                          class="m-0">
+
+                        <button type="submit"
+                                class="btn btn-outline-secondary btn-sm">
+                            Cerrar sesión
+                        </button>
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Buscador para móvil -->
+        <div class="row mt-3 d-lg-none">
+            <div class="col-12">
+                <form th:action="@{/}" method="get" role="search">
+                    <div class="input-group">
+                        <input type="search"
+                               class="form-control"
+                               placeholder="Buscar productos..."
+                               aria-label="Buscar productos">
+
+                        <button type="button"
+                                class="btn btn-primary"
+                                aria-label="Buscar">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navegación -->
+    <nav class="store-navbar border-top border-bottom"
+         aria-label="Navegación principal">
+
+        <div class="container">
+            <div class="d-flex align-items-center gap-4 py-3">
+
+                <a th:href="@{/}" class="store-nav-link">
+                    Inicio
+                </a>
+
+                <a href="#" class="store-nav-link">
+                    Catálogo
+                </a>
+
+                <a href="#" class="store-nav-link">
+                    Categorías
+                </a>
+
+                <a href="#" class="store-nav-link">
+                    Ofertas
+                </a>
+
+                <a sec:authorize="isAnonymous()"
+                   th:href="@{/registro}"
+                   class="store-nav-link ms-auto">
+                    Crear cuenta
+                </a>
+
+            </div>
+        </div>
+    </nav>
+</header>

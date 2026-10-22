@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{ecommerce/fragments/ecommerce-head :: head('Iniciar Sesión')}">
+</head>
+
+<body class="bg-light">
+
+<div th:replace="~{ecommerce/layout/ecommerce-layout :: layout(~{::contenido})}">
+
+    <th:block th:fragment="contenido">
+
+        <main class="container mt-5 mb-5">
+
+            <div class="row justify-content-center">
+                <div class="col-md-6 col-lg-5">
+
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body p-4 p-md-5">
+
+                            <h2 class="text-center mb-4">
+                                Iniciar Sesión
+                            </h2>
+
+                            <div th:if="${param.exito}"
+                                 class="alert alert-success text-center">
+                                ¡Cuenta creada con éxito! Ahora puedes iniciar sesión.
+                            </div>
+
+                            <div th:if="${param.error}"
+                                 class="alert alert-danger text-center">
+                                Correo o contraseña incorrectos.
+                            </div>
+
+                            <form th:action="@{/inicio-sesion}" method="post">
+
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">
+                                        Correo Electrónico
+                                    </label>
+
+                                    <input type="email"
+                                           id="username"
+                                           name="username"
+                                           class="form-control"
+                                           placeholder="ejemplo@correo.com"
+                                           autocomplete="username"
+                                           required>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label for="password" class="form-label">
+                                        Contraseña
+                                    </label>
+
+                                    <input type="password"
+                                           id="password"
+                                           name="password"
+                                           class="form-control"
+                                           autocomplete="current-password"
+                                           required>
+                                </div>
+
+                                <div class="d-grid">
+                                    <button type="submit"
+                                            class="btn btn-primary btn-lg">
+                                        Entrar
+                                    </button>
+                                </div>
+
+                                <div class="text-center mt-4">
+                                        <span class="text-muted">
+                                            ¿No tienes cuenta?
+                                        </span>
+
+                                    <a th:href="@{/registro}"
+                                       class="text-decoration-none">
+                                        Regístrate aquí
+                                    </a>
+                                </div>
+
+                            </form>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </main>
+
+    </th:block>
+
+</div>
+
+</body>
+</html>

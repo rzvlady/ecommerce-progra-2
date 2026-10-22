@@ -20,7 +20,7 @@ public class LoginController {
     @GetMapping("/inicio-sesion")
     public String mostrarLogin() {
         LOG.info("mostrarLogin() => Cargando vista de inicio de sesion");
-        return "pages/security/login";
+        return "ecommerce/pages/security/login";
     }
 
 }

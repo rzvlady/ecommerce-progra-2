@@ -28,7 +28,7 @@ public class RegistroController {
         LOG.info("mostrarFormularioRegistro() => Cargando vista");
 
         model.addAttribute("registroDTO", new RegistroUsuarioDTO());
-        return "pages/register/registro";
+        return "ecommerce/pages/register/registro";
     }
 
     @PostMapping("/registro")

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{ecommerce/fragments/ecommerce-head :: head('Inicio')}">
+</head>
+
+<body class="store-body">
+
+  <div th:replace="~{ecommerce/layout/ecommerce-layout :: layout(~{::contenido})}">
+    <th:block th:fragment="contenido">
+
+      <!-- Banner principal -->
+      <section class="store-hero">
+        <div class="container">
+          <div class="row align-items-center g-5">
+
+            <div class="col-lg-6">
+                        <span class="hero-eyebrow">
+                            BIENVENIDO A E-COMMERCE
+                        </span>
+
+              <h1 class="hero-title mt-3">
+                Todo lo que buscas,
+                <span>en un solo lugar.</span>
+              </h1>
+
+              <p class="hero-description mt-3">
+                Descubre productos para tu día a día
+                y encuentra tus próximos favoritos.
+              </p>
+
+              <a href="#categorias"
+                 class="btn btn-primary btn-lg mt-3">
+                Explorar tienda
+                <i class="bi bi-arrow-right ms-2"></i>
+              </a>
+            </div>
+
+            <div class="col-lg-6">
+              <div class="hero-visual">
+                <div class="hero-circle hero-circle-one"></div>
+                <div class="hero-circle hero-circle-two"></div>
+
+                <i class="bi bi-bag-heart hero-icon"></i>
+
+                <div class="hero-caption">
+                  Tu próxima compra empieza aquí
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- Categorías -->
+      <section id="categorias" class="container store-section">
+
+        <div class="section-heading">
+          <div>
+            <span class="section-eyebrow">EXPLORA LA TIENDA</span>
+            <h2 class="section-title">Compra por categoría</h2>
+            <p class="section-description">
+              Encuentra productos según tus intereses.
+            </p>
+          </div>
+        </div>
+
+        <div class="row g-3">
+
+          <div class="col-6 col-md-3">
+            <a href="#" class="category-card">
+              <i class="bi bi-headphones"></i>
+              <span>Tecnología</span>
+              <i class="bi bi-arrow-up-right category-arrow"></i>
+            </a>
+          </div>
+
+          <div class="col-6 col-md-3">
+            <a href="#" class="category-card">
+              <i class="bi bi-house"></i>
+              <span>Hogar</span>
+              <i class="bi bi-arrow-up-right category-arrow"></i>
+            </a>
+          </div>
+
+          <div class="col-6 col-md-3">
+            <a href="#" class="category-card">
+              <i class="bi bi-handbag"></i>
+              <span>Moda</span>
+              <i class="bi bi-arrow-up-right category-arrow"></i>
+            </a>
+          </div>
+
+          <div class="col-6 col-md-3">
+            <a href="#" class="category-card">
+              <i class="bi bi-watch"></i>
+              <span>Accesorios</span>
+              <i class="bi bi-arrow-up-right category-arrow"></i>
+            </a>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Productos destacados -->
+      <section class="container store-section">
+
+        <div class="section-heading">
+          <div>
+            <span class="section-eyebrow">NUESTRA SELECCIÓN</span>
+            <h2 class="section-title">Productos destacados</h2>
+            <p class="section-description">
+              Una muestra de los productos que encontrarás en nuestra tienda.
+            </p>
+          </div>
+
+          <a href="#categorias" class="btn btn-outline-primary">
+            Explorar
+            <i class="bi bi-arrow-right ms-1"></i>
+          </a>
+        </div>
+
+        <div class="row g-4">
+
+          <div class="col-6 col-lg-3">
+            <article class="product-card">
+              <img
+                      src="https://images.unsplash.com/photo-1505740420928-5e560c06d30a?auto=format&fit=crop&w=600&q=80"
+                      alt="Auriculares"
+                      class="product-image"
+                      loading="lazy">
+
+              <div class="product-body">
+                <span class="product-badge">Destacado</span>
+                <h3>Auriculares inalámbricos</h3>
+                <p class="product-price">$39.99</p>
+                <button class="btn btn-outline-primary w-100" disabled>
+                  <i class="bi bi-cart-plus me-1"></i>
+                  Próximamente
+                </button>
+              </div>
+            </article>
+          </div>
+
+          <div class="col-6 col-lg-3">
+            <article class="product-card">
+              <img
+                      src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=600&q=80"
+                      alt="Reloj de pulsera"
+                      class="product-image"
+                      loading="lazy">
+
+              <div class="product-body">
+                <span class="product-badge">Popular</span>
+                <h3>Reloj de pulsera</h3>
+                <p class="product-price">$59.99</p>
+                <button class="btn btn-outline-primary w-100" disabled>
+                  <i class="bi bi-cart-plus me-1"></i>
+                  Próximamente
+                </button>
+              </div>
+            </article>
+          </div>
+
+          <div class="col-6 col-lg-3">
+            <article class="product-card">
+              <img
+                      src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80"
+                      alt="Zapatillas deportivas"
+                      class="product-image"
+                      loading="lazy">
+
+              <div class="product-body">
+                <span class="product-badge">Colección</span>
+                <h3>Zapatillas deportivas</h3>
+                <p class="product-price">$49.99</p>
+                <button class="btn btn-outline-primary w-100" disabled>
+                  <i class="bi bi-cart-plus me-1"></i>
+                  Próximamente
+                </button>
+              </div>
+            </article>
+          </div>
+
+          <div class="col-6 col-lg-3">
+            <article class="product-card">
+              <img
+                      src="https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=600&q=80"
+                      alt="Cámara fotográfica"
+                      class="product-image"
+                      loading="lazy">
+
+              <div class="product-body">
+                <span class="product-badge">Nuevo</span>
+                <h3>Cámara fotográfica</h3>
+                <p class="product-price">$89.99</p>
+                <button class="btn btn-outline-primary w-100" disabled>
+                  <i class="bi bi-cart-plus me-1"></i>
+                  Próximamente
+                </button>
+              </div>
+            </article>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Beneficios informativos -->
+      <section class="container store-section">
+        <div class="row g-3">
+
+          <div class="col-md-4">
+            <div class="benefit-card">
+              <i class="bi bi-truck"></i>
+              <div>
+                <h3>Opciones de entrega</h3>
+                <p>La información de envío estará disponible durante la compra.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="benefit-card">
+              <i class="bi bi-shield-check"></i>
+              <div>
+                <h3>Tu cuenta</h3>
+                <p>Accede a tu cuenta para gestionar tu experiencia de compra.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="benefit-card">
+              <i class="bi bi-bag-check"></i>
+              <div>
+                <h3>Compra organizada</h3>
+                <p>Estamos preparando una experiencia de compra sencilla.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </th:block>
+  </div>
+</body>
+</html>
