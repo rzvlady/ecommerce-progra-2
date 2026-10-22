@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{backoffice/fragments/head :: head('Categorías')}">
+</head>
+
+<body>
+<div th:replace="~{backoffice/layout/admin :: layout(
+            'Categorías',
+            'categorias',
+            ~{::pageContent}
+        )}">
+
+    <th:block th:fragment="pageContent">
+
+        <!-- Alertas flotantes con auto-cierre (timeout) -->
+        <div class="floating-alert-container">
+            <div th:if="${mensajeExito}"
+                 id="alertaFlotanteExito"
+                 class="alert alert-success alert-dismissible fade show border-0 floating-alert d-flex align-items-center mb-2"
+                 role="alert">
+                <i class="bi bi-check-circle-fill fs-5 me-2 text-success"></i>
+                <div class="small fw-medium" th:text="${mensajeExito}"></div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+
+            <div th:if="${mensajeError}"
+                 id="alertaFlotanteError"
+                 class="alert alert-danger alert-dismissible fade show border-0 floating-alert d-flex align-items-center mb-2"
+                 role="alert">
+                <i class="bi bi-exclamation-triangle-fill fs-5 me-2 text-danger"></i>
+                <div class="small fw-medium" th:text="${mensajeError}"></div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+        </div>
+
+        <!-- Encabezado de la página -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+            <div>
+                <h2 class="h4 fw-bold mb-1">Gestión de categorías</h2>
+                <p class="text-secondary mb-0">
+                    Organiza el catálogo con una jerarquía estructurada de hasta 3 niveles (Departamento › Categoría › Subcategoría).
+                </p>
+            </div>
+            <div>
+                <button type="button"
+                        id="btnAbrirModalNueva"
+                        class="btn btn-primary d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>Nueva categoría</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Indicadores KPI de Jerarquía -->
+        <div class="row g-3 mb-4">
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-secondary small">
+                            Total de categorías
+                        </div>
+                        <div class="fs-3 fw-bold" th:text="${totalCategorias}">0</div>
+                        <i class="bi bi-tags text-primary"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-secondary small">
+                            Nivel 1 · Departamentos (Raíz)
+                        </div>
+                        <div class="fs-3 fw-bold" th:text="${totalNivel1}">0</div>
+                        <i class="bi bi-diagram-2 text-primary"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-secondary small">
+                            Nivel 2 · Categorías
+                        </div>
+                        <div class="fs-3 fw-bold" th:text="${totalNivel2}">0</div>
+                        <i class="bi bi-diagram-3 text-info"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-secondary small">
+                            Nivel 3 · Subcategorías finales
+                        </div>
+                        <div class="fs-3 fw-bold" th:text="${totalNivel3}">0</div>
+                        <i class="bi bi-bookmark-check text-success"></i>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Barra de filtros dinámicos -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-3 p-lg-4">
+                <div class="row g-3 align-items-end">
+                    <div class="col-12 col-md-6">
+                        <label for="filtroNivel" class="form-label small text-secondary mb-1">
+                            <i class="bi bi-layers me-1"></i> Nivel jerárquico
+                        </label>
+                        <select id="filtroNivel"
+                                class="form-select select2-global"
+                                data-placeholder="Todos los niveles">
+                            <option value="">Todos los niveles (1, 2 y 3)</option>
+                            <option value="1">Nivel 1 · Raíz / Departamento</option>
+                            <option value="2">Nivel 2 · Categoría intermedia</option>
+                            <option value="3">Nivel 3 · Subcategoría final</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="filtroPadre" class="form-label small text-secondary mb-0">
+                                <i class="bi bi-diagram-3 me-1"></i> Filtrar por Categoría Padre
+                            </label>
+                            <button type="button"
+                                    id="btnLimpiarFiltros"
+                                    class="btn btn-link btn-sm p-0 text-decoration-none d-none">
+                                <i class="bi bi-arrow-counterclockwise me-1"></i>Limpiar filtros
+                            </button>
+                        </div>
+                        <select id="filtroPadre"
+                                class="form-select select2-global"
+                                data-placeholder="Todas las categorías">
+                            <option value="">Todas las categorías</option>
+                            <option value="RAIZ">Solo categorías raíz (sin padre)</option>
+                            <option th:each="padre : ${candidatasPadre}"
+                                    th:value="${padre.idCategoria}"
+                                    th:text="'Hijas de: ' + ${padre.rutaJerarquica}">
+                            </option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de categorías -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom py-3 px-4">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <h3 class="h6 fw-bold mb-0">
+                            Estructura de categorías
+                            <span id="badgeTotalFiltrados"
+                                  class="badge bg-primary-subtle text-primary ms-2"
+                                  th:text="${#lists.size(categorias)}">0</span>
+                        </h3>
+                        <div class="d-flex align-items-center gap-2 ms-md-2">
+                            <label for="selectorFilasPorPagina" class="small text-secondary mb-0">Mostrar</label>
+                            <select id="selectorFilasPorPagina" class="form-select form-select-sm" style="width: auto;">
+                                <option value="10" selected>10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Buscador integrado -->
+                    <div class="table-search-wrapper">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light border-end-0 text-secondary">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="search"
+                                   id="buscadorTabla"
+                                   class="form-control bg-light border-start-0"
+                                   placeholder="Buscar por nombre, ruta o descripción...">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-admin mb-0" id="tablaCategorias">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre y Ruta Jerárquica</th>
+                            <th class="text-center">Nivel Jerárquico</th>
+                            <th>Categoría Padre</th>
+                            <th class="text-center">Dependencias</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                        </thead>
+                        <tbody id="cuerpoTablaCategorias">
+                        <tr th:each="cat : ${categorias}"
+                            class="fila-categoria"
+                            th:attr="
+                                data-id=${cat.idCategoria},
+                                data-nombre=${cat.nombreCategoria},
+                                data-descripcion=${cat.descripcion != null ? cat.descripcion : ''},
+                                data-padre-id=${cat.idCategoriaPadre != null ? cat.idCategoriaPadre : ''},
+                                data-padre-nombre=${cat.nombreCategoriaPadre != null ? cat.nombreCategoriaPadre : ''},
+                                data-nivel=${cat.nivel},
+                                data-ruta=${cat.rutaJerarquica},
+                                data-subcategorias=${cat.cantidadSubcategorias},
+                                data-productos=${cat.cantidadProductos},
+                                data-profundidad-hijos=${cat.profundidadDescendientes}
+                            ">
+                            <td>
+                                <span class="sku-badge" th:text="'#' + ${cat.idCategoria}">#1</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2"
+                                     th:classappend="${cat.nivel == 2 ? 'ps-3' : (cat.nivel == 3 ? 'ps-4' : '')}">
+                                    <i th:if="${cat.nivel == 1}" class="bi bi-folder2-open text-primary"></i>
+                                    <i th:if="${cat.nivel == 2}" class="bi bi-arrow-return-right text-info"></i>
+                                    <i th:if="${cat.nivel == 3}" class="bi bi-dot fs-5 text-success"></i>
+                                    <div>
+                                        <div class="fw-bold text-dark" th:text="${cat.nombreCategoria}">Electrónica</div>
+                                        <div class="text-secondary small" style="font-size: 0.75rem;" th:text="${cat.rutaJerarquica}">
+                                            Electrónica
+                                        </div>
+                                        <div th:if="${cat.descripcion != null && !cat.descripcion.isEmpty()}"
+                                             class="text-muted small product-desc-truncate mt-1"
+                                             th:title="${cat.descripcion}"
+                                             th:text="${cat.descripcion}">
+                                            Descripción
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span th:if="${cat.nivel == 1}"
+                                      class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                    <i class="bi bi-layers-fill me-1"></i>Nivel 1 · Raíz
+                                </span>
+                                <span th:if="${cat.nivel == 2}"
+                                      class="badge bg-info-subtle text-info-emphasis border border-info-subtle">
+                                    <i class="bi bi-layers-half me-1"></i>Nivel 2 · Categoría
+                                </span>
+                                <span th:if="${cat.nivel == 3}"
+                                      class="badge bg-success-subtle text-success border border-success-subtle">
+                                    <i class="bi bi-layers me-1"></i>Nivel 3 · Subcategoría
+                                </span>
+                            </td>
+                            <td>
+                                <span th:if="${cat.nombreCategoriaPadre != null}"
+                                      class="badge bg-light text-dark border">
+                                    <i class="bi bi-diagram-2 me-1 text-secondary"></i>
+                                    <span th:text="${cat.nombreCategoriaPadre}">Padre</span>
+                                </span>
+                                <span th:if="${cat.nombreCategoriaPadre == null}"
+                                      class="text-secondary small fst-italic">
+                                    — Categoría Raíz —
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-inline-flex gap-1 flex-wrap justify-content-center">
+                                    <span th:if="${cat.nivel < 3}"
+                                          class="badge bg-secondary-subtle text-secondary"
+                                          title="Subcategorías hijas directas">
+                                        <i class="bi bi-diagram-3 me-1"></i>
+                                        <span th:text="${cat.cantidadSubcategorias} + ' sub'">0 sub</span>
+                                    </span>
+                                    <span class="badge bg-light text-secondary border"
+                                          title="Productos asociados">
+                                        <i class="bi bi-box-seam me-1"></i>
+                                        <span th:text="${cat.cantidadProductos} + ' prod'">0 prod</span>
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1">
+                                    <!-- Botón Editar -->
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-primary btn-editar-categoria"
+                                            title="Editar categoría">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+
+                                    <!-- Botón Eliminar -->
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger btn-eliminar-categoria"
+                                            title="Eliminar categoría">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Fila cuando no hay resultados -->
+                        <tr id="filaSinResultados" class="d-none">
+                            <td colspan="6" class="p-5 text-center">
+                                <i class="bi bi-search fs-2 text-secondary d-block mb-2"></i>
+                                <div class="fw-bold">No se encontraron categorías</div>
+                                <div class="text-secondary small">
+                                    Intenta ajustar los filtros de nivel o el término de búsqueda.
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pie de tabla: Paginación -->
+            <div class="card-footer bg-white border-top py-3 px-4 d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2">
+                <div id="infoPaginacion" class="text-secondary small">
+                    Mostrando 0 de 0 categorías
+                </div>
+                <nav aria-label="Paginación de categorías">
+                    <ul id="controlesPaginacion" class="pagination pagination-sm mb-0">
+                    </ul>
+                </nav>
+            </div>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- MODAL 1: FORMULARIO CREAR / EDITAR CATEGORÍA                   -->
+        <!-- ============================================================== -->
+        <div class="modal fade" id="modalCategoria" tabindex="-1" aria-labelledby="modalCategoriaTitulo" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-producto-dialog">
+                <form id="formCategoria"
+                      class="modal-content border-0 shadow overflow-hidden"
+                      th:action="@{/backoffice/categorias/guardar}"
+                      th:object="${categoriaDTO}"
+                      method="post"
+                      novalidate>
+
+                    <div class="modal-header modal-header-admin py-3 px-4">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-tags fs-5 text-primary"></i>
+                            <h5 class="modal-title h6 fw-bold mb-0"
+                                id="modalCategoriaTitulo"
+                                th:text="${modoEdicion} ? 'Editar categoría' : 'Registrar nueva categoría'">
+                                Registrar nueva categoría
+                            </h5>
+                            <span id="badgeIdCategoriaModal"
+                                  class="sku-badge ms-2"
+                                  th:classappend="${modoEdicion && categoriaDTO.idCategoria != null} ? '' : 'd-none'"
+                                  th:text="${categoriaDTO.idCategoria != null ? '#' + categoriaDTO.idCategoria : ''}">
+                            </span>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+
+                    <div class="modal-body modal-body-segmented">
+
+                        <!-- Alerta de error de negocio dentro del modal -->
+                        <div th:if="${mensajeErrorModal}" class="alert alert-danger py-2 px-3 small mb-3" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                            <span th:text="${mensajeErrorModal}"></span>
+                        </div>
+
+                        <input type="hidden" id="idCategoriaInput" th:field="*{idCategoria}">
+
+                        <!-- BLOQUE 1: DATOS PRINCIPALES -->
+                        <div class="modal-section-card">
+                            <div class="modal-section-title">
+                                <i class="bi bi-info-circle"></i>
+                                <span>Datos de la categoría</span>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label for="nombreCategoria" class="form-label small fw-bold mb-1">
+                                        Nombre de la categoría <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text"
+                                           id="nombreCategoria"
+                                           class="form-control"
+                                           th:classappend="${#fields.hasErrors('nombreCategoria')} ? 'is-invalid' : ''"
+                                           th:field="*{nombreCategoria}"
+                                           maxlength="100"
+                                           placeholder="Ej: Laptops, Audio Portátil, Línea Blanca...">
+                                    <div class="invalid-feedback"
+                                         th:if="${#fields.hasErrors('nombreCategoria')}"
+                                         th:errors="*{nombreCategoria}"></div>
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="descripcion" class="form-label small fw-bold mb-1">
+                                        Descripción
+                                    </label>
+                                    <textarea id="descripcion"
+                                              rows="2"
+                                              class="form-control"
+                                              th:classappend="${#fields.hasErrors('descripcion')} ? 'is-invalid' : ''"
+                                              th:field="*{descripcion}"
+                                              maxlength="500"
+                                              placeholder="Describe brevemente el tipo de productos que agrupa esta categoría..."></textarea>
+                                    <div class="invalid-feedback"
+                                         th:if="${#fields.hasErrors('descripcion')}"
+                                         th:errors="*{descripcion}"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BLOQUE 2: UBICACIÓN JERÁRQUICA (MÁXIMO 3 NIVELES) -->
+                        <div class="modal-section-card">
+                            <div class="modal-section-title d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-diagram-3"></i>
+                                    <span>Jerarquía (Máximo 3 niveles)</span>
+                                </div>
+                                <span id="badgeNivelResultante" class="badge bg-primary-subtle text-primary">
+                                    Resultará en: Nivel 1 (Raíz)
+                                </span>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label for="idCategoriaPadre" class="form-label small fw-bold mb-1">
+                                        Categoría Padre
+                                    </label>
+                                    <select id="idCategoriaPadre"
+                                            class="form-select select2-global"
+                                            data-placeholder="Ninguna — Categoría Raíz (Nivel 1)"
+                                            data-allow-clear="true"
+                                            th:field="*{idCategoriaPadre}">
+                                        <option value="">— Ninguna (Será Nivel 1 · Categoría Raíz / Departamento) —</option>
+                                        <option th:each="cand : ${candidatasPadre}"
+                                                th:value="${cand.idCategoria}"
+                                                th:attr="
+                                                    data-nivel=${cand.nivel},
+                                                    data-padre-id=${cand.idCategoriaPadre != null ? cand.idCategoriaPadre : ''},
+                                                    data-ruta=${cand.rutaJerarquica}
+                                                "
+                                                th:text="'[Nivel ' + ${cand.nivel} + '] ' + ${cand.rutaJerarquica}">
+                                        </option>
+                                    </select>
+                                    <div class="form-text small mt-2" id="ayudaJerarquiaModal">
+                                        <i class="bi bi-shield-check text-primary me-1"></i>
+                                        Solo se listan categorías de <strong>Nivel 1</strong> y <strong>Nivel 2</strong>.
+                                        Las subcategorías de Nivel 3 no pueden tener subcategorías hijas.
+                                    </div>
+                                    <div id="avisoRestriccionHijos" class="alert alert-warning py-2 px-3 small mt-2 mb-0 d-none">
+                                        <i class="bi bi-info-circle-fill me-1"></i>
+                                        <span id="textoAvisoRestriccionHijos"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer modal-footer-sticky py-3 px-4">
+                        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-check2-circle"></i>
+                            <span id="textoBotonGuardarModal"
+                                  th:text="${modoEdicion} ? 'Guardar cambios' : 'Registrar categoría'">
+                                Registrar categoría
+                            </span>
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- MODAL 2: CONFIRMAR ELIMINACIÓN DE CATEGORÍA                    -->
+        <!-- ============================================================== -->
+        <div class="modal fade" id="modalConfirmarEliminar" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-confirm-dialog">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header modal-header-admin py-3 px-4">
+                        <h5 class="modal-title h6 fw-bold mb-0">
+                            Confirmar eliminación
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <form id="formConfirmarEliminar" method="post">
+                        <div class="modal-body p-4 text-center">
+                            <div class="mb-3">
+                                <i class="bi bi-trash3-fill fs-1 text-danger"></i>
+                            </div>
+                            <p class="mb-2">
+                                ¿Estás seguro de que deseas eliminar la categoría?
+                            </p>
+                            <div class="p-2 bg-light rounded border mb-2">
+                                <div class="fw-bold text-dark small" id="nombreCategoriaEliminar"></div>
+                                <div class="text-secondary small" id="rutaCategoriaEliminar"></div>
+                            </div>
+                            <div id="alertaDependenciasEliminar" class="alert alert-warning py-2 px-3 small mt-2 mb-0 d-none text-start">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                <span id="textoDependenciasEliminar"></span>
+                            </div>
+                            <p id="textoConfirmacionSimple" class="text-secondary small mb-0">
+                                Esta acción eliminará permanentemente la categoría si no posee subcategorías ni productos asociados.
+                            </p>
+                        </div>
+                        <div class="modal-footer bg-light py-2 px-4 justify-content-center">
+                            <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
+                                Cancelar
+                            </button>
+                            <button type="submit" id="btnSubmitEliminar" class="btn btn-danger">
+                                Sí, eliminar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- SCRIPTS DE INTERACTIVIDAD, JERARQUÍA Y FILTROS                 -->
+        <!-- ============================================================== -->
+        <script th:inline="javascript">
+            document.addEventListener('DOMContentLoaded', function () {
+                const abrirModalAlCargar = /*[[${abrirModalFormulario}]]*/ false;
+                const modoEdicionInicial = /*[[${modoEdicion}]]*/ false;
+
+                // Auto-cierre de alertas flotantes (4.5 segundos)
+                ['alertaFlotanteExito', 'alertaFlotanteError'].forEach(function (idAlerta) {
+                    const alertaEl = document.getElementById(idAlerta);
+                    if (alertaEl) {
+                        setTimeout(function () {
+                            const bsAlert = bootstrap.Alert.getOrCreateInstance(alertaEl);
+                            bsAlert.close();
+                        }, 4500);
+                    }
+                });
+
+                const modalCategoriaEl = document.getElementById('modalCategoria');
+                const modalCategoria = new bootstrap.Modal(modalCategoriaEl);
+                const formCategoria = document.getElementById('formCategoria');
+
+                const idCategoriaInput = document.getElementById('idCategoriaInput');
+                const nombreCategoriaInput = document.getElementById('nombreCategoria');
+                const descripcionInput = document.getElementById('descripcion');
+                const selectPadre = document.getElementById('idCategoriaPadre');
+
+                const modalTitulo = document.getElementById('modalCategoriaTitulo');
+                const badgeIdModal = document.getElementById('badgeIdCategoriaModal');
+                const badgeNivelResultante = document.getElementById('badgeNivelResultante');
+                const textoBotonGuardar = document.getElementById('textoBotonGuardarModal');
+                const avisoRestriccionHijos = document.getElementById('avisoRestriccionHijos');
+                const textoAvisoRestriccionHijos = document.getElementById('textoAvisoRestriccionHijos');
+
+                // Guardar copia de todas las opciones originales del selector de padre
+                const opcionesPadreOriginales = Array.from(selectPadre.querySelectorAll('option')).map(function (opt) {
+                    return {
+                        value: opt.value,
+                        text: opt.textContent,
+                        nivel: opt.getAttribute('data-nivel') ? parseInt(opt.getAttribute('data-nivel'), 10) : 0,
+                        padreId: opt.getAttribute('data-padre-id') || ''
+                    };
+                });
+
+                function actualizarBadgeNivelResultante() {
+                    const val = selectPadre.value;
+                    if (!val) {
+                        badgeNivelResultante.className = 'badge bg-primary-subtle text-primary';
+                        badgeNivelResultante.textContent = 'Resultará en: Nivel 1 (Raíz)';
+                        return;
+                    }
+                    const opt = selectPadre.querySelector('option[value="' + val + '"]');
+                    const nivelPadre = opt && opt.getAttribute('data-nivel') ? parseInt(opt.getAttribute('data-nivel'), 10) : 1;
+                    const nuevoNivel = nivelPadre + 1;
+                    if (nuevoNivel === 2) {
+                        badgeNivelResultante.className = 'badge bg-info-subtle text-info-emphasis';
+                        badgeNivelResultante.textContent = 'Resultará en: Nivel 2 (Categoría)';
+                    } else {
+                        badgeNivelResultante.className = 'badge bg-success-subtle text-success';
+                        badgeNivelResultante.textContent = 'Resultará en: Nivel 3 (Subcategoría final)';
+                    }
+                }
+
+                /**
+                 * Reconstruye las opciones válidas del selector de categoría padre según:
+                 * - Regla de máximo 3 niveles
+                 * - Exclusión de sí misma y sus descendientes (anti-ciclos)
+                 * - Profundidad de hijos actuales de la categoría editada
+                 */
+                function reconstruirOpcionesPadre(idCategoriaEditada, profundidadHijos, valorSeleccionado) {
+                    const nivelMaximoPadrePermitido = 2 - (profundidadHijos || 0);
+
+                    selectPadre.innerHTML = '';
+                    opcionesPadreOriginales.forEach(function (item) {
+                        // Opción vacía (Raíz Nivel 1) siempre disponible
+                        if (!item.value) {
+                            const optRaiz = document.createElement('option');
+                            optRaiz.value = '';
+                            optRaiz.textContent = item.text;
+                            selectPadre.appendChild(optRaiz);
+                            return;
+                        }
+
+                        // Excluir a sí misma y a sus hijas directas
+                        if (idCategoriaEditada) {
+                            if (String(item.value) === String(idCategoriaEditada)) {
+                                return;
+                            }
+                            if (String(item.padreId) === String(idCategoriaEditada)) {
+                                return;
+                            }
+                        }
+
+                        // Respetar el nivel máximo que puede tener el padre según los hijos que ya tenga la categoría
+                        if (item.nivel > nivelMaximoPadrePermitido) {
+                            return;
+                        }
+
+                        const opt = document.createElement('option');
+                        opt.value = item.value;
+                        opt.textContent = item.text;
+                        opt.setAttribute('data-nivel', item.nivel);
+                        opt.setAttribute('data-padre-id', item.padreId);
+                        selectPadre.appendChild(opt);
+                    });
+
+                    selectPadre.value = valorSeleccionado || '';
+                    if (window.jQuery && jQuery(selectPadre).hasClass('select2-hidden-accessible')) {
+                        jQuery(selectPadre).val(valorSeleccionado || '').trigger('change.select2');
+                    }
+                    actualizarBadgeNivelResultante();
+
+                    // Mostrar aviso explicativo si la categoría editada ya tiene subcategorías
+                    if (profundidadHijos >= 2) {
+                        avisoRestriccionHijos.classList.remove('d-none');
+                        textoAvisoRestriccionHijos.textContent =
+                            'Esta categoría ya posee 2 niveles de subcategorías dependientes, por lo que debe permanecer como Nivel 1 (Raíz) para no superar los 3 niveles.';
+                    } else if (profundidadHijos === 1) {
+                        avisoRestriccionHijos.classList.remove('d-none');
+                        textoAvisoRestriccionHijos.textContent =
+                            'Esta categoría ya posee subcategorías hijas directas; solo puede ser raíz (Nivel 1) o asignarse bajo un padre de Nivel 1.';
+                    } else {
+                        avisoRestriccionHijos.classList.add('d-none');
+                    }
+                }
+
+                selectPadre.addEventListener('change', actualizarBadgeNivelResultante);
+                if (window.jQuery) {
+                    jQuery(selectPadre).on('change', actualizarBadgeNivelResultante);
+                }
+
+                // Botón: Nueva categoría
+                document.getElementById('btnAbrirModalNueva').addEventListener('click', function () {
+                    formCategoria.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                    idCategoriaInput.value = '';
+                    nombreCategoriaInput.value = '';
+                    descripcionInput.value = '';
+
+                    modalTitulo.textContent = 'Registrar nueva categoría';
+                    badgeIdModal.classList.add('d-none');
+                    textoBotonGuardar.textContent = 'Registrar categoría';
+
+                    reconstruirOpcionesPadre(null, 0, '');
+                    modalCategoria.show();
+                });
+
+                // Botones: Editar categoría en cada fila
+                document.querySelectorAll('.btn-editar-categoria').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        const fila = this.closest('.fila-categoria');
+                        const id = fila.getAttribute('data-id');
+                        const nombre = fila.getAttribute('data-nombre') || '';
+                        const descripcion = fila.getAttribute('data-descripcion') || '';
+                        const padreId = fila.getAttribute('data-padre-id') || '';
+                        const profHijos = parseInt(fila.getAttribute('data-profundidad-hijos') || '0', 10);
+
+                        formCategoria.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+                        idCategoriaInput.value = id;
+                        nombreCategoriaInput.value = nombre;
+                        descripcionInput.value = descripcion;
+
+                        modalTitulo.textContent = 'Editar categoría';
+                        badgeIdModal.textContent = '#' + id;
+                        badgeIdModal.classList.remove('d-none');
+                        textoBotonGuardar.textContent = 'Guardar cambios';
+
+                        reconstruirOpcionesPadre(id, profHijos, padreId);
+                        modalCategoria.show();
+                    });
+                });
+
+                // Modal de eliminación
+                const modalEliminarEl = document.getElementById('modalConfirmarEliminar');
+                const modalEliminar = new bootstrap.Modal(modalEliminarEl);
+                const formEliminar = document.getElementById('formConfirmarEliminar');
+                const nombreEliminar = document.getElementById('nombreCategoriaEliminar');
+                const rutaEliminar = document.getElementById('rutaCategoriaEliminar');
+                const alertaDepEliminar = document.getElementById('alertaDependenciasEliminar');
+                const textoDepEliminar = document.getElementById('textoDependenciasEliminar');
+
+                document.querySelectorAll('.btn-eliminar-categoria').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        const fila = this.closest('.fila-categoria');
+                        const id = fila.getAttribute('data-id');
+                        const nombre = fila.getAttribute('data-nombre');
+                        const ruta = fila.getAttribute('data-ruta');
+                        const subcats = parseInt(fila.getAttribute('data-subcategorias') || '0', 10);
+                        const prods = parseInt(fila.getAttribute('data-productos') || '0', 10);
+
+                        formEliminar.setAttribute('action', '/backoffice/categorias/eliminar/' + id);
+                        nombreEliminar.textContent = nombre;
+                        rutaEliminar.textContent = ruta;
+
+                        if (subcats > 0 || prods > 0) {
+                            alertaDepEliminar.classList.remove('d-none');
+                            textoDepEliminar.textContent =
+                                'Atención: Esta categoría tiene ' + subcats + ' subcategoría(s) y ' + prods +
+                                ' producto(s) asociado(s). El sistema bloqueará su eliminación hasta liberar sus dependencias.';
+                        } else {
+                            alertaDepEliminar.classList.add('d-none');
+                        }
+
+                        modalEliminar.show();
+                    });
+                });
+
+                // Si el backend indicó abrir el modal tras error de validación
+                if (abrirModalAlCargar) {
+                    const idActual = idCategoriaInput.value;
+                    let profActual = 0;
+                    if (idActual) {
+                        const filaExistente = document.querySelector('.fila-categoria[data-id="' + idActual + '"]');
+                        if (filaExistente) {
+                            profActual = parseInt(filaExistente.getAttribute('data-profundidad-hijos') || '0', 10);
+                        }
+                    }
+                    reconstruirOpcionesPadre(idActual || null, profActual, selectPadre.value);
+                    modalCategoria.show();
+                }
+
+                // ==================== Buscador en tiempo real, Filtros y Paginación ====================
+                const filas = Array.from(document.querySelectorAll('.fila-categoria'));
+                const buscador = document.getElementById('buscadorTabla');
+                const filtroNivel = document.getElementById('filtroNivel');
+                const filtroPadre = document.getElementById('filtroPadre');
+                const btnLimpiar = document.getElementById('btnLimpiarFiltros');
+                const selectorFilas = document.getElementById('selectorFilasPorPagina');
+                const filaSinResultados = document.getElementById('filaSinResultados');
+                const badgeTotalFiltrados = document.getElementById('badgeTotalFiltrados');
+                const infoPaginacion = document.getElementById('infoPaginacion');
+                const controlesPaginacion = document.getElementById('controlesPaginacion');
+
+                let paginaActual = 1;
+
+                function aplicarFiltrosYPaginacion() {
+                    const termino = (buscador.value || '').trim().toLowerCase();
+                    const nivelSel = filtroNivel.value;
+                    const padreSel = filtroPadre.value;
+                    const porPagina = parseInt(selectorFilas.value, 10) || 10;
+
+                    if (termino || nivelSel || padreSel) {
+                        btnLimpiar.classList.remove('d-none');
+                    } else {
+                        btnLimpiar.classList.add('d-none');
+                    }
+
+                    const coincidencias = filas.filter(function (fila) {
+                        const nombre = (fila.getAttribute('data-nombre') || '').toLowerCase();
+                        const desc = (fila.getAttribute('data-descripcion') || '').toLowerCase();
+                        const ruta = (fila.getAttribute('data-ruta') || '').toLowerCase();
+                        const nivel = fila.getAttribute('data-nivel') || '';
+                        const padreId = fila.getAttribute('data-padre-id') || '';
+
+                        const pasaTexto = !termino || nombre.includes(termino) || desc.includes(termino) || ruta.includes(termino);
+                        const pasaNivel = !nivelSel || nivel === nivelSel;
+                        let pasaPadre = true;
+                        if (padreSel === 'RAIZ') {
+                            pasaPadre = !padreId;
+                        } else if (padreSel) {
+                            pasaPadre = padreId === padreSel;
+                        }
+
+                        return pasaTexto && pasaNivel && pasaPadre;
+                    });
+
+                    badgeTotalFiltrados.textContent = coincidencias.length;
+                    const totalPaginas = Math.max(1, Math.ceil(coincidencias.length / porPagina));
+                    if (paginaActual > totalPaginas) {
+                        paginaActual = totalPaginas;
+                    }
+
+                    const inicio = (paginaActual - 1) * porPagina;
+                    const fin = inicio + porPagina;
+
+                    filas.forEach(f => f.classList.add('d-none'));
+                    coincidencias.slice(inicio, fin).forEach(f => f.classList.remove('d-none'));
+
+                    if (coincidencias.length === 0) {
+                        filaSinResultados.classList.remove('d-none');
+                        infoPaginacion.textContent = 'Mostrando 0 de 0 categorías';
+                    } else {
+                        filaSinResultados.classList.add('d-none');
+                        infoPaginacion.textContent =
+                            'Mostrando ' + (inicio + 1) + ' a ' + Math.min(fin, coincidencias.length) +
+                            ' de ' + coincidencias.length + ' categorías';
+                    }
+
+                    renderizarControlesPaginacion(totalPaginas);
+                }
+
+                function renderizarControlesPaginacion(totalPaginas) {
+                    controlesPaginacion.innerHTML = '';
+                    if (totalPaginas <= 1) {
+                        return;
+                    }
+                    for (let i = 1; i <= totalPaginas; i++) {
+                        const li = document.createElement('li');
+                        li.className = 'page-item' + (i === paginaActual ? ' active' : '');
+                        const a = document.createElement('a');
+                        a.className = 'page-link';
+                        a.href = '#';
+                        a.textContent = i;
+                        a.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            paginaActual = i;
+                            aplicarFiltrosYPaginacion();
+                        });
+                        li.appendChild(a);
+                        controlesPaginacion.appendChild(li);
+                    }
+                }
+
+                buscador.addEventListener('input', function () {
+                    paginaActual = 1;
+                    aplicarFiltrosYPaginacion();
+                });
+
+                selectorFilas.addEventListener('change', function () {
+                    paginaActual = 1;
+                    aplicarFiltrosYPaginacion();
+                });
+
+                if (window.jQuery) {
+                    jQuery('#filtroNivel, #filtroPadre').on('change', function () {
+                        paginaActual = 1;
+                        aplicarFiltrosYPaginacion();
+                    });
+                } else {
+                    filtroNivel.addEventListener('change', aplicarFiltrosYPaginacion);
+                    filtroPadre.addEventListener('change', aplicarFiltrosYPaginacion);
+                }
+
+                btnLimpiar.addEventListener('click', function () {
+                    buscador.value = '';
+                    filtroNivel.value = '';
+                    filtroPadre.value = '';
+                    if (window.jQuery) {
+                        jQuery('#filtroNivel, #filtroPadre').val('').trigger('change.select2');
+                    }
+                    paginaActual = 1;
+                    aplicarFiltrosYPaginacion();
+                });
+
+                aplicarFiltrosYPaginacion();
+            });
+        </script>
+
+    </th:block>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js">
+</script>
+
+</body>
+</html>

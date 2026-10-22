@@ -1,5 +1,6 @@
 package com.sv.grupo1.ecommerce.entities.core;
 
+import com.sv.grupo1.ecommerce.entities.catalogo.Categoria;
 import com.sv.grupo1.ecommerce.entities.catalogo.Marca;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;

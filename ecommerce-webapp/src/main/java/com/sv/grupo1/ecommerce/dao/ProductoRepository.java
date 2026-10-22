@@ -14,6 +14,10 @@ public interface ProductoRepository extends JpaRepository<Producto, Integer> {
 
     boolean existsByCodigoSkuAndIdProductoNot(String codigoSku, Integer idProducto);
 
+    boolean existsByCategoria_IdCategoria(Integer idCategoria);
+
+    long countByCategoria_IdCategoria(Integer idCategoria);
+
     @Query("SELECT p FROM Producto p JOIN FETCH p.categoria JOIN FETCH p.marca ORDER BY p.fechaCreacion DESC, p.idProducto DESC")
     List<Producto> findAllConRelaciones();
 

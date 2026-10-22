@@ -1,4 +1,4 @@
-:root {
+﻿:root {
     --sidebar-bg: #172033;
     --sidebar-hover: #2c4167;
     --sidebar-text: #c5cede;
@@ -141,6 +141,33 @@ body {
 .sidebar hr {
     border-color: #4b5563 !important;
     opacity: 0.7;
+}
+
+/* ===== Submenú colapsable en Sidebar (Catálogo) ===== */
+
+.sidebar .nav-link .submenu-arrow {
+    width: auto;
+    font-size: 0.8rem;
+    transition: transform 0.25s ease;
+}
+
+.sidebar .nav-link[aria-expanded="true"] .submenu-arrow {
+    transform: rotate(180deg);
+}
+
+.sidebar .submenu-trigger.active {
+    background-color: #1e293b;
+    color: #ffffff;
+}
+
+.sidebar .submenu-nav {
+    margin-top: 2px;
+    margin-bottom: 4px;
+}
+
+.sidebar .nav-link.submenu-link {
+    padding: 8px 12px;
+    font-size: 0.85rem;
 }
 
 /* ===== Tablas y Componentes CRUD Backoffice ===== */

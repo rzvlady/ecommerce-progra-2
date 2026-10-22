@@ -39,19 +39,39 @@
 
         <nav class="nav flex-column mt-2">
 
-            <a th:href="@{/backoffice/productos}"
-               class="nav-link"
-               th:classappend="${activePage == 'productos'} ? ' active' : ''">
-                <i class="bi bi-box-seam"></i>
-                Productos
+            <!-- Menú desplegable: Catálogo -->
+            <a href="#menuCatalogo"
+               class="nav-link submenu-trigger"
+               data-bs-toggle="collapse"
+               data-bs-target="#menuCatalogo"
+               role="button"
+               aria-controls="menuCatalogo"
+               th:attr="aria-expanded=${activePage == 'productos' or activePage == 'categorias'}"
+               th:classappend="${(activePage == 'productos' or activePage == 'categorias') ? ' active' : ' collapsed'}">
+                <i class="bi bi-collection"></i>
+                <span>Catálogo</span>
+                <i class="bi bi-chevron-down ms-auto submenu-arrow"></i>
             </a>
 
-            <a th:href="@{/admin/categorias}"
-               class="nav-link"
-               th:classappend="${activePage == 'categorias'} ? ' active' : ''">
-                <i class="bi bi-tags"></i>
-                Categorías
-            </a>
+            <div class="collapse"
+                 id="menuCatalogo"
+                 th:classappend="${activePage == 'productos' or activePage == 'categorias'} ? ' show' : ''">
+                <nav class="nav flex-column submenu-nav ps-4">
+                    <a th:href="@{/backoffice/productos}"
+                       class="nav-link submenu-link"
+                       th:classappend="${activePage == 'productos'} ? ' active' : ''">
+                        <i class="bi bi-box-seam"></i>
+                        Productos
+                    </a>
+
+                    <a th:href="@{/backoffice/categorias}"
+                       class="nav-link submenu-link"
+                       th:classappend="${activePage == 'categorias'} ? ' active' : ''">
+                        <i class="bi bi-tags"></i>
+                        Categorías
+                    </a>
+                </nav>
+            </div>
 
             <a th:href="@{/admin/inventario}"
                class="nav-link"

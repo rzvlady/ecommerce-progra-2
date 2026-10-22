@@ -1,10 +1,10 @@
-package com.sv.grupo1.ecommerce.entities.core;
+package com.sv.grupo1.ecommerce.entities.catalogo;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 @Entity
-@Table(name = "categorias", schema = "core")
+@Table(name = "categorias", schema = "catalogo")
 public class Categoria {
 
     @Id
@@ -19,11 +19,14 @@ public class Categoria {
     @Column(name = "nombre_categoria", nullable = false)
     private String nombreCategoria;
 
-    @Column(name = "descripccion")
+    @Column(name = "descripcion_categoria", length = 255)
     private String descripcion;
 
+    @Column(name = "estado", length = 1, nullable = false)
+    private Character estado = 'A';
+
     @Column(name = "fecha_creacion", insertable = false, updatable = false)
-    private LocalDateTime fechaCreacion;
+    private OffsetDateTime fechaCreacion;
 
     public Categoria() {}
 
@@ -36,6 +39,8 @@ public class Categoria {
     public void setNombreCategoria(String nombreCategoria) { this.nombreCategoria = nombreCategoria; }
     public String getDescripcion() { return descripcion; }
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
-    public LocalDateTime getFechaCreacion() { return fechaCreacion; }
-    public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
+    public Character getEstado() { return estado; }
+    public void setEstado(Character estado) { this.estado = estado; }
+    public OffsetDateTime getFechaCreacion() { return fechaCreacion; }
+    public void setFechaCreacion(OffsetDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
 }

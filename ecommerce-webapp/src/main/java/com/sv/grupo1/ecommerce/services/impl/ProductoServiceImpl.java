@@ -5,7 +5,7 @@ import com.sv.grupo1.ecommerce.dao.MarcaRepository;
 import com.sv.grupo1.ecommerce.dao.ProductoRepository;
 import com.sv.grupo1.ecommerce.dto.ProductoRegistroDTO;
 import com.sv.grupo1.ecommerce.entities.catalogo.Marca;
-import com.sv.grupo1.ecommerce.entities.core.Categoria;
+import com.sv.grupo1.ecommerce.entities.catalogo.Categoria;
 import com.sv.grupo1.ecommerce.entities.core.Producto;
 import com.sv.grupo1.ecommerce.services.ProductoService;
 import org.springframework.dao.DataIntegrityViolationException;
