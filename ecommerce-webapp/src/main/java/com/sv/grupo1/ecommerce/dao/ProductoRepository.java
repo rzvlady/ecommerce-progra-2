@@ -3,13 +3,27 @@ package com.sv.grupo1.ecommerce.dao;
 import com.sv.grupo1.ecommerce.entities.core.Producto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
-public interface ProductoRepository /*extends JpaRepository<Producto, Integer>*/ {
+public interface ProductoRepository extends JpaRepository<Producto, Integer> {
+
     boolean existsByCodigoSku(String codigoSku);
 
-    //@Query("SELECT p FROM Producto p JOIN FETCH p.categoria JOIN FETCH p.marca " +
-    //        "WHERE p.stockMinimo IS NOT NULL AND p.stockDisponible <= p.stockMinimo")
+    boolean existsByCodigoSkuAndIdProductoNot(String codigoSku, Integer idProducto);
+
+    @Query("SELECT p FROM Producto p JOIN FETCH p.categoria JOIN FETCH p.marca ORDER BY p.fechaCreacion DESC, p.idProducto DESC")
+    List<Producto> findAllConRelaciones();
+
+    @Query("SELECT p FROM Producto p JOIN FETCH p.categoria JOIN FETCH p.marca WHERE p.idProducto = :id")
+    Optional<Producto> findByIdConRelaciones(@Param("id") Integer id);
+
+    @Query("SELECT p FROM Producto p JOIN FETCH p.categoria JOIN FETCH p.marca " +
+            "WHERE p.stockMinimo IS NOT NULL AND p.stockDisponible <= p.stockMinimo")
     List<Producto> findProductosConStockBajo();
+
+    @Query("SELECT COALESCE(MAX(p.idProducto), 0) FROM Producto p")
+    Integer obtenerMaxIdProducto();
 }

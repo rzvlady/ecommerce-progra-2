@@ -1,8 +1,10 @@
 package com.sv.grupo1.backoffice.controller;
 
+import com.sv.grupo1.ecommerce.services.ProductoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -15,19 +17,26 @@ public class DashboardController {
 
     private static final Logger LOG = LoggerFactory.getLogger(DashboardController.class);
 
+    private final ProductoService productoService;
+
+    public DashboardController(ProductoService productoService) {
+        this.productoService = productoService;
+    }
+
     @RequestMapping(path = "/dashboard")
-    public String dashboard() {
+    public String dashboard(Model model) {
         LOG.info("Dashboard Controller");
-        return  "backoffice/dashboard";
+        model.addAttribute("totalProductos", productoService.contarTotalProductos());
+        return "backoffice/dashboard";
     }
 
     @GetMapping(path = "/test/v1/dashboard")
     public String testDashboard() {
-        return  "backoffice/test/dashboard";
+        return "backoffice/test/dashboard";
     }
 
     @GetMapping(path = "/test/v2/dashboard")
     public String testDashboardV2() {
-        return  "backoffice/test/dashboardV2";
+        return "backoffice/test/dashboardV2";
     }
 }

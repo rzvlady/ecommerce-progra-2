@@ -5,6 +5,7 @@ import com.sv.grupo1.ecommerce.entities.core.Producto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.time.LocalDateTime;
@@ -12,7 +13,7 @@ import java.time.format.DateTimeFormatter;
 
 // Tarea ejecutada en segundo plano para monitorear stock sin bloquear peticiones HTTP
 // Justificación Punto 5 (Uso de programación concurrente / Hilos)
-//@Component
+@Component
 public class StockMonitorTaskImpl {
 
     private static final DateTimeFormatter FORMATO_HORA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");

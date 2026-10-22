@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{backoffice/fragments/head :: head('Productos')}">
+</head>
+
+<body>
+<div th:replace="~{backoffice/layout/admin :: layout(
+            'Productos',
+            'productos',
+            ~{::pageContent}
+        )}">
+
+    <th:block th:fragment="pageContent">
+
+        <!-- Alertas flotantes con auto-cierre (timeout) -->
+        <div class="floating-alert-container">
+            <div th:if="${mensajeExito}"
+                 id="alertaFlotanteExito"
+                 class="alert alert-success alert-dismissible fade show border-0 floating-alert d-flex align-items-center mb-2"
+                 role="alert">
+                <i class="bi bi-check-circle-fill fs-5 me-2 text-success"></i>
+                <div class="small fw-medium" th:text="${mensajeExito}"></div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+
+            <div th:if="${mensajeError}"
+                 id="alertaFlotanteError"
+                 class="alert alert-danger alert-dismissible fade show border-0 floating-alert d-flex align-items-center mb-2"
+                 role="alert">
+                <i class="bi bi-exclamation-triangle-fill fs-5 me-2 text-danger"></i>
+                <div class="small fw-medium" th:text="${mensajeError}"></div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+        </div>
+
+        <!-- Encabezado de la página -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+            <div>
+                <h2 class="h4 fw-bold mb-1">Catálogo de productos</h2>
+                <p class="text-secondary mb-0">
+                    Administra el inventario, precios, categorías y disponibilidad de tus productos.
+                </p>
+            </div>
+            <div>
+                <button type="button"
+                        id="btnAbrirModalNuevo"
+                        class="btn btn-primary d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>Nuevo producto</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Indicadores KPI -->
+        <div class="row g-3 mb-4">
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-secondary small">
+                            Total de productos
+                        </div>
+                        <div class="fs-3 fw-bold" th:text="${totalProductos}">0</div>
+                        <i class="bi bi-box-seam text-primary"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-secondary small">
+                            Productos activos
+                        </div>
+                        <div class="fs-3 fw-bold" th:text="${productosActivos}">0</div>
+                        <i class="bi bi-check-circle text-success"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-secondary small">
+                            Stock bajo mínimo
+                        </div>
+                        <div class="fs-3 fw-bold" th:text="${productosStockBajo}">0</div>
+                        <i class="bi bi-exclamation-triangle text-warning"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-secondary small">
+                            Productos agotados
+                        </div>
+                        <div class="fs-3 fw-bold" th:text="${productosAgotados}">0</div>
+                        <i class="bi bi-x-circle text-danger"></i>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Barra de filtros dinámicos en tiempo real (todos con Select2) -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-3 p-lg-4">
+                <div class="row g-3 align-items-end">
+                    <div class="col-12 col-md-4">
+                        <label for="filtroCategoria" class="form-label small text-secondary mb-1">
+                            <i class="bi bi-tags me-1"></i> Categoría
+                        </label>
+                        <select id="filtroCategoria"
+                                class="form-select select2-global"
+                                data-placeholder="Todas las categorías">
+                            <option value="">Todas las categorías</option>
+                            <option th:each="cat : ${categorias}"
+                                    th:value="${cat.idCategoria}"
+                                    th:text="${cat.nombreCategoria}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label for="filtroMarca" class="form-label small text-secondary mb-1">
+                            <i class="bi bi-award me-1"></i> Marca
+                        </label>
+                        <select id="filtroMarca"
+                                class="form-select select2-global"
+                                data-placeholder="Todas las marcas">
+                            <option value="">Todas las marcas</option>
+                            <option th:each="m : ${marcas}"
+                                    th:value="${m.idMarca}"
+                                    th:text="${m.nombreMarca}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="filtroEstado" class="form-label small text-secondary mb-0">
+                                <i class="bi bi-sliders me-1"></i> Estado / Disponibilidad
+                            </label>
+                            <button type="button"
+                                    id="btnLimpiarFiltros"
+                                    class="btn btn-link btn-sm p-0 text-decoration-none d-none">
+                                <i class="bi bi-arrow-counterclockwise me-1"></i>Limpiar filtros
+                            </button>
+                        </div>
+                        <select id="filtroEstado"
+                                class="form-select select2-global"
+                                data-placeholder="Todos los productos">
+                            <option value="">Todos los productos</option>
+                            <option value="A">Activos</option>
+                            <option value="I">Inactivos</option>
+                            <option value="BAJO">Stock bajo mínimo</option>
+                            <option value="AGOTADO">Agotados (sin stock)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de productos con buscador integrado y paginación -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom py-3 px-4">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <h3 class="h6 fw-bold mb-0">
+                            Listado de productos
+                            <span id="badgeTotalFiltrados"
+                                  class="badge bg-primary-subtle text-primary ms-2"
+                                  th:text="${#lists.size(productos)}">0</span>
+                        </h3>
+                        <div class="d-flex align-items-center gap-2 ms-md-2">
+                            <label for="selectorFilasPorPagina" class="small text-secondary mb-0">Mostrar</label>
+                            <select id="selectorFilasPorPagina" class="form-select form-select-sm" style="width: auto;">
+                                <option value="10" selected>10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Buscador integrado en la cabecera de la tabla -->
+                    <div class="table-search-wrapper">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light border-end-0 text-secondary">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="search"
+                                   id="buscadorTabla"
+                                   class="form-control bg-light border-start-0"
+                                   placeholder="Buscar por SKU, nombre o descripción...">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-admin mb-0" id="tablaProductos">
+                        <thead>
+                        <tr>
+                            <th>SKU</th>
+                            <th>Producto</th>
+                            <th>Categoría</th>
+                            <th>Marca</th>
+                            <th class="text-end">Costo</th>
+                            <th class="text-end">Precio Venta</th>
+                            <th class="text-center">Stock</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                        </thead>
+                        <tbody id="cuerpoTablaProductos">
+                        <tr th:each="prod : ${productos}"
+                            class="fila-producto"
+                            th:attr="
+                                data-id=${prod.idProducto},
+                                data-sku=${prod.codigoSku},
+                                data-nombre=${prod.nombreProducto},
+                                data-descripcion=${prod.descripcionProducto},
+                                data-categoria-id=${prod.categoria != null ? prod.categoria.idCategoria : ''},
+                                data-marca-id=${prod.marca != null ? prod.marca.idMarca : ''},
+                                data-precio-costo=${prod.precioCosto},
+                                data-precio-venta=${prod.precioVenta},
+                                data-stock-disponible=${prod.stockDisponible},
+                                data-stock-minimo=${prod.stockMinimo},
+                                data-estado=${prod.estado != null ? prod.estado.toString() : 'A'},
+                                data-stock-nivel=${(prod.stockDisponible == null || prod.stockDisponible <= 0) ? 'AGOTADO' : ((prod.stockMinimo != null && prod.stockDisponible <= prod.stockMinimo) ? 'BAJO' : 'OK')}
+                            ">
+                            <td>
+                                <span class="sku-badge" th:text="${prod.codigoSku}">COM-HP-0001</span>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark text-uppercase" th:text="${prod.nombreProducto}">NOMBRE PRODUCTO</div>
+                                <div class="text-secondary small product-desc-truncate"
+                                     th:title="${prod.descripcionProducto}"
+                                     th:text="${prod.descripcionProducto}">
+                                    Descripción
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border"
+                                      th:text="${prod.categoria != null ? prod.categoria.nombreCategoria : 'Sin categoría'}">
+                                    Categoría
+                                </span>
+                            </td>
+                            <td th:text="${prod.marca != null ? prod.marca.nombreMarca : 'Sin marca'}">Marca</td>
+                            <td class="text-end text-secondary"
+                                th:text="${prod.precioCosto != null ? '$' + #numbers.formatDecimal(prod.precioCosto, 1, 'COMMA', 2, 'POINT') : '-'}">
+                                $0.00
+                            </td>
+                            <td class="text-end fw-bold"
+                                th:text="${prod.precioVenta != null ? '$' + #numbers.formatDecimal(prod.precioVenta, 1, 'COMMA', 2, 'POINT') : '$0.00'}">
+                                $0.00
+                            </td>
+                            <td class="text-center">
+                                <span th:if="${prod.stockDisponible == null || prod.stockDisponible <= 0}"
+                                      class="badge bg-danger-subtle text-danger">
+                                    <i class="bi bi-x-circle me-1"></i>
+                                    Agotado (0)
+                                </span>
+                                <span th:if="${prod.stockDisponible != null && prod.stockDisponible > 0 && prod.stockMinimo != null && prod.stockDisponible <= prod.stockMinimo}"
+                                      class="badge bg-warning-subtle text-warning-emphasis"
+                                      th:title="'Stock mínimo: ' + ${prod.stockMinimo}">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>
+                                    <span th:text="${prod.stockDisponible} + ' / mín ' + ${prod.stockMinimo}">5</span>
+                                </span>
+                                <span th:if="${prod.stockDisponible != null && prod.stockDisponible > 0 && (prod.stockMinimo == null || prod.stockDisponible > prod.stockMinimo)}"
+                                      class="badge bg-success-subtle text-success"
+                                      th:title="'Stock mínimo: ' + ${prod.stockMinimo}">
+                                    <span th:text="${prod.stockDisponible} + ' uds'">25 uds</span>
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span th:if="${prod.estado != null && prod.estado.toString() == 'A'}"
+                                      class="badge bg-primary-subtle text-primary">
+                                    Activo
+                                </span>
+                                <span th:unless="${prod.estado != null && prod.estado.toString() == 'A'}"
+                                      class="badge bg-secondary-subtle text-secondary">
+                                    Inactivo
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1">
+                                    <!-- Botón Editar en Modal -->
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-primary btn-editar-producto"
+                                            title="Editar producto">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+
+                                    <!-- Botón Cambiar Estado con Modal de confirmación -->
+                                    <button type="button"
+                                            class="btn btn-sm btn-estado-producto"
+                                            th:classappend="${prod.estado != null && prod.estado.toString() == 'A'} ? 'btn-outline-warning' : 'btn-outline-success'"
+                                            th:title="${prod.estado != null && prod.estado.toString() == 'A'} ? 'Desactivar producto' : 'Activar producto'">
+                                        <i class="bi"
+                                           th:classappend="${prod.estado != null && prod.estado.toString() == 'A'} ? 'bi-toggle-on' : 'bi-toggle-off'"></i>
+                                    </button>
+
+                                    <!-- Botón Eliminar con Modal de confirmación -->
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger btn-eliminar-producto"
+                                            title="Eliminar producto">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Fila cuando no hay coincidencias -->
+                        <tr id="filaSinResultados" class="d-none">
+                            <td colspan="9" class="p-5 text-center">
+                                <i class="bi bi-search fs-2 text-secondary d-block mb-2"></i>
+                                <div class="fw-bold">No se encontraron productos</div>
+                                <div class="text-secondary small">
+                                    Intenta ajustar los filtros o el término de búsqueda.
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pie de tabla: Paginación -->
+            <div class="card-footer bg-white border-top py-3 px-4 d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2">
+                <div id="infoPaginacion" class="text-secondary small">
+                    Mostrando 0 de 0 productos
+                </div>
+                <nav aria-label="Paginación del catálogo">
+                    <ul id="controlesPaginacion" class="pagination pagination-sm mb-0">
+                    </ul>
+                </nav>
+            </div>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- MODAL 1: FORMULARIO CREAR / EDITAR PRODUCTO (SEGMENTADO)       -->
+        <!-- ============================================================== -->
+        <div class="modal fade" id="modalProducto" tabindex="-1" aria-labelledby="modalProductoTitulo" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-producto-dialog">
+                <form id="formProducto"
+                      class="modal-content border-0 shadow overflow-hidden"
+                      th:action="${modoEdicion && productoDTO.idProducto != null} ? @{/backoffice/productos/{id}/actualizar(id=${productoDTO.idProducto})} : @{/backoffice/productos/guardar}"
+                      th:object="${productoDTO}"
+                      method="post"
+                      novalidate>
+
+                    <div class="modal-header modal-header-admin py-3 px-4">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-box-seam fs-5 text-primary"></i>
+                            <h5 class="modal-title h6 fw-bold mb-0"
+                                id="modalProductoTitulo"
+                                th:text="${modoEdicion} ? 'Editar producto' : 'Registrar nuevo producto'">
+                                Registrar nuevo producto
+                            </h5>
+                            <span id="badgeSkuModal"
+                                  class="sku-badge ms-2"
+                                  th:classappend="${modoEdicion && productoDTO.sku != null} ? '' : 'd-none'"
+                                  th:text="${productoDTO.sku}">
+                            </span>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+
+                    <div class="modal-body modal-body-segmented">
+
+                            <!-- Alerta de error dentro del modal si ocurrió en validación de negocio -->
+                            <div th:if="${mensajeErrorModal}" class="alert alert-danger py-2 px-3 small mb-3" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                <span th:text="${mensajeErrorModal}"></span>
+                            </div>
+
+                            <input type="hidden" id="idProductoInput" th:field="*{idProducto}">
+
+                            <!-- BLOQUE 1: INFORMACIÓN GENERAL -->
+                            <div class="modal-section-card">
+                                <div class="modal-section-title">
+                                    <i class="bi bi-info-circle"></i>
+                                    <span>Información general</span>
+                                </div>
+
+                                <div class="row g-3">
+                                    <!-- Nombre del Producto (UPPERCASE automático) -->
+                                    <div class="col-12">
+                                        <label for="nombreProducto" class="form-label small fw-bold mb-1">
+                                            Nombre del producto <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text"
+                                               id="nombreProducto"
+                                               class="form-control input-uppercase"
+                                               th:classappend="${#fields.hasErrors('nombreProducto')} ? 'is-invalid' : ''"
+                                               th:field="*{nombreProducto}"
+                                               placeholder="Ej: MONITOR SAMSUNG ODYSSEY G5 27&quot;">
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('nombreProducto')}" th:errors="*{nombreProducto}"></div>
+                                    </div>
+
+                                    <!-- Descripción -->
+                                    <div class="col-12">
+                                        <label for="descripcionProducto" class="form-label small fw-bold mb-1">
+                                            Descripción <span class="text-danger">*</span>
+                                        </label>
+                                        <textarea id="descripcionProducto"
+                                                  rows="2"
+                                                  class="form-control"
+                                                  th:classappend="${#fields.hasErrors('descripcionProducto')} ? 'is-invalid' : ''"
+                                                  th:field="*{descripcionProducto}"
+                                                  placeholder="Describe las especificaciones y detalles principales del producto..."></textarea>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('descripcionProducto')}" th:errors="*{descripcionProducto}"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- BLOQUE 2: CLASIFICACIÓN -->
+                            <div class="modal-section-card">
+                                <div class="modal-section-title">
+                                    <i class="bi bi-tags"></i>
+                                    <span>Clasificación</span>
+                                </div>
+
+                                <div class="row g-3">
+                                    <!-- Categoría -->
+                                    <div class="col-12 col-md-6">
+                                        <label for="idCategoria" class="form-label small fw-bold mb-1">
+                                            Categoría <span class="text-danger">*</span>
+                                        </label>
+                                        <select id="idCategoria"
+                                                class="form-select select2-global"
+                                                data-placeholder="Seleccione una categoría..."
+                                                th:classappend="${#fields.hasErrors('idCategoria')} ? 'is-invalid' : ''"
+                                                th:field="*{idCategoria}">
+                                            <option value="">Seleccione una categoría...</option>
+                                            <option th:each="cat : ${categorias}"
+                                                    th:value="${cat.idCategoria}"
+                                                    th:text="${cat.nombreCategoria}">
+                                            </option>
+                                        </select>
+                                        <div class="text-danger small mt-1" th:if="${#fields.hasErrors('idCategoria')}" th:errors="*{idCategoria}"></div>
+                                    </div>
+
+                                    <!-- Marca -->
+                                    <div class="col-12 col-md-6">
+                                        <label for="idMarca" class="form-label small fw-bold mb-1">
+                                            Marca <span class="text-danger">*</span>
+                                        </label>
+                                        <select id="idMarca"
+                                                class="form-select select2-global"
+                                                data-placeholder="Seleccione una marca..."
+                                                th:classappend="${#fields.hasErrors('idMarca')} ? 'is-invalid' : ''"
+                                                th:field="*{idMarca}">
+                                            <option value="">Seleccione una marca...</option>
+                                            <option th:each="m : ${marcas}"
+                                                    th:value="${m.idMarca}"
+                                                    th:text="${m.nombreMarca}">
+                                            </option>
+                                        </select>
+                                        <div class="text-danger small mt-1" th:if="${#fields.hasErrors('idMarca')}" th:errors="*{idMarca}"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- BLOQUE 3: PRECIOS E INVENTARIO (En cuadrícula 2x2 para evitar saturación) -->
+                            <div class="modal-section-card">
+                                <div class="modal-section-title">
+                                    <i class="bi bi-currency-dollar"></i>
+                                    <span>Precios e inventario</span>
+                                </div>
+
+                                <div class="row g-3">
+                                    <!-- Precio Costo -->
+                                    <div class="col-12 col-md-6">
+                                        <label for="precioCosto" class="form-label small fw-bold mb-1">
+                                            Precio de costo ($) <span class="text-danger">*</span>
+                                        </label>
+                                        <div class="input-group has-validation">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number"
+                                                   step="0.01"
+                                                   min="0"
+                                                   id="precioCosto"
+                                                   class="form-control"
+                                                   th:classappend="${#fields.hasErrors('precioCosto')} ? 'is-invalid' : ''"
+                                                   th:field="*{precioCosto}"
+                                                   placeholder="0.00">
+                                            <div class="invalid-feedback" th:if="${#fields.hasErrors('precioCosto')}" th:errors="*{precioCosto}"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Precio Venta -->
+                                    <div class="col-12 col-md-6">
+                                        <label for="precioVenta" class="form-label small fw-bold mb-1">
+                                            Precio de venta ($) <span class="text-danger">*</span>
+                                        </label>
+                                        <div class="input-group has-validation">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number"
+                                                   step="0.01"
+                                                   min="0.01"
+                                                   id="precioVenta"
+                                                   class="form-control"
+                                                   th:classappend="${#fields.hasErrors('precioVenta')} ? 'is-invalid' : ''"
+                                                   th:field="*{precioVenta}"
+                                                   placeholder="0.00">
+                                            <div class="invalid-feedback" th:if="${#fields.hasErrors('precioVenta')}" th:errors="*{precioVenta}"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Stock Disponible -->
+                                    <div class="col-12 col-md-6">
+                                        <label for="stockDisponible" class="form-label small fw-bold mb-1">
+                                            Stock disponible <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="number"
+                                               min="0"
+                                               id="stockDisponible"
+                                               class="form-control"
+                                               th:classappend="${#fields.hasErrors('stockDisponible')} ? 'is-invalid' : ''"
+                                               th:field="*{stockDisponible}"
+                                               placeholder="0">
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('stockDisponible')}" th:errors="*{stockDisponible}"></div>
+                                    </div>
+
+                                    <!-- Stock Mínimo -->
+                                    <div class="col-12 col-md-6">
+                                        <label for="stockMinimo" class="form-label small fw-bold mb-1">
+                                            Stock mínimo (alerta) <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="number"
+                                               min="0"
+                                               id="stockMinimo"
+                                               class="form-control"
+                                               th:classappend="${#fields.hasErrors('stockMinimo')} ? 'is-invalid' : ''"
+                                               th:field="*{stockMinimo}"
+                                               placeholder="5">
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('stockMinimo')}" th:errors="*{stockMinimo}"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- BLOQUE 4: FOTOGRAFÍAS DEL PRODUCTO POR BLOQUES INDIVIDUALES -->
+                            <div class="modal-section-card">
+                                <div class="modal-section-title">
+                                    <i class="bi bi-images"></i>
+                                    <span>Fotografías del producto</span>
+                                </div>
+
+                                <div class="row g-3">
+                                    <!-- Bloque 1: Imagen 1 -->
+                                    <div class="col-6 col-sm-3">
+                                        <div class="image-slot-wrapper">
+                                            <div class="image-slot-label">
+                                                <span>Imagen 1</span>
+                                                <span class="badge bg-primary-subtle text-primary" style="font-size: 0.65rem;">Principal</span>
+                                            </div>
+                                            <div class="image-slot-box" data-slot="1">
+                                                <input type="file" class="d-none slot-file-input" accept="image/png,image/jpeg,image/webp">
+                                                <div class="slot-placeholder">
+                                                    <i class="bi bi-cloud-arrow-up fs-4 text-primary d-block mb-1"></i>
+                                                    <span class="text-secondary" style="font-size: 0.72rem;">Subir imagen</span>
+                                                </div>
+                                                <img src="" alt="Imagen 1" class="image-slot-preview d-none">
+                                                <button type="button" class="image-slot-remove d-none" title="Quitar imagen">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Bloque 2: Imagen 2 -->
+                                    <div class="col-6 col-sm-3">
+                                        <div class="image-slot-wrapper">
+                                            <div class="image-slot-label">
+                                                <span>Imagen 2</span>
+                                            </div>
+                                            <div class="image-slot-box" data-slot="2">
+                                                <input type="file" class="d-none slot-file-input" accept="image/png,image/jpeg,image/webp">
+                                                <div class="slot-placeholder">
+                                                    <i class="bi bi-cloud-arrow-up fs-4 text-primary d-block mb-1"></i>
+                                                    <span class="text-secondary" style="font-size: 0.72rem;">Subir imagen</span>
+                                                </div>
+                                                <img src="" alt="Imagen 2" class="image-slot-preview d-none">
+                                                <button type="button" class="image-slot-remove d-none" title="Quitar imagen">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Bloque 3: Imagen 3 -->
+                                    <div class="col-6 col-sm-3">
+                                        <div class="image-slot-wrapper">
+                                            <div class="image-slot-label">
+                                                <span>Imagen 3</span>
+                                            </div>
+                                            <div class="image-slot-box" data-slot="3">
+                                                <input type="file" class="d-none slot-file-input" accept="image/png,image/jpeg,image/webp">
+                                                <div class="slot-placeholder">
+                                                    <i class="bi bi-cloud-arrow-up fs-4 text-primary d-block mb-1"></i>
+                                                    <span class="text-secondary" style="font-size: 0.72rem;">Subir imagen</span>
+                                                </div>
+                                                <img src="" alt="Imagen 3" class="image-slot-preview d-none">
+                                                <button type="button" class="image-slot-remove d-none" title="Quitar imagen">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Bloque 4: Imagen 4 -->
+                                    <div class="col-6 col-sm-3">
+                                        <div class="image-slot-wrapper">
+                                            <div class="image-slot-label">
+                                                <span>Imagen 4</span>
+                                            </div>
+                                            <div class="image-slot-box" data-slot="4">
+                                                <input type="file" class="d-none slot-file-input" accept="image/png,image/jpeg,image/webp">
+                                                <div class="slot-placeholder">
+                                                    <i class="bi bi-cloud-arrow-up fs-4 text-primary d-block mb-1"></i>
+                                                    <span class="text-secondary" style="font-size: 0.72rem;">Subir imagen</span>
+                                                </div>
+                                                <img src="" alt="Imagen 4" class="image-slot-preview d-none">
+                                                <button type="button" class="image-slot-remove d-none" title="Quitar imagen">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                    </div>
+
+                    <div class="modal-footer modal-footer-sticky py-3 px-4">
+                        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-check2-circle"></i>
+                            <span id="textoBotonGuardarModal"
+                                  th:text="${modoEdicion} ? 'Guardar cambios' : 'Registrar producto'">
+                                Registrar producto
+                            </span>
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- MODAL 2: CONFIRMAR CAMBIO DE ESTADO (ACTIVAR / DESACTIVAR)     -->
+        <!-- ============================================================== -->
+        <div class="modal fade" id="modalConfirmarEstado" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-confirm-dialog">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header modal-header-admin py-3 px-4">
+                        <h5 class="modal-title h6 fw-bold mb-0" id="tituloModalEstado">
+                            Confirmar cambio de estado
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <form id="formConfirmarEstado" method="post">
+                        <div class="modal-body p-4 text-center">
+                            <div id="iconoModalEstadoWrapper" class="mb-3">
+                                <i id="iconoModalEstado" class="bi bi-toggle-off fs-1 text-warning"></i>
+                            </div>
+                            <p class="mb-2" id="mensajeModalEstado">
+                                ¿Deseas cambiar el estado del siguiente producto?
+                            </p>
+                            <div class="p-2 bg-light rounded border mb-2">
+                                <div class="fw-bold text-dark text-uppercase small" id="nombreProductoEstado"></div>
+                                <span class="sku-badge mt-1" id="skuProductoEstado"></span>
+                            </div>
+                            <p class="text-secondary small mb-0" id="detalleModalEstado">
+                                El producto cambiará su disponibilidad en el catálogo.
+                            </p>
+                        </div>
+                        <div class="modal-footer bg-light py-2 px-4 justify-content-center">
+                            <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
+                                Cancelar
+                            </button>
+                            <button type="submit" id="btnSubmitEstado" class="btn btn-warning">
+                                Confirmar cambio
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- MODAL 3: CONFIRMAR ELIMINACIÓN DE PRODUCTO                     -->
+        <!-- ============================================================== -->
+        <div class="modal fade" id="modalConfirmarEliminar" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-confirm-dialog">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header modal-header-admin py-3 px-4">
+                        <h5 class="modal-title h6 fw-bold mb-0">
+                            <i class="bi bi-exclamation-octagon text-danger me-2"></i>Eliminar producto
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <form id="formConfirmarEliminar" method="post">
+                        <div class="modal-body p-4 text-center">
+                            <div class="mb-3">
+                                <i class="bi bi-trash3 fs-1 text-danger"></i>
+                            </div>
+                            <p class="mb-2">
+                                ¿Estás seguro de que deseas eliminar permanentemente este producto?
+                            </p>
+                            <div class="p-2 bg-light rounded border mb-2">
+                                <div class="fw-bold text-dark text-uppercase small" id="nombreProductoEliminar"></div>
+                                <span class="sku-badge mt-1" id="skuProductoEliminar"></span>
+                            </div>
+                            <p class="text-secondary small mb-0">
+                                Esta acción no se puede deshacer. Si el producto tiene pedidos asociados, te recomendamos desactivarlo.
+                            </p>
+                        </div>
+                        <div class="modal-footer bg-light py-2 px-4 justify-content-center">
+                            <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash me-1"></i> Sí, eliminar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </th:block>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js">
+</script>
+
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        const basePath = /*[[@{/backoffice/productos}]]*/ '/backoffice/productos';
+        const abrirModalInicial = /*[[${abrirModalFormulario}]]*/ false;
+
+        // 0. Auto-cierre con timeout (4 segundos) para alertas flotantes tras acciones en modales
+        document.querySelectorAll('.floating-alert').forEach(function (alertEl) {
+            setTimeout(function () {
+                const bsAlert = bootstrap.Alert.getOrCreateInstance(alertEl);
+                if (bsAlert) {
+                    bsAlert.close();
+                }
+            }, 4000);
+        });
+
+        // Referencias a modales de Bootstrap
+        const modalProductoEl = document.getElementById('modalProducto');
+        const modalProducto = new bootstrap.Modal(modalProductoEl);
+        const modalEstado = new bootstrap.Modal(document.getElementById('modalConfirmarEstado'));
+        const modalEliminar = new bootstrap.Modal(document.getElementById('modalConfirmarEliminar'));
+
+        // Referencias del formulario de producto
+        const formProducto = document.getElementById('formProducto');
+        const modalTitulo = document.getElementById('modalProductoTitulo');
+        const badgeSkuModal = document.getElementById('badgeSkuModal');
+        const textoBotonGuardar = document.getElementById('textoBotonGuardarModal');
+        const idProductoInput = document.getElementById('idProductoInput');
+        const nombreInput = document.getElementById('nombreProducto');
+        const descripcionInput = document.getElementById('descripcionProducto');
+        const categoriaSelect = document.getElementById('idCategoria');
+        const marcaSelect = document.getElementById('idMarca');
+        const precioCostoInput = document.getElementById('precioCosto');
+        const precioVentaInput = document.getElementById('precioVenta');
+        const stockDisponibleInput = document.getElementById('stockDisponible');
+        const stockMinimoInput = document.getElementById('stockMinimo');
+
+        // 1. Forzar UPPERCASE al escribir en Nombre del Producto
+        if (nombreInput) {
+            nombreInput.addEventListener('input', function () {
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                this.value = this.value.toUpperCase();
+                this.setSelectionRange(start, end);
+            });
+        }
+
+        // 2. Abrir modal en modo "Nuevo Producto"
+        document.getElementById('btnAbrirModalNuevo').addEventListener('click', function () {
+            limpiarErroresValidacion();
+            formProducto.setAttribute('action', basePath + '/guardar');
+            modalTitulo.textContent = 'Registrar nuevo producto';
+            textoBotonGuardar.textContent = 'Registrar producto';
+            badgeSkuModal.classList.add('d-none');
+            badgeSkuModal.textContent = '';
+
+            idProductoInput.value = '';
+            nombreInput.value = '';
+            descripcionInput.value = '';
+            precioCostoInput.value = '';
+            precioVentaInput.value = '';
+            stockDisponibleInput.value = '';
+            stockMinimoInput.value = '';
+
+            if (window.jQuery) {
+                jQuery(categoriaSelect).val('').trigger('change');
+                jQuery(marcaSelect).val('').trigger('change');
+            } else {
+                categoriaSelect.value = '';
+                marcaSelect.value = '';
+            }
+
+            limpiarBloquesFotografias();
+            modalProducto.show();
+        });
+
+        // 3. Abrir modal en modo "Editar Producto" desde cualquier fila de la tabla
+        document.querySelectorAll('.btn-editar-producto').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const fila = this.closest('.fila-producto');
+                if (!fila) return;
+
+                limpiarErroresValidacion();
+
+                const id = fila.getAttribute('data-id');
+                const sku = fila.getAttribute('data-sku') || '';
+                const nombre = (fila.getAttribute('data-nombre') || '').toUpperCase();
+                const descripcion = fila.getAttribute('data-descripcion') || '';
+                const catId = fila.getAttribute('data-categoria-id') || '';
+                const marcaId = fila.getAttribute('data-marca-id') || '';
+                const costo = fila.getAttribute('data-precio-costo') || '';
+                const venta = fila.getAttribute('data-precio-venta') || '';
+                const stockDisp = fila.getAttribute('data-stock-disponible') || '';
+                const stockMin = fila.getAttribute('data-stock-minimo') || '';
+
+                formProducto.setAttribute('action', basePath + '/' + id + '/actualizar');
+                modalTitulo.textContent = 'Editar producto';
+                textoBotonGuardar.textContent = 'Guardar cambios';
+
+                badgeSkuModal.textContent = sku;
+                badgeSkuModal.classList.remove('d-none');
+
+                idProductoInput.value = id;
+                nombreInput.value = nombre;
+                descripcionInput.value = descripcion;
+                precioCostoInput.value = costo;
+                precioVentaInput.value = venta;
+                stockDisponibleInput.value = stockDisp;
+                stockMinimoInput.value = stockMin;
+
+                if (window.jQuery) {
+                    jQuery(categoriaSelect).val(catId).trigger('change');
+                    jQuery(marcaSelect).val(marcaId).trigger('change');
+                } else {
+                    categoriaSelect.value = catId;
+                    marcaSelect.value = marcaId;
+                }
+
+                limpiarBloquesFotografias();
+                modalProducto.show();
+            });
+        });
+
+        // 4. Abrir modal de confirmación para Activar / Desactivar
+        document.querySelectorAll('.btn-estado-producto').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const fila = this.closest('.fila-producto');
+                if (!fila) return;
+
+                const id = fila.getAttribute('data-id');
+                const sku = fila.getAttribute('data-sku');
+                const nombre = fila.getAttribute('data-nombre');
+                const estadoActual = fila.getAttribute('data-estado');
+                const esActivo = estadoActual === 'A';
+
+                document.getElementById('formConfirmarEstado').setAttribute('action', basePath + '/' + id + '/estado');
+                document.getElementById('nombreProductoEstado').textContent = nombre;
+                document.getElementById('skuProductoEstado').textContent = sku;
+
+                const tituloEl = document.getElementById('tituloModalEstado');
+                const iconoEl = document.getElementById('iconoModalEstado');
+                const mensajeEl = document.getElementById('mensajeModalEstado');
+                const detalleEl = document.getElementById('detalleModalEstado');
+                const btnSubmitEl = document.getElementById('btnSubmitEstado');
+
+                if (esActivo) {
+                    tituloEl.textContent = 'Desactivar producto';
+                    iconoEl.className = 'bi bi-toggle-off fs-1 text-warning';
+                    mensajeEl.textContent = '¿Deseas desactivar el siguiente producto?';
+                    detalleEl.textContent = 'El producto pasará a estado Inactivo y no se mostrará como disponible en tienda.';
+                    btnSubmitEl.className = 'btn btn-warning';
+                    btnSubmitEl.textContent = 'Sí, desactivar';
+                } else {
+                    tituloEl.textContent = 'Activar producto';
+                    iconoEl.className = 'bi bi-toggle-on fs-1 text-success';
+                    mensajeEl.textContent = '¿Deseas activar nuevamente este producto?';
+                    detalleEl.textContent = 'El producto volverá a estar Activo en el catálogo.';
+                    btnSubmitEl.className = 'btn btn-success';
+                    btnSubmitEl.textContent = 'Sí, activar';
+                }
+
+                modalEstado.show();
+            });
+        });
+
+        // 5. Abrir modal de confirmación para Eliminar
+        document.querySelectorAll('.btn-eliminar-producto').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const fila = this.closest('.fila-producto');
+                if (!fila) return;
+
+                const id = fila.getAttribute('data-id');
+                const sku = fila.getAttribute('data-sku');
+                const nombre = fila.getAttribute('data-nombre');
+
+                document.getElementById('formConfirmarEliminar').setAttribute('action', basePath + '/' + id + '/eliminar');
+                document.getElementById('nombreProductoEliminar').textContent = nombre;
+                document.getElementById('skuProductoEliminar').textContent = sku;
+
+                modalEliminar.show();
+            });
+        });
+
+        // 6. Bloques individuales de fotografías (Bloque 1 -> Imagen 1, etc.)
+        document.querySelectorAll('.image-slot-box').forEach(function (slotBox) {
+            const fileInput = slotBox.querySelector('.slot-file-input');
+            const placeholder = slotBox.querySelector('.slot-placeholder');
+            const previewImg = slotBox.querySelector('.image-slot-preview');
+            const removeBtn = slotBox.querySelector('.image-slot-remove');
+
+            slotBox.addEventListener('click', function (e) {
+                if (e.target.closest('.image-slot-remove')) {
+                    return;
+                }
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', function () {
+                const file = this.files && this.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function (ev) {
+                    previewImg.src = ev.target.result;
+                    previewImg.classList.remove('d-none');
+                    removeBtn.classList.remove('d-none');
+                    placeholder.classList.add('d-none');
+                    slotBox.classList.add('has-image');
+                };
+                reader.readAsDataURL(file);
+            });
+
+            removeBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                limpiarSlotIndividual(slotBox);
+            });
+        });
+
+        function limpiarSlotIndividual(slotBox) {
+            const fileInput = slotBox.querySelector('.slot-file-input');
+            const placeholder = slotBox.querySelector('.slot-placeholder');
+            const previewImg = slotBox.querySelector('.image-slot-preview');
+            const removeBtn = slotBox.querySelector('.image-slot-remove');
+
+            if (fileInput) fileInput.value = '';
+            if (previewImg) {
+                previewImg.src = '';
+                previewImg.classList.add('d-none');
+            }
+            if (removeBtn) removeBtn.classList.add('d-none');
+            if (placeholder) placeholder.classList.remove('d-none');
+            slotBox.classList.remove('has-image');
+        }
+
+        function limpiarBloquesFotografias() {
+            document.querySelectorAll('.image-slot-box').forEach(function (slotBox) {
+                limpiarSlotIndividual(slotBox);
+            });
+        }
+
+        function limpiarErroresValidacion() {
+            formProducto.querySelectorAll('.is-invalid').forEach(function (el) {
+                el.classList.remove('is-invalid');
+            });
+            formProducto.querySelectorAll('.invalid-feedback, .text-danger.small.mt-1').forEach(function (el) {
+                el.style.display = 'none';
+            });
+        }
+
+        // Si el backend indicó abrir el modal (por errores de validación o ruta directa)
+        if (abrirModalInicial) {
+            modalProducto.show();
+        }
+
+        // =========================================================================
+        // 7. FILTRADO DINÁMICO EN TIEMPO REAL + PAGINACIÓN DE LA TABLA
+        // =========================================================================
+        const todasLasFilas = Array.from(document.querySelectorAll('.fila-producto'));
+        const filtroCategoriaEl = document.getElementById('filtroCategoria');
+        const filtroMarcaEl = document.getElementById('filtroMarca');
+        const filtroEstadoEl = document.getElementById('filtroEstado');
+        const buscadorTablaEl = document.getElementById('buscadorTabla');
+        const selectorFilasEl = document.getElementById('selectorFilasPorPagina');
+        const btnLimpiarFiltros = document.getElementById('btnLimpiarFiltros');
+        const badgeTotalFiltrados = document.getElementById('badgeTotalFiltrados');
+        const filaSinResultados = document.getElementById('filaSinResultados');
+        const infoPaginacion = document.getElementById('infoPaginacion');
+        const controlesPaginacion = document.getElementById('controlesPaginacion');
+
+        let paginaActual = 1;
+        let filasFiltradas = todasLasFilas.slice();
+
+        function aplicarFiltrosEnTiempoReal() {
+            const termino = (buscadorTablaEl.value || '').trim().toLowerCase();
+            const catId = filtroCategoriaEl.value || '';
+            const marcaId = filtroMarcaEl.value || '';
+            const estadoFiltro = filtroEstadoEl.value || '';
+
+            const hayFiltrosActivos = termino !== '' || catId !== '' || marcaId !== '' || estadoFiltro !== '';
+            btnLimpiarFiltros.classList.toggle('d-none', !hayFiltrosActivos);
+
+            filasFiltradas = todasLasFilas.filter(function (fila) {
+                const sku = (fila.getAttribute('data-sku') || '').toLowerCase();
+                const nombre = (fila.getAttribute('data-nombre') || '').toLowerCase();
+                const desc = (fila.getAttribute('data-descripcion') || '').toLowerCase();
+                const filaCat = fila.getAttribute('data-categoria-id') || '';
+                const filaMarca = fila.getAttribute('data-marca-id') || '';
+                const filaEstado = fila.getAttribute('data-estado') || '';
+                const filaStockNivel = fila.getAttribute('data-stock-nivel') || '';
+
+                if (termino !== '' && !sku.includes(termino) && !nombre.includes(termino) && !desc.includes(termino)) {
+                    return false;
+                }
+                if (catId !== '' && filaCat !== catId) {
+                    return false;
+                }
+                if (marcaId !== '' && filaMarca !== marcaId) {
+                    return false;
+                }
+                if (estadoFiltro === 'A' && filaEstado !== 'A') {
+                    return false;
+                }
+                if (estadoFiltro === 'I' && filaEstado !== 'I') {
+                    return false;
+                }
+                if (estadoFiltro === 'BAJO' && filaStockNivel !== 'BAJO') {
+                    return false;
+                }
+                if (estadoFiltro === 'AGOTADO' && filaStockNivel !== 'AGOTADO') {
+                    return false;
+                }
+                return true;
+            });
+
+            badgeTotalFiltrados.textContent = filasFiltradas.length;
+            paginaActual = 1;
+            renderizarPagina();
+        }
+
+        function renderizarPagina() {
+            const filasPorPagina = parseInt(selectorFilasEl.value, 10) || 10;
+            const totalItems = filasFiltradas.length;
+            const totalPaginas = Math.max(1, Math.ceil(totalItems / filasPorPagina));
+
+            if (paginaActual > totalPaginas) {
+                paginaActual = totalPaginas;
+            }
+
+            const inicio = (paginaActual - 1) * filasPorPagina;
+            const fin = Math.min(inicio + filasPorPagina, totalItems);
+
+            // Ocultar todas las filas primero
+            todasLasFilas.forEach(function (fila) {
+                fila.classList.add('d-none');
+            });
+
+            if (totalItems === 0) {
+                filaSinResultados.classList.remove('d-none');
+                infoPaginacion.textContent = 'Mostrando 0 de 0 productos';
+            } else {
+                filaSinResultados.classList.add('d-none');
+                filasFiltradas.slice(inicio, fin).forEach(function (fila) {
+                    fila.classList.remove('d-none');
+                });
+                infoPaginacion.textContent = 'Mostrando ' + (inicio + 1) + ' a ' + fin + ' de ' + totalItems + ' productos';
+            }
+
+            renderizarControlesPaginacion(totalPaginas);
+        }
+
+        function renderizarControlesPaginacion(totalPaginas) {
+            controlesPaginacion.innerHTML = '';
+
+            // Botón Anterior
+            const liPrev = document.createElement('li');
+            liPrev.className = 'page-item' + (paginaActual === 1 ? ' disabled' : '');
+            const aPrev = document.createElement('button');
+            aPrev.type = 'button';
+            aPrev.className = 'page-link';
+            aPrev.innerHTML = '<i class="bi bi-chevron-left"></i>';
+            aPrev.addEventListener('click', function () {
+                if (paginaActual > 1) {
+                    paginaActual--;
+                    renderizarPagina();
+                }
+            });
+            liPrev.appendChild(aPrev);
+            controlesPaginacion.appendChild(liPrev);
+
+            // Páginas numeradas
+            for (let p = 1; p <= totalPaginas; p++) {
+                const li = document.createElement('li');
+                li.className = 'page-item' + (p === paginaActual ? ' active' : '');
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'page-link';
+                btn.textContent = p;
+                btn.addEventListener('click', function () {
+                    paginaActual = p;
+                    renderizarPagina();
+                });
+                li.appendChild(btn);
+                controlesPaginacion.appendChild(li);
+            }
+
+            // Botón Siguiente
+            const liNext = document.createElement('li');
+            liNext.className = 'page-item' + (paginaActual === totalPaginas ? ' disabled' : '');
+            const aNext = document.createElement('button');
+            aNext.type = 'button';
+            aNext.className = 'page-link';
+            aNext.innerHTML = '<i class="bi bi-chevron-right"></i>';
+            aNext.addEventListener('click', function () {
+                if (paginaActual < totalPaginas) {
+                    paginaActual++;
+                    renderizarPagina();
+                }
+            });
+            liNext.appendChild(aNext);
+            controlesPaginacion.appendChild(liNext);
+        }
+
+        // Eventos en tiempo real (incluyendo eventos de Select2 vía jQuery para los 3 filtros)
+        buscadorTablaEl.addEventListener('input', aplicarFiltrosEnTiempoReal);
+        selectorFilasEl.addEventListener('change', function () {
+            paginaActual = 1;
+            renderizarPagina();
+        });
+
+        if (window.jQuery) {
+            jQuery(filtroCategoriaEl).on('change', aplicarFiltrosEnTiempoReal);
+            jQuery(filtroMarcaEl).on('change', aplicarFiltrosEnTiempoReal);
+            jQuery(filtroEstadoEl).on('change', aplicarFiltrosEnTiempoReal);
+        } else {
+            filtroCategoriaEl.addEventListener('change', aplicarFiltrosEnTiempoReal);
+            filtroMarcaEl.addEventListener('change', aplicarFiltrosEnTiempoReal);
+            filtroEstadoEl.addEventListener('change', aplicarFiltrosEnTiempoReal);
+        }
+
+        btnLimpiarFiltros.addEventListener('click', function () {
+            buscadorTablaEl.value = '';
+            if (window.jQuery) {
+                jQuery(filtroCategoriaEl).val('').trigger('change.select2');
+                jQuery(filtroMarcaEl).val('').trigger('change.select2');
+                jQuery(filtroEstadoEl).val('').trigger('change.select2');
+            } else {
+                filtroCategoriaEl.value = '';
+                filtroMarcaEl.value = '';
+                filtroEstadoEl.value = '';
+            }
+            aplicarFiltrosEnTiempoReal();
+        });
+
+        // Inicializar primera renderización de paginación
+        aplicarFiltrosEnTiempoReal();
+    });
+</script>
+
+</body>
+</html>
