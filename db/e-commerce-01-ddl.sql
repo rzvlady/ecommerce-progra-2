@@ -26,6 +26,16 @@ CREATE TABLE IF NOT EXISTS catalogo.municipios (
 	CONSTRAINT fk_municipios_to_departamentos FOREIGN KEY(id_departamento) REFERENCES catalogo.departamentos(id_departamento)
 );
 
+CREATE TABLE IF NOT EXISTS seguridad.roles (
+    id_rol              INTEGER GENERATED ALWAYS AS IDENTITY,
+    nombre              VARCHAR(50) NOT NULL,
+    descripcion         VARCHAR(255),
+    eliminado           BOOLEAN NOT NULL DEFAULT FALSE,
+    fecha_creacion      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_roles PRIMARY KEY(id_rol),
+    CONSTRAINT uq_roles_nombre UNIQUE(nombre)
+);
+
 CREATE TABLE IF NOT EXISTS seguridad.usuarios (
 	id_usuario 				INTEGER GENERATED ALWAYS AS IDENTITY,
 	correo_inicio_sesion 	VARCHAR(255) NOT NULL,
@@ -37,6 +47,16 @@ CREATE TABLE IF NOT EXISTS seguridad.usuarios (
 	metadata 				JSONB,
 	CONSTRAINT pk_usuarios PRIMARY KEY(id_usuario),
 	CONSTRAINT uq_usuarios_correo_inicio_sesion UNIQUE(correo_inicio_sesion)
+);
+
+CREATE TABLE IF NOT EXISTS seguridad.usuarios_roles (
+    id_usuario          INTEGER NOT NULL,
+    id_rol              INTEGER NOT NULL,
+    fecha_asignacion    TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    auditoria           JSONB, /* Registro de quién asignó o modificó este rol y por qué */
+    CONSTRAINT pk_usuarios_roles PRIMARY KEY(id_usuario, id_rol),
+    CONSTRAINT fk_usuarios_roles_to_usuarios FOREIGN KEY(id_usuario) REFERENCES seguridad.usuarios(id_usuario) ON DELETE CASCADE,
+    CONSTRAINT fk_usuarios_roles_to_roles FOREIGN KEY(id_rol) REFERENCES seguridad.roles(id_rol)
 );
 
 CREATE TABLE IF NOT EXISTS seguridad.usuarios_contacto (
@@ -126,4 +146,68 @@ CREATE TABLE IF NOT EXISTS core.movimientos_inventario (
 	id_pedido 				INTEGER,
 	CONSTRAINT pk_movimientos_inventario PRIMARY KEY(id_movimiento),
 	CONSTRAINT fk_movimientos_to_productos FOREIGN KEY(id_producto) REFERENCES core.productos(id_producto)
+);
+
+/* Estados de pedido (estado_pedido): P=Pendiente, C=Confirmado, E=Enviado, F=Finalizado/Entregado, A=Anulado */
+CREATE TABLE IF NOT EXISTS core.pedidos (
+	id_pedido 				INTEGER GENERATED ALWAYS AS IDENTITY,
+	id_usuario 				INTEGER NOT NULL,
+	id_direccion 			INTEGER NOT NULL,
+	estado_pedido 			CHAR(1) NOT NULL DEFAULT 'P',
+	descuento				NUMERIC(10,2) DEFAULT 0.0,
+	total 					NUMERIC(10,2) NOT NULL,
+	fecha_creacion 			TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+	fecha_actualizacion 	TIMESTAMPTZ,
+	metadata_pedido 		JSONB,
+	auditoria_pedido 		JSONB,
+	CONSTRAINT pk_pedidos PRIMARY KEY(id_pedido),
+	CONSTRAINT fk_pedidos_to_usuarios FOREIGN KEY(id_usuario) REFERENCES seguridad.usuarios(id_usuario),
+	CONSTRAINT fk_pedidos_to_usuarios_direccion FOREIGN KEY(id_direccion) REFERENCES seguridad.usuarios_direccion(id_direccion)
+);
+
+CREATE TABLE IF NOT EXISTS core.detalles_pedido (
+	id_detalle 				INTEGER GENERATED ALWAYS AS IDENTITY,
+	id_pedido 				INTEGER NOT NULL,
+	id_producto 			INTEGER NOT NULL,
+	cantidad 				INTEGER NOT NULL,
+	precio_unitario 		NUMERIC(10,2) NOT NULL,
+	descuento				NUMERIC(10,2) DEFAULT 0.0,
+	subtotal 				NUMERIC(10,2) NOT NULL,
+	fecha_creacion 			TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+	metadata_det_pedido 	JSONB,
+	auditoria_det_pedido 	JSONB,
+	CONSTRAINT pk_detalles_pedido PRIMARY KEY(id_detalle),
+	CONSTRAINT fk_detalles_pedido_to_pedidos FOREIGN KEY(id_pedido) REFERENCES core.pedidos(id_pedido),
+	CONSTRAINT fk_detalles_pedido_to_productos FOREIGN KEY(id_producto) REFERENCES core.productos(id_producto)
+);
+
+/* Estados de transacción (estado_transaccion): P=Pendiente, E=Exitoso/Aprobado, R=Rechazado, V=Reversado */
+CREATE TABLE IF NOT EXISTS core.pagos (
+	id_pago 				INTEGER GENERATED ALWAYS AS IDENTITY,
+	id_pedido 				INTEGER NOT NULL, /* UNIQUE removido para soportar múltiples intentos fallidos */
+	metodo_pago 			VARCHAR(255) NOT NULL,
+	monto 					NUMERIC(10,2) NOT NULL,
+	estado_transaccion 		CHAR(1) NOT NULL,
+	referencia_pasarela 	VARCHAR(255), /* Agregado para trazabilidad con el banco o proveedor */
+	fecha_pago 				TIMESTAMPTZ,
+	fecha_creacion 			TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+	auditoria_pago			JSONB,
+	CONSTRAINT pk_pagos PRIMARY KEY(id_pago),
+	CONSTRAINT fk_pagos_to_pedidos FOREIGN KEY(id_pedido) REFERENCES core.pedidos(id_pedido)
+);
+
+/* Estados de envío (estado_envio): P=Preparando, L=Listo para recolección, T=En Tránsito, E=Entregado, D=Devuelto */
+CREATE TABLE IF NOT EXISTS core.envios (
+	id_envio 				INTEGER GENERATED ALWAYS AS IDENTITY,
+	id_pedido 				INTEGER UNIQUE NOT NULL,
+	empresa_transporte 		VARCHAR(255),
+	numero_seguimiento 		VARCHAR(100),
+	costo_envio 			NUMERIC(10,2), /* Agregado para separar el costo del flete */
+	estado_envio 			CHAR(1) NOT NULL,
+	fecha_despacho 			TIMESTAMPTZ,
+	fecha_entrega 			TIMESTAMPTZ,
+	fecha_creacion 			TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+	auditoria_envio			JSONB,
+	CONSTRAINT pk_envios PRIMARY KEY(id_envio),
+	CONSTRAINT fk_envios_to_pedidos FOREIGN KEY(id_pedido) REFERENCES core.pedidos(id_pedido)
 );
