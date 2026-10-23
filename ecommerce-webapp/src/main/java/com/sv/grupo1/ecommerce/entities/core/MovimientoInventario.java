@@ -3,8 +3,8 @@ package com.sv.grupo1.ecommerce.entities.core;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 
-//@Entity
-//@Table(name = "movimientos_inventario", schema = "core")
+@Entity
+@Table(name = "movimientos_inventario", schema = "core")
 public class MovimientoInventario {
 
     @Id
@@ -28,8 +28,10 @@ public class MovimientoInventario {
     @Column(name = "fecha_movimiento", insertable = false, updatable = false)
     private OffsetDateTime fechaMovimiento;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_pedido")
+    @Column(name = "id_pedido")
+    private Integer idPedido;
+
+    @Transient
     private Pedido pedido;
 
     public MovimientoInventario() {}
@@ -47,6 +49,11 @@ public class MovimientoInventario {
     public void setMotivo(String motivo) { this.motivo = motivo; }
     public OffsetDateTime getFechaMovimiento() { return fechaMovimiento; }
     public void setFechaMovimiento(OffsetDateTime fechaMovimiento) { this.fechaMovimiento = fechaMovimiento; }
+    public Integer getIdPedido() { return idPedido; }
+    public void setIdPedido(Integer idPedido) { this.idPedido = idPedido; }
     public Pedido getPedido() { return pedido; }
-    public void setPedido(Pedido pedido) { this.pedido = pedido; }
+    public void setPedido(Pedido pedido) {
+        this.pedido = pedido;
+        this.idPedido = pedido != null ? pedido.getIdPedido() : null;
+    }
 }

@@ -1,6 +1,6 @@
 package com.sv.grupo1.backoffice.controller;
 
-import com.sv.grupo1.ecommerce.services.ProductoService;
+import com.sv.grupo1.backoffice.service.BackofficeProductoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -17,9 +17,9 @@ public class DashboardController {
 
     private static final Logger LOG = LoggerFactory.getLogger(DashboardController.class);
 
-    private final ProductoService productoService;
+    private final BackofficeProductoService productoService;
 
-    public DashboardController(ProductoService productoService) {
+    public DashboardController(BackofficeProductoService productoService) {
         this.productoService = productoService;
     }
 

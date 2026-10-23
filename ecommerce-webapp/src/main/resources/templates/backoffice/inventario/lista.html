@@ -1,0 +1,1728 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{backoffice/fragments/head :: head('Inventario')}">
+</head>
+
+<body>
+<div th:replace="~{backoffice/layout/admin :: layout(
+            'Inventario',
+            'inventario',
+            ~{::pageContent}
+        )}">
+
+    <th:block th:fragment="pageContent">
+
+        <!-- Alertas flotantes con auto-cierre (timeout) -->
+        <div class="floating-alert-container">
+            <div th:if="${mensajeExito}"
+                 id="alertaFlotanteExito"
+                 class="alert alert-success alert-dismissible fade show border-0 floating-alert d-flex align-items-center mb-2"
+                 role="alert">
+                <i class="bi bi-check-circle-fill fs-5 me-2 text-success"></i>
+                <div class="small fw-medium" th:text="${mensajeExito}"></div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+
+            <div th:if="${mensajeError}"
+                 id="alertaFlotanteError"
+                 class="alert alert-danger alert-dismissible fade show border-0 floating-alert d-flex align-items-center mb-2"
+                 role="alert">
+                <i class="bi bi-exclamation-triangle-fill fs-5 me-2 text-danger"></i>
+                <div class="small fw-medium" th:text="${mensajeError}"></div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+        </div>
+
+        <!-- Encabezado de la página -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+            <div>
+                <h2 class="h4 fw-bold mb-1">Control de inventario y Kardex</h2>
+                <p class="text-secondary mb-0">
+                    Supervisa existencias en bodega, alertas de reabastecimiento y movimientos de entrada/salida.
+                </p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <form id="formEscanearStock" th:action="@{/backoffice/inventario/escanear-alertas}" method="post" class="d-inline">
+                    <button type="submit"
+                            id="btnEscanearStock"
+                            class="btn btn-outline-secondary bg-white d-inline-flex align-items-center gap-2 shadow-sm"
+                            title="Ejecutar escaneo inmediato del monitor de stock">
+                        <i class="bi bi-arrow-repeat" id="iconoEscanear"></i>
+                        <span id="textoEscanear">Escanear stock</span>
+                    </button>
+                </form>
+
+                <button type="button"
+                        id="btnAbrirModalMovimiento"
+                        class="btn btn-primary d-inline-flex align-items-center gap-2 shadow-sm">
+                    <i class="bi bi-arrow-left-right"></i>
+                    <span>Registrar movimiento</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Indicadores KPI de Inventario -->
+        <div class="row g-3 mb-4">
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="text-secondary small">Valor del inventario (Costo)</div>
+                                <div class="fs-3 fw-bold"
+                                     th:text="${'$' + #numbers.formatDecimal(valorTotalInventario, 1, 'COMMA', 2, 'POINT')}">
+                                    $0.00
+                                </div>
+                            </div>
+                            <i class="bi bi-cash-stack fs-4 text-success"></i>
+                        </div>
+                        <div class="small text-secondary mt-1">
+                            Valorizado sobre unidades activas en bodega
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="text-secondary small">Unidades totales en bodega</div>
+                                <div class="fs-3 fw-bold" th:text="${unidadesTotalesBodega}">0</div>
+                            </div>
+                            <i class="bi bi-boxes fs-4 text-primary"></i>
+                        </div>
+                        <div class="small text-secondary mt-1">
+                            Distribuido en <span class="fw-bold" th:text="${#lists.size(productos)}">0</span> SKUs registrados
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="text-secondary small">Alertas de stock crítico</div>
+                                <div class="fs-3 fw-bold"
+                                     th:classappend="${totalAlertasCriticas > 0 ? 'text-danger' : 'text-dark'}"
+                                     th:text="${totalAlertasCriticas}">0</div>
+                            </div>
+                            <i class="bi bi-exclamation-triangle fs-4 text-warning"></i>
+                        </div>
+                        <div class="small text-secondary mt-1">
+                            <span class="text-warning-emphasis fw-medium" th:text="${productosStockBajo} + ' bajo mín.'">0 bajo mín.</span>
+                            &middot;
+                            <span class="text-danger fw-medium" th:text="${productosAgotados} + ' agotados'">0 agotados</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="text-secondary small">Movimientos en Kardex</div>
+                                <div class="fs-3 fw-bold" th:text="${totalMovimientos}">0</div>
+                            </div>
+                            <i class="bi bi-clipboard-data fs-4 text-info"></i>
+                        </div>
+                        <div class="small text-secondary mt-1">
+                            <span class="text-success fw-medium" th:text="'+' + ${totalEntradas} + ' entradas'">0 entradas</span>
+                            &middot;
+                            <span class="text-danger fw-medium" th:text="'-' + ${totalSalidas} + ' salidas'">0 salidas</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Banner Compacto del Monitor Concurrente de Stock (StockMonitorTaskImpl) -->
+        <div th:if="${!#lists.isEmpty(alertasMonitor)}"
+             class="card border-0 shadow-sm mb-4 border-start border-warning border-4">
+            <div class="card-body p-3 px-4">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <span class="badge bg-warning-subtle text-warning-emphasis px-2 py-1">
+                            <i class="bi bi-cpu me-1"></i>Monitor concurrente
+                        </span>
+                        <span class="fw-bold text-dark small mb-0">
+                            Se detectaron <span class="text-danger fw-bold" th:text="${#lists.size(alertasMonitor)}">0</span> productos con nivel crítico de existencias.
+                        </span>
+                        <span class="text-secondary small d-none d-lg-inline">
+                            (Escaneo en segundo plano cada 60s)
+                        </span>
+                    </div>
+
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <button type="button"
+                                id="btnFiltrarCriticosDesdeMonitor"
+                                class="btn btn-sm btn-outline-warning text-dark border-warning-subtle bg-warning-subtle d-inline-flex align-items-center gap-1">
+                            <i class="bi bi-funnel-fill text-warning-emphasis"></i>
+                            <span>Filtrar críticos en tabla</span>
+                        </button>
+
+                        <button type="button"
+                                id="btnToggleChipsMonitor"
+                                class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#collapseAlertasMonitor"
+                                aria-expanded="false"
+                                aria-controls="collapseAlertasMonitor">
+                            <i class="bi bi-chevron-down" id="iconoChevronChips"></i>
+                            <span id="textoChipsMonitor">Ver chips</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Detalle colapsable con los chips individuales -->
+                <div class="collapse mt-3 pt-3 border-top" id="collapseAlertasMonitor">
+                    <div class="small text-secondary mb-2">
+                        Haz clic en <strong>Reabastecer</strong> en cualquiera de los productos para abrir el modal con cantidad sugerida:
+                    </div>
+                    <div class="monitor-chips-scroll">
+                        <div class="row g-2 m-0">
+                            <div th:each="alerta : ${alertasMonitor}" class="col-12 col-xl-6 p-1">
+                                <div class="d-flex align-items-center justify-content-between gap-2 bg-light border rounded-3 p-2 h-100 shadow-xs" style="min-width: 0;">
+                                    <div class="d-flex align-items-center gap-2 min-w-0 flex-grow-1" style="overflow: hidden;">
+                                        <div class="product-thumb-wrapper flex-shrink-0 bg-white" style="width: 32px; height: 32px; border-radius: 6px;">
+                                            <img th:if="${alerta.imagenPrincipalUrl != null}"
+                                                 th:src="${alerta.imagenPrincipalUrl}"
+                                                 th:alt="${alerta.nombreProducto}"
+                                                 class="product-thumb-img">
+                                            <i th:if="${alerta.imagenPrincipalUrl == null}"
+                                               class="bi bi-box-seam text-secondary" style="font-size: 0.85rem;"></i>
+                                        </div>
+                                        <span class="sku-badge flex-shrink-0" style="font-size: 0.68rem; padding: 0.18rem 0.42rem;" th:text="${alerta.codigoSku}">SKU</span>
+                                        <div class="d-flex flex-column min-w-0 flex-grow-1" style="overflow: hidden;">
+                                            <span class="alerta-chip-nombre text-uppercase"
+                                                  th:title="${alerta.nombreProducto}"
+                                                  th:text="${alerta.nombreProducto}">PRODUCTO</span>
+                                            <span th:if="${alerta.categoria != null}"
+                                                  class="taxonomy-parent-path d-block text-truncate"
+                                                  style="font-size: 0.65rem; max-width: 100%;"
+                                                  th:title="${alerta.categoria.rutaJerarquica}"
+                                                  th:text="${alerta.categoria.rutaJerarquica}">CATEGORÍA</span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2 flex-shrink-0 ms-auto">
+                                        <span class="badge text-nowrap" style="min-width: 68px; text-align: center; font-size: 0.72rem;"
+                                              th:classappend="${(alerta.stockDisponible != null && alerta.stockDisponible <= 0) ? 'bg-danger-subtle text-danger' : 'bg-warning-subtle text-warning-emphasis'}"
+                                              th:text="${(alerta.stockDisponible != null ? alerta.stockDisponible : 0) + ' / mín ' + (alerta.stockMinimo != null ? alerta.stockMinimo : 0)}">
+                                            0 / mín 5
+                                        </span>
+                                        <button type="button"
+                                                class="btn btn-sm btn-primary py-1 px-2 text-nowrap btn-reabastecer-alerta d-inline-flex align-items-center justify-content-center gap-1 shadow-xs"
+                                                style="font-size: 0.72rem; min-width: 105px;"
+                                                th:attr="
+                                                    data-id=${alerta.idProducto},
+                                                    data-sugerido=${(alerta.stockMinimo != null ? alerta.stockMinimo : 5) - (alerta.stockDisponible != null ? alerta.stockDisponible : 0) + 5}
+                                                ">
+                                            <i class="bi bi-plus-circle"></i>
+                                            <span>Reabastecer</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pestañas de Navegación: Existencias vs. Historial Kardex -->
+        <ul class="nav nav-tabs border-bottom-0 mb-3 gap-2" id="inventarioTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold d-inline-flex align-items-center gap-2 rounded-3 border"
+                        th:classappend="${tabActiva != 'kardex'} ? 'active bg-white text-primary shadow-sm' : 'bg-light text-secondary'"
+                        id="tab-existencias-btn"
+                        data-bs-toggle="tab"
+                        data-bs-target="#paneExistencias"
+                        type="button"
+                        role="tab">
+                    <i class="bi bi-box-seam"></i>
+                    <span>Existencias por Producto</span>
+                    <span class="badge bg-primary-subtle text-primary ms-1" th:text="${#lists.size(productos)}">0</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold d-inline-flex align-items-center gap-2 rounded-3 border"
+                        th:classappend="${tabActiva == 'kardex'} ? 'active bg-white text-primary shadow-sm' : 'bg-light text-secondary'"
+                        id="tab-kardex-btn"
+                        data-bs-toggle="tab"
+                        data-bs-target="#paneKardex"
+                        type="button"
+                        role="tab">
+                    <i class="bi bi-clock-history"></i>
+                    <span>Historial de Movimientos (Kardex)</span>
+                    <span class="badge bg-secondary-subtle text-secondary ms-1" th:text="${#lists.size(movimientos)}">0</span>
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="inventarioTabsContent">
+
+            <!-- ============================================================== -->
+            <!-- PESTAÑA 1: EXISTENCIAS Y CONTROL DE STOCK POR PRODUCTO         -->
+            <!-- ============================================================== -->
+            <div class="tab-pane fade"
+                 th:classappend="${tabActiva != 'kardex'} ? 'show active' : ''"
+                 id="paneExistencias"
+                 role="tabpanel">
+
+                <!-- Barra de filtros dinámicos de Existencias con Select2 -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-3 p-lg-4">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-12 col-md-4">
+                                <label for="filtroCategoriaStock" class="form-label small text-secondary mb-1">
+                                    <i class="bi bi-diagram-3 me-1"></i> Categoría (Jerárquica)
+                                </label>
+                                <select id="filtroCategoriaStock"
+                                        class="form-select select2-global"
+                                        data-placeholder="Todas las categorías">
+                                    <option value="">Todas las categorías</option>
+                                    <option th:each="cat : ${categorias}"
+                                            th:value="${cat.idCategoria}"
+                                            th:text="${cat.rutaJerarquica}">
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="col-12 col-md-4">
+                                <label for="filtroMarcaStock" class="form-label small text-secondary mb-1">
+                                    <i class="bi bi-award me-1"></i> Marca
+                                </label>
+                                <select id="filtroMarcaStock"
+                                        class="form-select select2-global"
+                                        data-placeholder="Todas las marcas">
+                                    <option value="">Todas las marcas</option>
+                                    <option th:each="m : ${marcas}"
+                                            th:value="${m.idMarca}"
+                                            th:text="${m.nombreMarca}">
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="col-12 col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="filtroNivelStock" class="form-label small text-secondary mb-0">
+                                        <i class="bi bi-speedometer2 me-1"></i> Nivel de abastecimiento
+                                    </label>
+                                    <button type="button"
+                                            id="btnLimpiarFiltrosStock"
+                                            class="btn btn-link btn-sm p-0 text-decoration-none d-none">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i>Limpiar filtros
+                                    </button>
+                                </div>
+                                <select id="filtroNivelStock"
+                                        class="form-select select2-global"
+                                        data-placeholder="Todos los niveles">
+                                    <option value="">Todos los niveles</option>
+                                    <option value="OK">Nivel óptimo</option>
+                                    <option value="BAJO">Stock bajo mínimo (Alerta)</option>
+                                    <option value="AGOTADO">Agotados (0 unidades)</option>
+                                    <option value="CRITICO">Todos los críticos (Bajo + Agotado)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Existencias -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom py-3 px-4">
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <h3 class="h6 fw-bold mb-0">
+                                    Estado de existencias
+                                    <span id="badgeTotalStockFiltrados"
+                                          class="badge bg-primary-subtle text-primary ms-2"
+                                          th:text="${#lists.size(productos)}">0</span>
+                                </h3>
+                                <div class="d-flex align-items-center gap-2 ms-md-2" style="min-width: 140px;">
+                                    <label for="selectorFilasStock" class="small text-secondary mb-0">Mostrar</label>
+                                    <select id="selectorFilasStock" class="form-select form-select-sm select2-global" data-placeholder="Filas">
+                                        <option value="10" selected>10 filas</option>
+                                        <option value="20">20 filas</option>
+                                        <option value="50">50 filas</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="table-search-wrapper">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light border-end-0 text-secondary">
+                                        <i class="bi bi-search"></i>
+                                    </span>
+                                    <input type="search"
+                                           id="buscadorTablaStock"
+                                           class="form-control bg-light border-start-0"
+                                           placeholder="Buscar por SKU o producto...">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-admin table-inventario-compact mb-0" id="tablaExistencias">
+                                <thead>
+                                <tr>
+                                    <th style="width: 110px;">SKU</th>
+                                    <th style="min-width: 240px;">Producto</th>
+                                    <th style="min-width: 210px;">Categoría / Marca</th>
+                                    <th class="text-center" style="width: 110px;">Existencias</th>
+                                    <th class="text-center" style="width: 105px;">Nivel</th>
+                                    <th class="text-end" style="width: 100px;">Costo Unit.</th>
+                                    <th class="text-end" style="width: 110px;">Valor Total</th>
+                                    <th class="text-end" style="width: 130px;">Acciones</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="prod : ${productos}"
+                                    class="fila-existencia"
+                                    th:attr="
+                                        data-id=${prod.idProducto},
+                                        data-sku=${prod.codigoSku},
+                                        data-nombre=${prod.nombreProducto},
+                                        data-descripcion=${prod.descripcionProducto != null ? prod.descripcionProducto : ''},
+                                        data-categoria-id=${prod.categoria != null ? prod.categoria.idCategoria : ''},
+                                        data-categoria-ruta=${prod.categoria != null ? prod.categoria.rutaJerarquica : ''},
+                                        data-categoria-jerarquia=${prod.categoria != null ? prod.categoria.idsJerarquia : ''},
+                                        data-marca-id=${prod.marca != null ? prod.marca.idMarca : ''},
+                                        data-marca-nombre=${prod.marca != null ? prod.marca.nombreMarca : ''},
+                                        data-stock-disponible=${prod.stockDisponible != null ? prod.stockDisponible : 0},
+                                        data-stock-minimo=${prod.stockMinimo != null ? prod.stockMinimo : 0},
+                                        data-stock-nivel=${(prod.stockDisponible == null || prod.stockDisponible <= 0) ? 'AGOTADO' : ((prod.stockMinimo != null && prod.stockDisponible <= prod.stockMinimo) ? 'BAJO' : 'OK')},
+                                        data-metadata=${prod.metadata != null ? prod.metadata : ''},
+                                        data-imagen=${prod.imagenPrincipalUrl != null ? prod.imagenPrincipalUrl : ''}
+                                    ">
+                                    <td class="text-nowrap">
+                                        <span class="sku-badge" th:text="${prod.codigoSku}">SKU-0001</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-start gap-2">
+                                            <div class="product-thumb-wrapper flex-shrink-0" style="width: 38px; height: 38px; border-radius: 6px;">
+                                                <img th:if="${prod.imagenPrincipalUrl != null}"
+                                                     th:src="${prod.imagenPrincipalUrl}"
+                                                     th:alt="${prod.nombreProducto}"
+                                                     class="product-thumb-img">
+                                                <i th:if="${prod.imagenPrincipalUrl == null}"
+                                                   class="bi bi-box-seam text-secondary" style="font-size: 0.85rem;"></i>
+                                                <span th:if="${prod.totalImagenes != null && prod.totalImagenes > 1}"
+                                                      class="product-thumb-count"
+                                                      th:text="'+' + (${prod.totalImagenes} - 1)">
+                                                    +2
+                                                </span>
+                                            </div>
+                                            <div class="min-w-0 flex-grow-1">
+                                                <div class="fw-bold text-dark text-uppercase text-truncate" th:title="${prod.nombreProducto}" th:text="${prod.nombreProducto}">PRODUCTO</div>
+                                                <div class="small text-secondary product-desc-truncate"
+                                                     th:title="${prod.descripcionProducto}"
+                                                     th:text="${prod.descripcionProducto}">
+                                                    Descripción
+                                                </div>
+                                                <div class="small text-secondary" style="font-size: 0.72rem;">
+                                                    Estado:
+                                                    <span th:if="${prod.estado != null && prod.estado.toString() == 'A'}" class="text-success fw-medium">Activo</span>
+                                                    <span th:unless="${prod.estado != null && prod.estado.toString() == 'A'}" class="text-secondary">Inactivo</span>
+                                                </div>
+                                                <!-- Contenedor dinámico de chips de Metadata (Key-Value) -->
+                                                <div class="metadata-chips-container d-none"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div th:if="${prod.categoria != null}" class="taxonomy-cell-wrapper mb-1">
+                                            <span th:if="${!#strings.isEmpty(prod.categoria.rutaPadres)}"
+                                                  class="taxonomy-parent-path text-truncate d-block"
+                                                  style="max-width: 230px;"
+                                                  th:title="${prod.categoria.rutaPadres}"
+                                                  th:text="${prod.categoria.rutaPadres + ' ›'}">
+                                                ELECTRÓNICA › COMPUTACIÓN ›
+                                            </span>
+                                            <div class="d-inline-flex align-items-center gap-1">
+                                                <span class="badge bg-light text-dark border text-truncate"
+                                                      style="max-width: 190px;"
+                                                      th:title="${prod.categoria.nombreCategoria}"
+                                                      th:text="${prod.categoria.nombreCategoria}">
+                                                    Categoría
+                                                </span>
+                                                <span class="taxonomy-level-pill"
+                                                      th:classappend="'nivel-' + ${prod.categoria.nivel}"
+                                                      th:text="'N' + ${prod.categoria.nivel}"
+                                                      th:title="${prod.categoria.rutaJerarquica}">
+                                                    N3
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <span th:if="${prod.categoria == null}" class="badge bg-light text-secondary border mb-1">
+                                            Sin categoría
+                                        </span>
+                                        <div class="small text-muted d-flex align-items-center gap-1">
+                                            <i class="bi bi-tag" style="font-size: 0.70rem;"></i>
+                                            <span class="text-truncate" style="max-width: 200px;"
+                                                  th:title="${prod.marca != null ? prod.marca.nombreMarca : 'Sin marca'}"
+                                                  th:text="${prod.marca != null ? prod.marca.nombreMarca : 'Sin marca'}">
+                                                Marca
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="text-center text-nowrap">
+                                        <div>
+                                            <span class="fs-6 fw-bold"
+                                                  th:classappend="${(prod.stockDisponible == null || prod.stockDisponible <= 0) ? 'text-danger' : ((prod.stockMinimo != null && prod.stockDisponible <= prod.stockMinimo) ? 'text-warning-emphasis' : 'text-dark')}"
+                                                  th:text="${prod.stockDisponible != null ? prod.stockDisponible : 0}">
+                                                0
+                                            </span>
+                                            <span class="small text-secondary">uds</span>
+                                        </div>
+                                        <div class="small text-muted" style="font-size: 0.72rem;">
+                                            Mín: <span class="fw-medium" th:text="${(prod.stockMinimo != null ? prod.stockMinimo : 0) + ' uds'}">5 uds</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-center text-nowrap">
+                                        <span th:if="${prod.stockDisponible == null || prod.stockDisponible <= 0}"
+                                              class="badge bg-danger-subtle text-danger">
+                                            <i class="bi bi-x-circle me-1"></i>Agotado
+                                        </span>
+                                        <span th:if="${prod.stockDisponible != null && prod.stockDisponible > 0 && prod.stockMinimo != null && prod.stockDisponible <= prod.stockMinimo}"
+                                              class="badge bg-warning-subtle text-warning-emphasis">
+                                            <i class="bi bi-exclamation-triangle me-1"></i>Stock Bajo
+                                        </span>
+                                        <span th:if="${prod.stockDisponible != null && prod.stockDisponible > 0 && (prod.stockMinimo == null || prod.stockDisponible > prod.stockMinimo)}"
+                                              class="badge bg-success-subtle text-success">
+                                            <i class="bi bi-check-circle me-1"></i>Óptimo
+                                        </span>
+                                    </td>
+                                    <td class="text-end text-nowrap text-secondary font-monospace" style="font-size: 0.80rem;"
+                                        th:text="${prod.precioCosto != null ? '$' + #numbers.formatDecimal(prod.precioCosto, 1, 'COMMA', 2, 'POINT') : '$0.00'}">
+                                        $0.00
+                                    </td>
+                                    <td class="text-end text-nowrap fw-bold font-monospace" style="font-size: 0.82rem;"
+                                        th:text="${(prod.precioCosto != null && prod.stockDisponible != null && prod.stockDisponible > 0) ? '$' + #numbers.formatDecimal(prod.precioCosto * prod.stockDisponible, 1, 'COMMA', 2, 'POINT') : '$0.00'}">
+                                        $0.00
+                                    </td>
+                                    <td class="text-end text-nowrap">
+                                        <div class="d-inline-flex gap-1">
+                                            <!-- Botón Entrada Rápida -->
+                                            <button type="button"
+                                                    class="btn btn-outline-success btn-action-icon btn-movimiento-rapido"
+                                                    data-tipo="ENTRADA"
+                                                    title="Registrar entrada de stock">
+                                                <i class="bi bi-plus-lg"></i>
+                                            </button>
+
+                                            <!-- Botón Salida Rápida -->
+                                            <button type="button"
+                                                    class="btn btn-outline-danger btn-action-icon btn-movimiento-rapido"
+                                                    data-tipo="SALIDA"
+                                                    th:disabled="${prod.stockDisponible == null || prod.stockDisponible <= 0}"
+                                                    title="Registrar salida o merma">
+                                                <i class="bi bi-dash-lg"></i>
+                                            </button>
+
+                                            <!-- Botón Ajustar Stock Mínimo -->
+                                            <button type="button"
+                                                    class="btn btn-outline-secondary btn-action-icon btn-ajustar-minimo"
+                                                    title="Configurar stock mínimo de alerta">
+                                                <i class="bi bi-sliders"></i>
+                                            </button>
+
+                                            <!-- Botón Ver Kardex del Producto -->
+                                            <button type="button"
+                                                    class="btn btn-outline-primary btn-action-icon btn-ver-kardex-producto"
+                                                    title="Ver historial Kardex de este SKU">
+                                                <i class="bi bi-clock-history"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr id="filaSinResultadosStock" class="d-none">
+                                    <td colspan="8" class="p-5 text-center">
+                                        <i class="bi bi-inbox fs-2 text-secondary d-block mb-2"></i>
+                                        <div class="fw-bold">No se encontraron productos con esos criterios</div>
+                                        <div class="text-secondary small">
+                                            Intenta limpiar los filtros de nivel, categoría o búsqueda.
+                                        </div>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card-footer bg-white border-top py-3 px-4 d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2">
+                        <div id="infoPaginacionStock" class="text-secondary small">
+                            Mostrando 0 de 0 productos
+                        </div>
+                        <nav aria-label="Paginación de existencias">
+                            <ul id="controlesPaginacionStock" class="pagination pagination-sm mb-0">
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ============================================================== -->
+            <!-- PESTAÑA 2: HISTORIAL DE MOVIMIENTOS (KARDEX)                   -->
+            <!-- ============================================================== -->
+            <div class="tab-pane fade"
+                 th:classappend="${tabActiva == 'kardex'} ? 'show active' : ''"
+                 id="paneKardex"
+                 role="tabpanel">
+
+                <!-- Filtros del Kardex con Select2 -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-3 p-lg-4">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-12 col-md-6">
+                                <label for="filtroTipoKardex" class="form-label small text-secondary mb-1">
+                                    <i class="bi bi-arrow-down-up me-1"></i> Tipo de movimiento
+                                </label>
+                                <select id="filtroTipoKardex"
+                                        class="form-select select2-global"
+                                        data-placeholder="Todos los tipos">
+                                    <option value="">Todos los movimientos (Entradas y Salidas)</option>
+                                    <option value="ENTRADA">Solo ENTRADAS (+)</option>
+                                    <option value="SALIDA">Solo SALIDAS (-)</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="filtroMotivoKardex" class="form-label small text-secondary mb-0">
+                                        <i class="bi bi-journal-text me-1"></i> Motivo de operación
+                                    </label>
+                                    <button type="button"
+                                            id="btnLimpiarFiltrosKardex"
+                                            class="btn btn-link btn-sm p-0 text-decoration-none d-none">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i>Limpiar filtros
+                                    </button>
+                                </div>
+                                <select id="filtroMotivoKardex"
+                                        class="form-select select2-global"
+                                        data-placeholder="Todos los motivos">
+                                    <option value="">Todos los motivos</option>
+                                    <option value="COMPRA_PROVEEDOR">COMPRA_PROVEEDOR (Reabastecimiento)</option>
+                                    <option value="VENTA">VENTA</option>
+                                    <option value="AJUSTE">AJUSTE (Corrección / Merma / Auditoría)</option>
+                                    <option value="DEVOLUCION">DEVOLUCION (Retorno de mercadería)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla Kardex -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom py-3 px-4">
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <h3 class="h6 fw-bold mb-0">
+                                    Bitácora Kardex de movimientos
+                                    <span id="badgeTotalKardexFiltrados"
+                                          class="badge bg-primary-subtle text-primary ms-2"
+                                          th:text="${#lists.size(movimientos)}">0</span>
+                                </h3>
+                                <div class="d-flex align-items-center gap-2 ms-md-2" style="min-width: 140px;">
+                                    <label for="selectorFilasKardex" class="small text-secondary mb-0">Mostrar</label>
+                                    <select id="selectorFilasKardex" class="form-select form-select-sm select2-global" data-placeholder="Filas">
+                                        <option value="10" selected>10 filas</option>
+                                        <option value="20">20 filas</option>
+                                        <option value="50">50 filas</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="table-search-wrapper">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light border-end-0 text-secondary">
+                                        <i class="bi bi-search"></i>
+                                    </span>
+                                    <input type="search"
+                                           id="buscadorTablaKardex"
+                                           class="form-control bg-light border-start-0"
+                                           placeholder="Filtrar por SKU, producto o motivo...">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-admin table-inventario-compact mb-0" id="tablaKardex">
+                                <thead>
+                                <tr>
+                                    <th># Mov.</th>
+                                    <th>Fecha y Hora</th>
+                                    <th>SKU</th>
+                                    <th>Producto</th>
+                                    <th class="text-center">Tipo</th>
+                                    <th class="text-center">Cantidad</th>
+                                    <th>Motivo / Detalle</th>
+                                    <th class="text-center">Stock Actual</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="mov : ${movimientos}"
+                                    class="fila-kardex"
+                                    th:attr="
+                                        data-sku=${mov.producto.codigoSku},
+                                        data-nombre=${mov.producto.nombreProducto},
+                                        data-tipo=${mov.tipoMovimiento},
+                                        data-motivo=${mov.motivo},
+                                        data-categoria-ruta=${mov.producto.categoria != null ? mov.producto.categoria.rutaJerarquica : ''},
+                                        data-marca=${mov.producto.marca != null ? mov.producto.marca.nombreMarca : ''}
+                                    ">
+                                    <td class="text-secondary fw-medium" th:text="'#' + ${mov.idMovimiento}">#1</td>
+                                    <td class="small text-secondary"
+                                        th:text="${mov.fechaMovimiento != null ? #temporals.format(mov.fechaMovimiento, 'dd/MM/yyyy HH:mm') : 'Reciente'}">
+                                        21/10/2026 14:30
+                                    </td>
+                                    <td>
+                                        <span class="sku-badge" th:text="${mov.producto.codigoSku}">SKU-0001</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="product-thumb-wrapper flex-shrink-0" style="width: 36px; height: 36px; border-radius: 6px;">
+                                                <img th:if="${mov.producto.imagenPrincipalUrl != null}"
+                                                     th:src="${mov.producto.imagenPrincipalUrl}"
+                                                     th:alt="${mov.producto.nombreProducto}"
+                                                     class="product-thumb-img">
+                                                <i th:if="${mov.producto.imagenPrincipalUrl == null}"
+                                                   class="bi bi-image text-secondary"></i>
+                                            </div>
+                                            <div class="min-w-0">
+                                                <div class="fw-bold text-dark text-uppercase text-truncate" style="max-width: 220px;" th:text="${mov.producto.nombreProducto}">PRODUCTO</div>
+                                                <div th:if="${mov.producto.categoria != null}" class="taxonomy-parent-path text-truncate" style="max-width: 220px;"
+                                                     th:text="${mov.producto.categoria.rutaJerarquica}">
+                                                    Categoría jerárquica
+                                                </div>
+                                                <div class="small text-secondary" th:text="${mov.producto.marca != null ? mov.producto.marca.nombreMarca : ''}">Marca</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span th:if="${mov.tipoMovimiento == 'ENTRADA'}"
+                                              class="badge bg-success-subtle text-success">
+                                            <i class="bi bi-arrow-down-left-circle me-1"></i>ENTRADA
+                                        </span>
+                                        <span th:if="${mov.tipoMovimiento == 'SALIDA'}"
+                                              class="badge bg-danger-subtle text-danger">
+                                            <i class="bi bi-arrow-up-right-circle me-1"></i>SALIDA
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="fw-bold"
+                                              th:classappend="${mov.tipoMovimiento == 'ENTRADA' ? 'text-success' : 'text-danger'}"
+                                              th:text="${(mov.tipoMovimiento == 'ENTRADA' ? '+' : '-') + mov.cantidad + ' uds'}">
+                                            +10 uds
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="fw-medium text-dark" th:text="${mov.motivo}">COMPRA_PROVEEDOR</span>
+                                        <span th:if="${mov.idPedido != null}"
+                                              class="badge bg-info-subtle text-info ms-1"
+                                              th:text="'Pedido #' + ${mov.idPedido}">
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-light text-dark border"
+                                              th:text="${mov.producto.stockDisponible + ' uds'}">
+                                            20 uds
+                                        </span>
+                                    </td>
+                                </tr>
+
+                                <tr id="filaSinResultadosKardex" class="d-none">
+                                    <td colspan="8" class="p-5 text-center">
+                                        <i class="bi bi-clock-history fs-2 text-secondary d-block mb-2"></i>
+                                        <div class="fw-bold">No hay movimientos registrados con esos filtros</div>
+                                        <div class="text-secondary small">
+                                            Registra una entrada o salida de inventario con el botón superior.
+                                        </div>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card-footer bg-white border-top py-3 px-4 d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2">
+                        <div id="infoPaginacionKardex" class="text-secondary small">
+                            Mostrando 0 de 0 movimientos
+                        </div>
+                        <nav aria-label="Paginación de Kardex">
+                            <ul id="controlesPaginacionKardex" class="pagination pagination-sm mb-0">
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- MODAL 1: REGISTRAR MOVIMIENTO DE INVENTARIO (ENTRADA / SALIDA) -->
+        <!-- ============================================================== -->
+        <div class="modal fade" id="modalMovimiento" tabindex="-1" aria-labelledby="modalMovimientoTitulo" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-producto-dialog">
+                <form id="formMovimiento"
+                      class="modal-content border-0 shadow overflow-hidden"
+                      th:action="@{/backoffice/inventario/movimiento}"
+                      method="post"
+                      novalidate>
+
+                    <div class="modal-header modal-header-admin py-3 px-4">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-arrow-left-right fs-5 text-primary"></i>
+                            <h5 class="modal-title h6 fw-bold mb-0" id="modalMovimientoTitulo">
+                                Registrar movimiento de inventario
+                            </h5>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+
+                    <div class="modal-body modal-body-segmented">
+
+                        <!-- Alerta de error de negocio dentro del modal -->
+                        <div th:if="${mensajeErrorModal}" class="alert alert-danger py-2 px-3 small mb-3" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                            <span th:text="${mensajeErrorModal}"></span>
+                        </div>
+
+                        <!-- BLOQUE 1: PRODUCTO Y SIMULACIÓN DE STOCK -->
+                        <div class="modal-section-card">
+                            <div class="modal-section-title">
+                                <i class="bi bi-box-seam"></i>
+                                <span>Producto y proyección de existencias</span>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label for="idProductoMovimiento" class="form-label small fw-bold mb-1">
+                                        Producto <span class="text-danger">*</span>
+                                    </label>
+                                    <select id="idProductoMovimiento"
+                                            name="idProducto"
+                                            class="form-select select2-global"
+                                            data-placeholder="Seleccione un producto del catálogo..."
+                                            required>
+                                        <option value="">Seleccione un producto del catálogo...</option>
+                                        <option th:each="prod : ${productos}"
+                                                th:value="${prod.idProducto}"
+                                                th:attr="
+                                                    data-stock=${prod.stockDisponible != null ? prod.stockDisponible : 0},
+                                                    data-minimo=${prod.stockMinimo != null ? prod.stockMinimo : 0},
+                                                    data-sku=${prod.codigoSku},
+                                                    data-nombre=${prod.nombreProducto},
+                                                    data-categoria=${prod.categoria != null ? prod.categoria.rutaJerarquica : ''},
+                                                    data-marca=${prod.marca != null ? prod.marca.nombreMarca : ''},
+                                                    data-imagen=${prod.imagenPrincipalUrl != null ? prod.imagenPrincipalUrl : ''},
+                                                    data-metadata=${prod.metadata != null ? prod.metadata : ''}
+                                                "
+                                                th:text="${prod.codigoSku + ' — ' + prod.nombreProducto + ' (Stock: ' + (prod.stockDisponible != null ? prod.stockDisponible : 0) + ' uds)'}">
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <!-- Ficha visual del producto seleccionado -->
+                                <div class="col-12">
+                                    <div id="previewFichaProducto" class="d-none p-2 bg-light border rounded-3 mb-2">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="product-thumb-wrapper flex-shrink-0 bg-white" style="width: 44px; height: 44px; border-radius: 8px;">
+                                                <img id="previewImgProducto" src="" class="product-thumb-img d-none" alt="">
+                                                <i id="previewIconoProducto" class="bi bi-box-seam text-secondary fs-5"></i>
+                                            </div>
+                                            <div class="min-w-0 flex-grow-1">
+                                                <div class="d-flex align-items-center gap-2 mb-1">
+                                                    <span class="sku-badge" id="previewSkuProducto">SKU</span>
+                                                    <span class="badge bg-white text-secondary border small" id="previewMarcaProducto">Marca</span>
+                                                </div>
+                                                <div class="fw-bold text-dark text-uppercase small text-truncate" id="previewNombreProducto"></div>
+                                                <div class="taxonomy-parent-path text-truncate" id="previewCategoriaProducto"></div>
+                                            </div>
+                                        </div>
+                                        <div id="previewMetadataChips" class="metadata-chips-container mt-2 pt-2 border-top d-none"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Tarjeta de proyección en vivo -->
+                                <div class="col-12">
+                                    <div class="row g-2 text-center bg-light border rounded-3 p-2 mx-0">
+                                        <div class="col-4 border-end">
+                                            <div class="text-secondary" style="font-size: 0.72rem;">STOCK ACTUAL</div>
+                                            <div class="fw-bold fs-6 text-dark" id="previewStockActual">-</div>
+                                        </div>
+                                        <div class="col-4 border-end">
+                                            <div class="text-secondary" style="font-size: 0.72rem;">OPERACIÓN</div>
+                                            <div class="fw-bold fs-6 text-primary" id="previewOperacion">0 uds</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="text-secondary" style="font-size: 0.72rem;">STOCK PROYECTADO</div>
+                                            <div class="fw-bold fs-6 text-success" id="previewStockFinal">-</div>
+                                        </div>
+                                    </div>
+                                    <div id="alertaStockInsuficiente" class="text-danger small mt-2 d-none">
+                                        <i class="bi bi-exclamation-octagon-fill me-1"></i>
+                                        La cantidad de salida supera el stock disponible actual.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BLOQUE 2: DETALLES DEL MOVIMIENTO (CON SELECT2) -->
+                        <div class="modal-section-card">
+                            <div class="modal-section-title">
+                                <i class="bi bi-sliders"></i>
+                                <span>Detalle del movimiento</span>
+                            </div>
+
+                            <div class="row g-3">
+                                <!-- Tipo de Movimiento -->
+                                <div class="col-12 col-md-6">
+                                    <label for="tipoMovimientoSelect" class="form-label small fw-bold mb-1">
+                                        Tipo de movimiento <span class="text-danger">*</span>
+                                    </label>
+                                    <select id="tipoMovimientoSelect"
+                                            name="tipoMovimiento"
+                                            class="form-select select2-global"
+                                            data-placeholder="Seleccione tipo de movimiento..."
+                                            required>
+                                        <option value="ENTRADA">ENTRADA (+ Ingreso a bodega)</option>
+                                        <option value="SALIDA">SALIDA (- Egreso / Descuento)</option>
+                                    </select>
+                                </div>
+
+                                <!-- Cantidad -->
+                                <div class="col-12 col-md-6">
+                                    <label for="cantidadMovimientoInput" class="form-label small fw-bold mb-1">
+                                        Cantidad (unidades) <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number"
+                                           min="1"
+                                           step="1"
+                                           id="cantidadMovimientoInput"
+                                           name="cantidad"
+                                           class="form-control"
+                                           placeholder="Ej: 10"
+                                           required>
+                                </div>
+
+                                <!-- Motivo -->
+                                <div class="col-12 col-md-6">
+                                    <label for="motivoMovimientoSelect" class="form-label small fw-bold mb-1">
+                                        Motivo estandarizado <span class="text-danger">*</span>
+                                    </label>
+                                    <select id="motivoMovimientoSelect"
+                                            name="motivo"
+                                            class="form-select select2-global"
+                                            data-placeholder="Seleccione motivo del movimiento..."
+                                            required>
+                                        <option value="COMPRA_PROVEEDOR">COMPRA_PROVEEDOR (Reabastecimiento)</option>
+                                        <option value="AJUSTE">AJUSTE (Corrección / Merma / Auditoría)</option>
+                                        <option value="DEVOLUCION">DEVOLUCION (Retorno de mercadería)</option>
+                                        <option value="VENTA">VENTA (Despacho manual)</option>
+                                    </select>
+                                </div>
+
+                                <!-- Observación opcional -->
+                                <div class="col-12 col-md-6">
+                                    <label for="observacionMovimientoInput" class="form-label small fw-bold mb-1">
+                                        Referencia / Observación <span class="text-secondary fw-normal">(Opcional)</span>
+                                    </label>
+                                    <input type="text"
+                                           id="observacionMovimientoInput"
+                                           name="observacion"
+                                           class="form-control"
+                                           placeholder="Ej: Factura #402, Lote oct-2026...">
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer modal-footer-sticky py-3 px-4">
+                        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
+                            Cancelar
+                        </button>
+                        <button type="submit" id="btnGuardarMovimiento" class="btn btn-primary d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-check2-circle"></i>
+                            <span>Aplicar movimiento</span>
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- MODAL 2: CONFIGURAR UMBRAL DE STOCK MÍNIMO                     -->
+        <!-- ============================================================== -->
+        <div class="modal fade" id="modalStockMinimo" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-confirm-dialog">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header modal-header-admin py-3 px-4">
+                        <h5 class="modal-title h6 fw-bold mb-0">
+                            <i class="bi bi-sliders me-2 text-primary"></i>Umbral de stock mínimo
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <form id="formStockMinimo" method="post">
+                        <div class="modal-body p-4">
+                            <div class="p-3 bg-light rounded border mb-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="product-thumb-wrapper flex-shrink-0 bg-white" style="width: 48px; height: 48px; border-radius: 8px;">
+                                        <img id="imgProductoMinimo" src="" class="product-thumb-img d-none" alt="">
+                                        <i id="iconoProductoMinimo" class="bi bi-box-seam text-secondary fs-4"></i>
+                                    </div>
+                                    <div class="min-w-0 flex-grow-1">
+                                        <div class="fw-bold text-dark text-uppercase small" id="nombreProductoMinimo"></div>
+                                        <div class="d-flex align-items-center gap-2 mt-1">
+                                            <span class="sku-badge" id="skuProductoMinimo"></span>
+                                            <span class="taxonomy-parent-path text-truncate" style="max-width: 250px;" id="catProductoMinimo"></span>
+                                        </div>
+                                        <div class="small text-secondary mt-1">
+                                            Stock disponible actual: <strong id="stockActualMinimo" class="text-dark">0</strong> uds
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <label for="inputNuevoStockMinimo" class="form-label small fw-bold mb-1">
+                                Nuevo stock mínimo de alerta (unidades) <span class="text-danger">*</span>
+                            </label>
+                            <input type="number"
+                                   min="0"
+                                   step="1"
+                                   name="stockMinimo"
+                                   id="inputNuevoStockMinimo"
+                                   class="form-control"
+                                   required>
+                            <div class="form-text small">
+                                El monitor en segundo plano generará alerta cuando el stock disponible sea menor o igual a este valor.
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-light py-2 px-4">
+                            <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                Guardar umbral
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </th:block>
+</div>
+
+<!-- Script Bootstrap Bundle (Select2 y jQuery ya vienen del head.html) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        const basePath = /*[[@{/backoffice/inventario}]]*/ '/backoffice/inventario';
+        const abrirModalInicial = /*[[${abrirModalMovimiento}]]*/ false;
+
+        // Auto-cierre para alertas flotantes
+        document.querySelectorAll('.floating-alert').forEach(function (alertEl) {
+            setTimeout(function () {
+                if (window.bootstrap) {
+                    const bsAlert = bootstrap.Alert.getOrCreateInstance(alertEl);
+                    if (bsAlert) bsAlert.close();
+                }
+            }, 4500);
+        });
+
+        // Alternar pestañas y estilos
+        document.querySelectorAll('#inventarioTabs button[data-bs-toggle="tab"]').forEach(function (tabBtn) {
+            tabBtn.addEventListener('shown.bs.tab', function (event) {
+                document.querySelectorAll('#inventarioTabs button').forEach(function (btn) {
+                    btn.classList.remove('bg-white', 'text-primary', 'shadow-sm');
+                    btn.classList.add('bg-light', 'text-secondary');
+                });
+                event.target.classList.remove('bg-light', 'text-secondary');
+                event.target.classList.add('bg-white', 'text-primary', 'shadow-sm');
+            });
+        });
+
+        // =========================================================================
+        // DECLARACIÓN GLOBAL DE REFERENCIAS DOM (SIN PROBLEMAS DE HOISTING / TDZ)
+        // =========================================================================
+        const formEscanearStock = document.getElementById('formEscanearStock');
+        const btnEscanearStock = document.getElementById('btnEscanearStock');
+        const iconoEscanear = document.getElementById('iconoEscanear');
+        const textoEscanear = document.getElementById('textoEscanear');
+
+        const btnAbrirModalMovimiento = document.getElementById('btnAbrirModalMovimiento');
+        const btnFiltrarCriticosDesdeMonitor = document.getElementById('btnFiltrarCriticosDesdeMonitor');
+        const btnToggleChipsMonitor = document.getElementById('btnToggleChipsMonitor');
+        const collapseAlertasEl = document.getElementById('collapseAlertasMonitor');
+
+        // Modal Movimiento
+        const modalMovimientoEl = document.getElementById('modalMovimiento');
+        const modalStockMinimoEl = document.getElementById('modalStockMinimo');
+
+        const selectProductoMov = document.getElementById('idProductoMovimiento');
+        const selectTipoMov = document.getElementById('tipoMovimientoSelect');
+        const inputCantidadMov = document.getElementById('cantidadMovimientoInput');
+        const selectMotivoMov = document.getElementById('motivoMovimientoSelect');
+        const inputObservacionMov = document.getElementById('observacionMovimientoInput');
+        const previewStockActual = document.getElementById('previewStockActual');
+        const previewOperacion = document.getElementById('previewOperacion');
+        const previewStockFinal = document.getElementById('previewStockFinal');
+        const alertaStockInsuficiente = document.getElementById('alertaStockInsuficiente');
+        const btnGuardarMovimiento = document.getElementById('btnGuardarMovimiento');
+
+        // Tabla Existencias
+        const filasExistencias = Array.from(document.querySelectorAll('.fila-existencia'));
+        const filtroCatStockEl = document.getElementById('filtroCategoriaStock');
+        const filtroMarcaStockEl = document.getElementById('filtroMarcaStock');
+        const filtroNivelStockEl = document.getElementById('filtroNivelStock');
+        const buscadorStockEl = document.getElementById('buscadorTablaStock');
+        const selectorFilasStockEl = document.getElementById('selectorFilasStock');
+        const btnLimpiarStock = document.getElementById('btnLimpiarFiltrosStock');
+        const badgeTotalStock = document.getElementById('badgeTotalStockFiltrados');
+        const filaSinStock = document.getElementById('filaSinResultadosStock');
+        const infoPagStock = document.getElementById('infoPaginacionStock');
+        const controlesPagStock = document.getElementById('controlesPaginacionStock');
+
+        // Tabla Kardex
+        const filasKardex = Array.from(document.querySelectorAll('.fila-kardex'));
+        const filtroTipoKardexEl = document.getElementById('filtroTipoKardex');
+        const filtroMotivoKardexEl = document.getElementById('filtroMotivoKardex');
+        const buscadorKardexEl = document.getElementById('buscadorTablaKardex');
+        const selectorFilasKardexEl = document.getElementById('selectorFilasKardex');
+        const btnLimpiarKardex = document.getElementById('btnLimpiarFiltrosKardex');
+        const badgeTotalKardex = document.getElementById('badgeTotalKardexFiltrados');
+        const filaSinKardex = document.getElementById('filaSinResultadosKardex');
+        const infoPagKardex = document.getElementById('infoPaginacionKardex');
+        const controlesPagKardex = document.getElementById('controlesPaginacionKardex');
+
+        let paginaStock = 1;
+        let existenciasFiltradas = filasExistencias.slice();
+        let paginaKardex = 1;
+        let kardexFiltrados = filasKardex.slice();
+
+        // =========================================================================
+        // BOTÓN 1: ESCANEAR STOCK CON FEEDBACK VISUAL INMEDIATO
+        // =========================================================================
+        if (formEscanearStock) {
+            formEscanearStock.addEventListener('submit', function () {
+                if (btnEscanearStock) btnEscanearStock.classList.add('disabled');
+                if (iconoEscanear) iconoEscanear.classList.add('spin-animation');
+                if (textoEscanear) textoEscanear.textContent = 'Escaneando...';
+            });
+        }
+
+        // =========================================================================
+        // BOTÓN 2: VER CHIPS (TOGGLE COLLAPSE ROBUSTO)
+        // =========================================================================
+        if (btnToggleChipsMonitor && collapseAlertasEl) {
+            btnToggleChipsMonitor.addEventListener('click', function (e) {
+                e.preventDefault();
+                if (window.bootstrap && bootstrap.Collapse) {
+                    const bsCollapse = bootstrap.Collapse.getOrCreateInstance(collapseAlertasEl);
+                    bsCollapse.toggle();
+                } else {
+                    collapseAlertasEl.classList.toggle('show');
+                }
+            });
+        }
+
+        // =========================================================================
+        // BOTÓN 3: FILTRAR CRÍTICOS EN TABLA DESDE EL BANNER
+        // =========================================================================
+        if (btnFiltrarCriticosDesdeMonitor) {
+            btnFiltrarCriticosDesdeMonitor.addEventListener('click', function () {
+                const tabExistenciasBtn = document.getElementById('tab-existencias-btn');
+                if (tabExistenciasBtn && window.bootstrap && bootstrap.Tab) {
+                    const tabInstance = bootstrap.Tab.getOrCreateInstance(tabExistenciasBtn);
+                    tabInstance.show();
+                }
+
+                if (window.jQuery && jQuery.fn.select2) {
+                    jQuery(filtroNivelStockEl).val('CRITICO').trigger('change');
+                } else if (filtroNivelStockEl) {
+                    filtroNivelStockEl.value = 'CRITICO';
+                    aplicarFiltrosStock();
+                }
+
+                const tablaEl = document.getElementById('tablaExistencias');
+                if (tablaEl) {
+                    tablaEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            });
+        }
+
+        // =========================================================================
+        // BOTÓN 4: REGISTRAR MOVIMIENTO (ABRIR MODAL Y REINICIALIZAR SELECT2)
+        // =========================================================================
+        function abrirModalParaProducto(idProducto, tipo, cantidadSugerida, motivoSugerido) {
+            const idVal = idProducto ? String(idProducto) : '';
+            const tipoVal = tipo || 'ENTRADA';
+            const motivoVal = motivoSugerido || (tipoVal === 'SALIDA' ? 'AJUSTE' : 'COMPRA_PROVEEDOR');
+
+            if (window.jQuery && jQuery.fn.select2) {
+                jQuery(selectProductoMov).val(idVal).trigger('change');
+                jQuery(selectTipoMov).val(tipoVal).trigger('change');
+                jQuery(selectMotivoMov).val(motivoVal).trigger('change');
+            } else {
+                if (selectProductoMov) selectProductoMov.value = idVal;
+                if (selectTipoMov) selectTipoMov.value = tipoVal;
+                if (selectMotivoMov) selectMotivoMov.value = motivoVal;
+            }
+
+            if (inputCantidadMov) inputCantidadMov.value = cantidadSugerida || '';
+            if (inputObservacionMov) inputObservacionMov.value = '';
+
+            actualizarProyeccionEnVivo();
+
+            if (modalMovimientoEl && window.bootstrap && bootstrap.Modal) {
+                const bsModal = bootstrap.Modal.getOrCreateInstance(modalMovimientoEl);
+                bsModal.show();
+            }
+        }
+
+        if (btnAbrirModalMovimiento) {
+            btnAbrirModalMovimiento.addEventListener('click', function () {
+                abrirModalParaProducto('', 'ENTRADA', '', 'COMPRA_PROVEEDOR');
+            });
+        }
+
+        // Botones "Reabastecer" de los chips
+        document.querySelectorAll('.btn-reabastecer-alerta').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const idProd = this.getAttribute('data-id');
+                const cantSugerida = Math.max(1, parseInt(this.getAttribute('data-sugerido'), 10) || 5);
+                abrirModalParaProducto(idProd, 'ENTRADA', cantSugerida, 'COMPRA_PROVEEDOR');
+            });
+        });
+
+        // Botones rápidos (+) y (-) en cada fila
+        document.querySelectorAll('.btn-movimiento-rapido').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const fila = this.closest('.fila-existencia');
+                if (!fila) return;
+                const idProd = fila.getAttribute('data-id');
+                const tipo = this.getAttribute('data-tipo') || 'ENTRADA';
+                const motivo = tipo === 'ENTRADA' ? 'COMPRA_PROVEEDOR' : 'AJUSTE';
+                abrirModalParaProducto(idProd, tipo, 1, motivo);
+            });
+        });
+
+        // Renderizar chips de metadata en las filas de la tabla
+        function renderizarChipsMetadataTabla() {
+            document.querySelectorAll('.fila-existencia').forEach(function (fila) {
+                const rawMeta = fila.getAttribute('data-metadata') || '';
+                const container = fila.querySelector('.metadata-chips-container');
+                if (!container || !rawMeta.trim()) return;
+
+                try {
+                    const parsed = JSON.parse(rawMeta);
+                    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return;
+                    const entries = Object.entries(parsed).filter(function ([k]) {
+                        return k !== 'imagenes';
+                    });
+                    if (entries.length === 0) return;
+
+                    container.innerHTML = '';
+                    const maxVisible = 3;
+                    entries.slice(0, maxVisible).forEach(function ([k, v]) {
+                        const chip = document.createElement('span');
+                        chip.className = 'metadata-chip';
+                        const keySpan = document.createElement('span');
+                        keySpan.className = 'metadata-chip-key';
+                        keySpan.textContent = k + ':';
+                        const valSpan = document.createElement('span');
+                        valSpan.textContent = String(v);
+                        chip.appendChild(keySpan);
+                        chip.appendChild(valSpan);
+                        container.appendChild(chip);
+                    });
+
+                    if (entries.length > maxVisible) {
+                        const moreChip = document.createElement('span');
+                        moreChip.className = 'metadata-chip text-primary fw-semibold';
+                        moreChip.textContent = '+' + (entries.length - maxVisible) + ' más';
+                        container.appendChild(moreChip);
+                    }
+                    container.classList.remove('d-none');
+                } catch (e) {
+                    // Ignorar si no es JSON válido
+                }
+            });
+        }
+        renderizarChipsMetadataTabla();
+
+        // Botón "Ajustar stock mínimo" en cada fila
+        document.querySelectorAll('.btn-ajustar-minimo').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const fila = this.closest('.fila-existencia');
+                if (!fila) return;
+                const id = fila.getAttribute('data-id');
+                const sku = fila.getAttribute('data-sku');
+                const nombre = fila.getAttribute('data-nombre');
+                const stockDisp = fila.getAttribute('data-stock-disponible');
+                const stockMin = fila.getAttribute('data-stock-minimo');
+                const catRuta = fila.getAttribute('data-categoria-ruta') || '';
+                const imgUrl = fila.getAttribute('data-imagen') || '';
+
+                document.getElementById('formStockMinimo').setAttribute('action', basePath + '/' + id + '/stock-minimo');
+                document.getElementById('nombreProductoMinimo').textContent = nombre;
+                document.getElementById('skuProductoMinimo').textContent = sku;
+                document.getElementById('stockActualMinimo').textContent = stockDisp;
+                document.getElementById('inputNuevoStockMinimo').value = stockMin;
+
+                const catEl = document.getElementById('catProductoMinimo');
+                if (catEl) catEl.textContent = catRuta;
+
+                const imgEl = document.getElementById('imgProductoMinimo');
+                const iconoEl = document.getElementById('iconoProductoMinimo');
+                if (imgEl && iconoEl) {
+                    if (imgUrl) {
+                        imgEl.src = imgUrl;
+                        imgEl.classList.remove('d-none');
+                        iconoEl.classList.add('d-none');
+                    } else {
+                        imgEl.src = '';
+                        imgEl.classList.add('d-none');
+                        iconoEl.classList.remove('d-none');
+                    }
+                }
+
+                if (modalStockMinimoEl && window.bootstrap && bootstrap.Modal) {
+                    const bsMinModal = bootstrap.Modal.getOrCreateInstance(modalStockMinimoEl);
+                    bsMinModal.show();
+                }
+            });
+        });
+
+        // Proyección en vivo de stock y ficha técnica en el modal
+        function actualizarProyeccionEnVivo() {
+            if (!selectProductoMov) return;
+            const idx = selectProductoMov.selectedIndex;
+            const opcionSeleccionada = (idx >= 0 && selectProductoMov.options) ? selectProductoMov.options[idx] : null;
+            const tieneProducto = opcionSeleccionada && opcionSeleccionada.value !== '';
+            const stockActual = tieneProducto ? (parseInt(opcionSeleccionada.getAttribute('data-stock'), 10) || 0) : null;
+            const tipo = (selectTipoMov ? selectTipoMov.value : 'ENTRADA') || 'ENTRADA';
+            const cantidad = parseInt(inputCantidadMov ? inputCantidadMov.value : 0, 10) || 0;
+
+            const fichaProd = document.getElementById('previewFichaProducto');
+            const imgEl = document.getElementById('previewImgProducto');
+            const iconoEl = document.getElementById('previewIconoProducto');
+            const skuEl = document.getElementById('previewSkuProducto');
+            const marcaEl = document.getElementById('previewMarcaProducto');
+            const nombreEl = document.getElementById('previewNombreProducto');
+            const catEl = document.getElementById('previewCategoriaProducto');
+            const metaContainer = document.getElementById('previewMetadataChips');
+
+            if (tieneProducto && fichaProd) {
+                const skuVal = opcionSeleccionada.getAttribute('data-sku') || '';
+                const nombreVal = opcionSeleccionada.getAttribute('data-nombre') || '';
+                const catVal = opcionSeleccionada.getAttribute('data-categoria') || '';
+                const marcaVal = opcionSeleccionada.getAttribute('data-marca') || '';
+                const imgVal = opcionSeleccionada.getAttribute('data-imagen') || '';
+                const metaVal = opcionSeleccionada.getAttribute('data-metadata') || '';
+
+                if (skuEl) skuEl.textContent = skuVal;
+                if (marcaEl) {
+                    marcaEl.textContent = marcaVal || 'Sin marca';
+                    marcaEl.style.display = marcaVal ? 'inline-block' : 'none';
+                }
+                if (nombreEl) nombreEl.textContent = nombreVal;
+                if (catEl) catEl.textContent = catVal;
+
+                if (imgEl && iconoEl) {
+                    if (imgVal) {
+                        imgEl.src = imgVal;
+                        imgEl.classList.remove('d-none');
+                        iconoEl.classList.add('d-none');
+                    } else {
+                        imgEl.src = '';
+                        imgEl.classList.add('d-none');
+                        iconoEl.classList.remove('d-none');
+                    }
+                }
+
+                if (metaContainer) {
+                    metaContainer.innerHTML = '';
+                    if (metaVal && metaVal.trim()) {
+                        try {
+                            const parsed = JSON.parse(metaVal);
+                            const entries = Object.entries(parsed).filter(function ([k]) { return k !== 'imagenes'; });
+                            if (entries.length > 0) {
+                                entries.forEach(function ([k, v]) {
+                                    const chip = document.createElement('span');
+                                    chip.className = 'metadata-chip';
+                                    chip.innerHTML = '<span class="metadata-chip-key">' + k + ':</span> ' + v;
+                                    metaContainer.appendChild(chip);
+                                });
+                                metaContainer.classList.remove('d-none');
+                            } else {
+                                metaContainer.classList.add('d-none');
+                            }
+                        } catch (e) {
+                            metaContainer.classList.add('d-none');
+                        }
+                    } else {
+                        metaContainer.classList.add('d-none');
+                    }
+                }
+                fichaProd.classList.remove('d-none');
+            } else if (fichaProd) {
+                fichaProd.classList.add('d-none');
+            }
+
+            if (stockActual === null) {
+                if (previewStockActual) previewStockActual.textContent = '-';
+                if (previewOperacion) {
+                    previewOperacion.textContent = '0 uds';
+                    previewOperacion.className = 'fw-bold fs-6 text-primary';
+                }
+                if (previewStockFinal) {
+                    previewStockFinal.textContent = '-';
+                    previewStockFinal.className = 'fw-bold fs-6 text-secondary';
+                }
+                if (alertaStockInsuficiente) alertaStockInsuficiente.classList.add('d-none');
+                if (btnGuardarMovimiento) btnGuardarMovimiento.disabled = false;
+                return;
+            }
+
+            if (previewStockActual) previewStockActual.textContent = stockActual + ' uds';
+            const signo = tipo === 'ENTRADA' ? '+' : '-';
+            if (previewOperacion) {
+                previewOperacion.textContent = signo + cantidad + ' uds';
+                previewOperacion.className = 'fw-bold fs-6 ' + (tipo === 'ENTRADA' ? 'text-success' : 'text-danger');
+            }
+
+            const proyectado = tipo === 'ENTRADA' ? (stockActual + cantidad) : (stockActual - cantidad);
+            if (previewStockFinal) previewStockFinal.textContent = proyectado + ' uds';
+
+            if (proyectado < 0) {
+                if (previewStockFinal) previewStockFinal.className = 'fw-bold fs-6 text-danger';
+                if (alertaStockInsuficiente) alertaStockInsuficiente.classList.remove('d-none');
+                if (btnGuardarMovimiento) btnGuardarMovimiento.disabled = true;
+            } else {
+                if (previewStockFinal) previewStockFinal.className = 'fw-bold fs-6 text-success';
+                if (alertaStockInsuficiente) alertaStockInsuficiente.classList.add('d-none');
+                if (btnGuardarMovimiento) btnGuardarMovimiento.disabled = false;
+            }
+        }
+
+        // Eventos del modal (soporte nativo y Select2 vía jQuery)
+        if (window.jQuery) {
+            jQuery(selectProductoMov).on('change', actualizarProyeccionEnVivo);
+            jQuery(selectTipoMov).on('change', function () {
+                const tipo = jQuery(this).val();
+                if (tipo === 'SALIDA' && jQuery(selectMotivoMov).val() === 'COMPRA_PROVEEDOR') {
+                    jQuery(selectMotivoMov).val('AJUSTE').trigger('change');
+                } else if (tipo === 'ENTRADA' && jQuery(selectMotivoMov).val() === 'VENTA') {
+                    jQuery(selectMotivoMov).val('COMPRA_PROVEEDOR').trigger('change');
+                }
+                actualizarProyeccionEnVivo();
+            });
+            jQuery(selectMotivoMov).on('change', actualizarProyeccionEnVivo);
+        } else {
+            if (selectProductoMov) selectProductoMov.addEventListener('change', actualizarProyeccionEnVivo);
+            if (selectTipoMov) selectTipoMov.addEventListener('change', actualizarProyeccionEnVivo);
+        }
+
+        if (inputCantidadMov) inputCantidadMov.addEventListener('input', actualizarProyeccionEnVivo);
+
+        if (abrirModalInicial) {
+            actualizarProyeccionEnVivo();
+            if (modalMovimientoEl && window.bootstrap && bootstrap.Modal) {
+                bootstrap.Modal.getOrCreateInstance(modalMovimientoEl).show();
+            }
+        }
+
+        // =========================================================================
+        // FILTRADO Y PAGINACIÓN: PESTAÑA 1 (EXISTENCIAS)
+        // =========================================================================
+        function aplicarFiltrosStock() {
+            const termino = (buscadorStockEl ? buscadorStockEl.value : '').trim().toLowerCase();
+            const catId = filtroCatStockEl ? filtroCatStockEl.value : '';
+            const marcaId = filtroMarcaStockEl ? filtroMarcaStockEl.value : '';
+            const nivel = filtroNivelStockEl ? filtroNivelStockEl.value : '';
+
+            const hayFiltros = termino !== '' || catId !== '' || marcaId !== '' || nivel !== '';
+            if (btnLimpiarStock) btnLimpiarStock.classList.toggle('d-none', !hayFiltros);
+
+            existenciasFiltradas = filasExistencias.filter(function (fila) {
+                const sku = (fila.getAttribute('data-sku') || '').toLowerCase();
+                const nombre = (fila.getAttribute('data-nombre') || '').toLowerCase();
+                const desc = (fila.getAttribute('data-descripcion') || '').toLowerCase();
+                const catRuta = (fila.getAttribute('data-categoria-ruta') || '').toLowerCase();
+                const metaStr = (fila.getAttribute('data-metadata') || '').toLowerCase();
+                const filaCat = fila.getAttribute('data-categoria-id') || '';
+                const filaJerarquia = fila.getAttribute('data-categoria-jerarquia') || (',' + filaCat + ',');
+                const filaMarca = fila.getAttribute('data-marca-id') || '';
+                const filaNivel = fila.getAttribute('data-stock-nivel') || '';
+
+                if (termino !== '' && !sku.includes(termino) && !nombre.includes(termino) && !desc.includes(termino) && !catRuta.includes(termino) && !metaStr.includes(termino)) {
+                    return false;
+                }
+                if (catId !== '' && !filaJerarquia.includes(',' + catId + ',')) {
+                    return false;
+                }
+                if (marcaId !== '' && filaMarca !== marcaId) {
+                    return false;
+                }
+                if (nivel === 'CRITICO') {
+                    return filaNivel === 'BAJO' || filaNivel === 'AGOTADO';
+                }
+                if (nivel !== '' && filaNivel !== nivel) {
+                    return false;
+                }
+                return true;
+            });
+
+            if (badgeTotalStock) badgeTotalStock.textContent = existenciasFiltradas.length;
+            paginaStock = 1;
+            renderizarPaginaStock();
+        }
+
+        function renderizarPaginaStock() {
+            const porPagina = parseInt(selectorFilasStockEl ? selectorFilasStockEl.value : 10, 10) || 10;
+            const total = existenciasFiltradas.length;
+            const totalPaginas = Math.max(1, Math.ceil(total / porPagina));
+            if (paginaStock > totalPaginas) paginaStock = totalPaginas;
+
+            const inicio = (paginaStock - 1) * porPagina;
+            const fin = Math.min(inicio + porPagina, total);
+
+            filasExistencias.forEach(function (f) { f.classList.add('d-none'); });
+
+            if (total === 0) {
+                if (filaSinStock) filaSinStock.classList.remove('d-none');
+                if (infoPagStock) infoPagStock.textContent = 'Mostrando 0 de 0 productos';
+            } else {
+                if (filaSinStock) filaSinStock.classList.add('d-none');
+                existenciasFiltradas.slice(inicio, fin).forEach(function (f) { f.classList.remove('d-none'); });
+                if (infoPagStock) infoPagStock.textContent = 'Mostrando ' + (inicio + 1) + ' a ' + fin + ' de ' + total + ' productos';
+            }
+
+            construirPaginacion(controlesPagStock, paginaStock, totalPaginas, function (nuevaPag) {
+                paginaStock = nuevaPag;
+                renderizarPaginaStock();
+            });
+        }
+
+        if (buscadorStockEl) buscadorStockEl.addEventListener('input', aplicarFiltrosStock);
+        if (selectorFilasStockEl) {
+            selectorFilasStockEl.addEventListener('change', function () {
+                paginaStock = 1;
+                renderizarPaginaStock();
+            });
+        }
+
+        if (window.jQuery) {
+            jQuery(filtroCatStockEl).on('change', aplicarFiltrosStock);
+            jQuery(filtroMarcaStockEl).on('change', aplicarFiltrosStock);
+            jQuery(filtroNivelStockEl).on('change', aplicarFiltrosStock);
+            jQuery(selectorFilasStockEl).on('change', function () {
+                paginaStock = 1;
+                renderizarPaginaStock();
+            });
+        } else {
+            if (filtroCatStockEl) filtroCatStockEl.addEventListener('change', aplicarFiltrosStock);
+            if (filtroMarcaStockEl) filtroMarcaStockEl.addEventListener('change', aplicarFiltrosStock);
+            if (filtroNivelStockEl) filtroNivelStockEl.addEventListener('change', aplicarFiltrosStock);
+        }
+
+        if (btnLimpiarStock) {
+            btnLimpiarStock.addEventListener('click', function () {
+                if (buscadorStockEl) buscadorStockEl.value = '';
+                if (window.jQuery) {
+                    jQuery(filtroCatStockEl).val('').trigger('change');
+                    jQuery(filtroMarcaStockEl).val('').trigger('change');
+                    jQuery(filtroNivelStockEl).val('').trigger('change');
+                } else {
+                    if (filtroCatStockEl) filtroCatStockEl.value = '';
+                    if (filtroMarcaStockEl) filtroMarcaStockEl.value = '';
+                    if (filtroNivelStockEl) filtroNivelStockEl.value = '';
+                }
+                aplicarFiltrosStock();
+            });
+        }
+
+        // =========================================================================
+        // FILTRADO Y PAGINACIÓN: PESTAÑA 2 (KARDEX)
+        // =========================================================================
+        function aplicarFiltrosKardex() {
+            const termino = (buscadorKardexEl ? buscadorKardexEl.value : '').trim().toLowerCase();
+            const tipo = filtroTipoKardexEl ? filtroTipoKardexEl.value : '';
+            const motivo = (filtroMotivoKardexEl ? filtroMotivoKardexEl.value : '').toUpperCase();
+
+            const hayFiltros = termino !== '' || tipo !== '' || motivo !== '';
+            if (btnLimpiarKardex) btnLimpiarKardex.classList.toggle('d-none', !hayFiltros);
+
+            kardexFiltrados = filasKardex.filter(function (fila) {
+                const sku = (fila.getAttribute('data-sku') || '').toLowerCase();
+                const nombre = (fila.getAttribute('data-nombre') || '').toLowerCase();
+                const catRuta = (fila.getAttribute('data-categoria-ruta') || '').toLowerCase();
+                const marca = (fila.getAttribute('data-marca') || '').toLowerCase();
+                const filaTipo = fila.getAttribute('data-tipo') || '';
+                const filaMotivo = (fila.getAttribute('data-motivo') || '').toUpperCase();
+
+                if (termino !== '' && !sku.includes(termino) && !nombre.includes(termino) && !catRuta.includes(termino) && !marca.includes(termino) && !filaMotivo.toLowerCase().includes(termino)) {
+                    return false;
+                }
+                if (tipo !== '' && filaTipo !== tipo) {
+                    return false;
+                }
+                if (motivo !== '' && !filaMotivo.startsWith(motivo)) {
+                    return false;
+                }
+                return true;
+            });
+
+            if (badgeTotalKardex) badgeTotalKardex.textContent = kardexFiltrados.length;
+            paginaKardex = 1;
+            renderizarPaginaKardex();
+        }
+
+        function renderizarPaginaKardex() {
+            const porPagina = parseInt(selectorFilasKardexEl ? selectorFilasKardexEl.value : 10, 10) || 10;
+            const total = kardexFiltrados.length;
+            const totalPaginas = Math.max(1, Math.ceil(total / porPagina));
+            if (paginaKardex > totalPaginas) paginaKardex = totalPaginas;
+
+            const inicio = (paginaKardex - 1) * porPagina;
+            const fin = Math.min(inicio + porPagina, total);
+
+            filasKardex.forEach(function (f) { f.classList.add('d-none'); });
+
+            if (total === 0) {
+                if (filaSinKardex) filaSinKardex.classList.remove('d-none');
+                if (infoPagKardex) infoPagKardex.textContent = 'Mostrando 0 de 0 movimientos';
+            } else {
+                if (filaSinKardex) filaSinKardex.classList.add('d-none');
+                kardexFiltrados.slice(inicio, fin).forEach(function (f) { f.classList.remove('d-none'); });
+                if (infoPagKardex) infoPagKardex.textContent = 'Mostrando ' + (inicio + 1) + ' a ' + fin + ' de ' + total + ' movimientos';
+            }
+
+            construirPaginacion(controlesPagKardex, paginaKardex, totalPaginas, function (nuevaPag) {
+                paginaKardex = nuevaPag;
+                renderizarPaginaKardex();
+            });
+        }
+
+        if (buscadorKardexEl) buscadorKardexEl.addEventListener('input', aplicarFiltrosKardex);
+        if (selectorFilasKardexEl) {
+            selectorFilasKardexEl.addEventListener('change', function () {
+                paginaKardex = 1;
+                renderizarPaginaKardex();
+            });
+        }
+
+        if (window.jQuery) {
+            jQuery(filtroTipoKardexEl).on('change', aplicarFiltrosKardex);
+            jQuery(filtroMotivoKardexEl).on('change', aplicarFiltrosKardex);
+            jQuery(selectorFilasKardexEl).on('change', function () {
+                paginaKardex = 1;
+                renderizarPaginaKardex();
+            });
+        } else {
+            if (filtroTipoKardexEl) filtroTipoKardexEl.addEventListener('change', aplicarFiltrosKardex);
+            if (filtroMotivoKardexEl) filtroMotivoKardexEl.addEventListener('change', aplicarFiltrosKardex);
+        }
+
+        if (btnLimpiarKardex) {
+            btnLimpiarKardex.addEventListener('click', function () {
+                if (buscadorKardexEl) buscadorKardexEl.value = '';
+                if (window.jQuery) {
+                    jQuery(filtroTipoKardexEl).val('').trigger('change');
+                    jQuery(filtroMotivoKardexEl).val('').trigger('change');
+                } else {
+                    if (filtroTipoKardexEl) filtroTipoKardexEl.value = '';
+                    if (filtroMotivoKardexEl) filtroMotivoKardexEl.value = '';
+                }
+                aplicarFiltrosKardex();
+            });
+        }
+
+        // Botón "Ver Kardex de este SKU" desde la tabla de existencias
+        document.querySelectorAll('.btn-ver-kardex-producto').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const fila = this.closest('.fila-existencia');
+                if (!fila) return;
+                const sku = fila.getAttribute('data-sku') || '';
+                const tabKardexBtn = document.getElementById('tab-kardex-btn');
+                if (tabKardexBtn && window.bootstrap && bootstrap.Tab) {
+                    const tabInstance = bootstrap.Tab.getOrCreateInstance(tabKardexBtn);
+                    tabInstance.show();
+                }
+
+                if (buscadorKardexEl) buscadorKardexEl.value = sku;
+                aplicarFiltrosKardex();
+            });
+        });
+
+        function construirPaginacion(contenedor, pagActual, totalPaginas, onPageClick) {
+            if (!contenedor) return;
+            contenedor.innerHTML = '';
+
+            const liPrev = document.createElement('li');
+            liPrev.className = 'page-item' + (pagActual === 1 ? ' disabled' : '');
+            const btnPrev = document.createElement('button');
+            btnPrev.type = 'button';
+            btnPrev.className = 'page-link';
+            btnPrev.innerHTML = '<i class="bi bi-chevron-left"></i>';
+            btnPrev.addEventListener('click', function () {
+                if (pagActual > 1) onPageClick(pagActual - 1);
+            });
+            liPrev.appendChild(btnPrev);
+            contenedor.appendChild(liPrev);
+
+            for (let p = 1; p <= totalPaginas; p++) {
+                const li = document.createElement('li');
+                li.className = 'page-item' + (p === pagActual ? ' active' : '');
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'page-link';
+                btn.textContent = p;
+                btn.addEventListener('click', function () {
+                    onPageClick(p);
+                });
+                li.appendChild(btn);
+                contenedor.appendChild(li);
+            }
+
+            const liNext = document.createElement('li');
+            liNext.className = 'page-item' + (pagActual === totalPaginas ? ' disabled' : '');
+            const btnNext = document.createElement('button');
+            btnNext.type = 'button';
+            btnNext.className = 'page-link';
+            btnNext.innerHTML = '<i class="bi bi-chevron-right"></i>';
+            btnNext.addEventListener('click', function () {
+                if (pagActual < totalPaginas) onPageClick(pagActual + 1);
+            });
+            liNext.appendChild(btnNext);
+            contenedor.appendChild(liNext);
+        }
+
+        // Inicializar ambas tablas
+        aplicarFiltrosStock();
+        aplicarFiltrosKardex();
+    });
+</script>
+
+</body>
+</html>

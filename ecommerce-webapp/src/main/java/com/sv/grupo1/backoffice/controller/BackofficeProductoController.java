@@ -1,8 +1,8 @@
 package com.sv.grupo1.backoffice.controller;
 
-import com.sv.grupo1.ecommerce.dto.ProductoRegistroDTO;
+import com.sv.grupo1.backoffice.dto.ProductoRegistroDTO;
+import com.sv.grupo1.backoffice.service.BackofficeProductoService;
 import com.sv.grupo1.ecommerce.entities.core.Producto;
-import com.sv.grupo1.ecommerce.services.ProductoService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,9 +20,9 @@ public class BackofficeProductoController {
 
     private static final Logger LOG = LoggerFactory.getLogger(BackofficeProductoController.class);
 
-    private final ProductoService productoService;
+    private final BackofficeProductoService productoService;
 
-    public BackofficeProductoController(ProductoService productoService) {
+    public BackofficeProductoController(BackofficeProductoService productoService) {
         this.productoService = productoService;
     }
 

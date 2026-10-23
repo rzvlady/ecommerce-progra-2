@@ -41,3 +41,9 @@ replay_pid*
 
 ecommerce-webapp/logs/
 mock-gateway-api/logs/
+
+.agents
+*.png
+*.webp
+*.log
+.env

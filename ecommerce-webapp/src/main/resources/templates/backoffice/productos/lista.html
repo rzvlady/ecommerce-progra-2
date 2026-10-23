@@ -111,7 +111,7 @@
                 <div class="row g-3 align-items-end">
                     <div class="col-12 col-md-4">
                         <label for="filtroCategoria" class="form-label small text-secondary mb-1">
-                            <i class="bi bi-tags me-1"></i> Categoría
+                            <i class="bi bi-diagram-3 me-1"></i> Categoría / Taxonomía
                         </label>
                         <select id="filtroCategoria"
                                 class="form-select select2-global"
@@ -119,7 +119,8 @@
                             <option value="">Todas las categorías</option>
                             <option th:each="cat : ${categorias}"
                                     th:value="${cat.idCategoria}"
-                                    th:text="${cat.nombreCategoria}">
+                                    th:attr="data-nivel=${cat.nivel},data-ruta-padres=${cat.rutaPadres},data-nombre=${cat.nombreCategoria}"
+                                    th:text="${cat.rutaJerarquica}">
                             </option>
                         </select>
                     </div>
@@ -225,29 +226,69 @@
                                 data-nombre=${prod.nombreProducto},
                                 data-descripcion=${prod.descripcionProducto},
                                 data-categoria-id=${prod.categoria != null ? prod.categoria.idCategoria : ''},
+                                data-categoria-jerarquia=${prod.categoria != null ? prod.categoria.idsJerarquia : ''},
+                                data-categoria-ruta=${prod.categoria != null ? prod.categoria.rutaJerarquica : ''},
                                 data-marca-id=${prod.marca != null ? prod.marca.idMarca : ''},
                                 data-precio-costo=${prod.precioCosto},
                                 data-precio-venta=${prod.precioVenta},
                                 data-stock-disponible=${prod.stockDisponible},
                                 data-stock-minimo=${prod.stockMinimo},
                                 data-estado=${prod.estado != null ? prod.estado.toString() : 'A'},
+                                data-metadata=${prod.metadata != null ? prod.metadata : ''},
+                                data-imagenes=${prod.imagenesSlotsJson != null ? prod.imagenesSlotsJson : '{}'},
                                 data-stock-nivel=${(prod.stockDisponible == null || prod.stockDisponible <= 0) ? 'AGOTADO' : ((prod.stockMinimo != null && prod.stockDisponible <= prod.stockMinimo) ? 'BAJO' : 'OK')}
                             ">
                             <td>
-                                <span class="sku-badge" th:text="${prod.codigoSku}">COM-HP-0001</span>
+                                <span class="sku-badge" th:text="${prod.codigoSku}">ELC-COM-LAP-HP-0001</span>
                             </td>
                             <td>
-                                <div class="fw-bold text-dark text-uppercase" th:text="${prod.nombreProducto}">NOMBRE PRODUCTO</div>
-                                <div class="text-secondary small product-desc-truncate"
-                                     th:title="${prod.descripcionProducto}"
-                                     th:text="${prod.descripcionProducto}">
-                                    Descripción
+                                <div class="d-flex align-items-start gap-2">
+                                    <div class="product-thumb-wrapper flex-shrink-0">
+                                        <img th:if="${prod.imagenPrincipalUrl != null}"
+                                             th:src="${prod.imagenPrincipalUrl}"
+                                             th:alt="${prod.nombreProducto}"
+                                             class="product-thumb-img">
+                                        <i th:if="${prod.imagenPrincipalUrl == null}"
+                                           class="bi bi-image text-secondary"></i>
+                                        <span th:if="${prod.totalImagenes != null && prod.totalImagenes > 1}"
+                                              class="product-thumb-count"
+                                              th:text="'+' + (${prod.totalImagenes} - 1)">
+                                            +2
+                                        </span>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="fw-bold text-dark text-uppercase" th:text="${prod.nombreProducto}">NOMBRE PRODUCTO</div>
+                                        <div class="text-secondary small product-desc-truncate"
+                                             th:title="${prod.descripcionProducto}"
+                                             th:text="${prod.descripcionProducto}">
+                                            Descripción
+                                        </div>
+                                        <div class="metadata-chips-container d-none"></div>
+                                    </div>
                                 </div>
                             </td>
                             <td>
-                                <span class="badge bg-light text-dark border"
-                                      th:text="${prod.categoria != null ? prod.categoria.nombreCategoria : 'Sin categoría'}">
-                                    Categoría
+                                <div th:if="${prod.categoria != null}" class="taxonomy-cell-wrapper">
+                                    <span th:if="${!#strings.isEmpty(prod.categoria.rutaPadres)}"
+                                          class="taxonomy-parent-path"
+                                          th:text="${prod.categoria.rutaPadres + ' ›'}">
+                                        ELECTRÓNICA › COMPUTACIÓN ›
+                                    </span>
+                                    <div class="d-inline-flex align-items-center gap-1">
+                                        <span class="badge bg-light text-dark border"
+                                              th:text="${prod.categoria.nombreCategoria}">
+                                            Categoría
+                                        </span>
+                                        <span class="taxonomy-level-pill"
+                                              th:classappend="'nivel-' + ${prod.categoria.nivel}"
+                                              th:text="'N' + ${prod.categoria.nivel}"
+                                              th:title="${prod.categoria.rutaJerarquica}">
+                                            N3
+                                        </span>
+                                    </div>
+                                </div>
+                                <span th:if="${prod.categoria == null}" class="badge bg-light text-secondary border">
+                                    Sin categoría
                                 </span>
                             </td>
                             <td th:text="${prod.marca != null ? prod.marca.nombreMarca : 'Sin marca'}">Marca</td>
@@ -352,6 +393,7 @@
                       th:action="${modoEdicion && productoDTO.idProducto != null} ? @{/backoffice/productos/{id}/actualizar(id=${productoDTO.idProducto})} : @{/backoffice/productos/guardar}"
                       th:object="${productoDTO}"
                       method="post"
+                      enctype="multipart/form-data"
                       novalidate>
 
                     <div class="modal-header modal-header-admin py-3 px-4">
@@ -419,18 +461,18 @@
                                 </div>
                             </div>
 
-                            <!-- BLOQUE 2: CLASIFICACIÓN -->
+                            <!-- BLOQUE 2: CLASIFICACIÓN Y TAXONOMÍA -->
                             <div class="modal-section-card">
                                 <div class="modal-section-title">
-                                    <i class="bi bi-tags"></i>
-                                    <span>Clasificación</span>
+                                    <i class="bi bi-diagram-3"></i>
+                                    <span>Clasificación y taxonomía</span>
                                 </div>
 
                                 <div class="row g-3">
-                                    <!-- Categoría -->
+                                    <!-- Categoría con ruta jerárquica -->
                                     <div class="col-12 col-md-6">
                                         <label for="idCategoria" class="form-label small fw-bold mb-1">
-                                            Categoría <span class="text-danger">*</span>
+                                            Categoría (Taxonomía) <span class="text-danger">*</span>
                                         </label>
                                         <select id="idCategoria"
                                                 class="form-select select2-global"
@@ -439,8 +481,10 @@
                                                 th:field="*{idCategoria}">
                                             <option value="">Seleccione una categoría...</option>
                                             <option th:each="cat : ${categorias}"
+                                                    th:if="${cat.estado == null or cat.estado.toString() == 'A' or (productoDTO.idCategoria != null and productoDTO.idCategoria == cat.idCategoria)}"
                                                     th:value="${cat.idCategoria}"
-                                                    th:text="${cat.nombreCategoria}">
+                                                    th:attr="data-nivel=${cat.nivel},data-ruta-padres=${cat.rutaPadres},data-nombre=${cat.nombreCategoria}"
+                                                    th:text="${cat.rutaJerarquica}">
                                             </option>
                                         </select>
                                         <div class="text-danger small mt-1" th:if="${#fields.hasErrors('idCategoria')}" th:errors="*{idCategoria}"></div>
@@ -513,19 +557,37 @@
                                         </div>
                                     </div>
 
-                                    <!-- Stock Disponible -->
+                                    <!-- Stock Disponible (Editable al crear, solo lectura al editar para auditoría de Kardex) -->
                                     <div class="col-12 col-md-6">
-                                        <label for="stockDisponible" class="form-label small fw-bold mb-1">
-                                            Stock disponible <span class="text-danger">*</span>
+                                        <label for="stockDisponible" id="labelStockDisponible" class="form-label small fw-bold mb-1">
+                                            <span th:text="${modoEdicion} ? 'Stock en bodega (Solo lectura)' : 'Stock inicial disponible'">Stock inicial disponible</span>
+                                            <span class="text-danger" th:if="${!modoEdicion}">*</span>
                                         </label>
-                                        <input type="number"
-                                               min="0"
-                                               id="stockDisponible"
-                                               class="form-control"
-                                               th:classappend="${#fields.hasErrors('stockDisponible')} ? 'is-invalid' : ''"
-                                               th:field="*{stockDisponible}"
-                                               placeholder="0">
-                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('stockDisponible')}" th:errors="*{stockDisponible}"></div>
+                                        <div class="input-group">
+                                            <input type="number"
+                                                   min="0"
+                                                   id="stockDisponible"
+                                                   class="form-control"
+                                                   th:readonly="${modoEdicion}"
+                                                   th:classappend="${(#fields.hasErrors('stockDisponible') ? 'is-invalid ' : '') + (modoEdicion ? 'bg-light text-muted' : '')}"
+                                                   th:field="*{stockDisponible}"
+                                                   placeholder="0">
+                                            <span class="input-group-text bg-light text-secondary small">uds</span>
+                                            <div class="invalid-feedback" th:if="${#fields.hasErrors('stockDisponible')}" th:errors="*{stockDisponible}"></div>
+                                        </div>
+                                        <div id="notaStockNuevo"
+                                             class="form-text text-secondary"
+                                             th:classappend="${modoEdicion} ? 'd-none' : ''"
+                                             style="font-size: 0.73rem;">
+                                            <i class="bi bi-info-circle me-1"></i>Genera automáticamente su movimiento de entrada inicial en el Kardex.
+                                        </div>
+                                        <div id="notaStockEdicion"
+                                             class="form-text text-muted"
+                                             th:classappend="${!modoEdicion} ? 'd-none' : ''"
+                                             style="font-size: 0.73rem;">
+                                            <i class="bi bi-lock-fill me-1 text-secondary"></i>Para alterar existencias físicas, usa el módulo de
+                                            <a th:href="@{/backoffice/inventario}" class="fw-bold text-decoration-none">Inventario</a>.
+                                        </div>
                                     </div>
 
                                     <!-- Stock Mínimo -->
@@ -545,12 +607,84 @@
                                 </div>
                             </div>
 
-                            <!-- BLOQUE 4: FOTOGRAFÍAS DEL PRODUCTO POR BLOQUES INDIVIDUALES -->
+                            <!-- BLOQUE 4: ESPECIFICACIONES Y METADATA (KEY -> VALUE JSONB) -->
                             <div class="modal-section-card">
-                                <div class="modal-section-title">
-                                    <i class="bi bi-images"></i>
-                                    <span>Fotografías del producto</span>
+                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2 pb-2 border-bottom">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="bi bi-braces-asterisk text-primary"></i>
+                                        <span class="fw-bold text-uppercase" style="font-size: 0.78rem; letter-spacing: 0.04em; color: #334155;">
+                                            Especificaciones y Metadata (Clave → Valor)
+                                        </span>
+                                        <span id="metadataCountBadge" class="badge bg-primary-subtle text-primary" style="font-size: 0.68rem;">
+                                            0 atributos
+                                        </span>
+                                    </div>
+                                    <button type="button"
+                                            id="btnAgregarMetadata"
+                                            class="btn btn-sm btn-outline-primary py-1 px-2 d-inline-flex align-items-center gap-1"
+                                            style="font-size: 0.75rem;">
+                                        <i class="bi bi-plus-circle"></i>
+                                        <span>Agregar atributo</span>
+                                    </button>
                                 </div>
+
+                                <!-- Input oculto que viaja hacia ProductoRegistroDTO.metadata en formato JSON estructurado -->
+                                <input type="hidden" id="metadataInput" th:field="*{metadata}">
+
+                                <!-- Sugerencias rápidas para agilizar la captura de atributos -->
+                                <div class="metadata-quick-pills">
+                                    <span class="text-secondary" style="font-size: 0.7rem;">Sugerencias:</span>
+                                    <button type="button" class="btn-metadata-suggestion" data-key="Procesador">+ Procesador</button>
+                                    <button type="button" class="btn-metadata-suggestion" data-key="Memoria RAM">+ Memoria RAM</button>
+                                    <button type="button" class="btn-metadata-suggestion" data-key="Almacenamiento">+ Almacenamiento</button>
+                                    <button type="button" class="btn-metadata-suggestion" data-key="Pantalla">+ Pantalla</button>
+                                    <button type="button" class="btn-metadata-suggestion" data-key="Color">+ Color</button>
+                                    <button type="button" class="btn-metadata-suggestion" data-key="Talla">+ Talla</button>
+                                    <button type="button" class="btn-metadata-suggestion" data-key="Material">+ Material</button>
+                                    <button type="button" class="btn-metadata-suggestion" data-key="Garantía">+ Garantía</button>
+                                </div>
+
+                                <!-- Estado vacío cuando no hay filas -->
+                                <div id="metadataEmptyState" class="metadata-empty-state">
+                                    <i class="bi bi-sliders2 d-block fs-5 mb-1 text-secondary"></i>
+                                    <span>Sin características técnicas registradas. Usa <strong>«Agregar atributo»</strong> o selecciona una sugerencia para añadir pares <code>Clave → Valor</code>.</span>
+                                </div>
+
+                                <!-- Contenedor dinámico de filas Key -> Value -->
+                                <div id="metadataRowsContainer" class="metadata-kv-list"></div>
+
+                                <!-- Barra de vista previa JSONB en tiempo real -->
+                                <div id="metadataJsonPreviewBar" class="metadata-json-preview-bar d-none">
+                                    <div class="d-flex align-items-center gap-2 overflow-hidden">
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.62rem;">JSONB</span>
+                                        <code id="metadataJsonPreviewCode" class="metadata-json-preview-code">{}</code>
+                                    </div>
+                                    <button type="button"
+                                            id="btnLimpiarMetadata"
+                                            class="btn btn-link btn-sm p-0 text-secondary text-decoration-none flex-shrink-0"
+                                            style="font-size: 0.7rem;"
+                                            title="Vaciar todos los atributos">
+                                        Limpiar todo
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- BLOQUE 5: FOTOGRAFÍAS DEL PRODUCTO POR BLOQUES INDIVIDUALES -->
+                            <div class="modal-section-card">
+                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2 pb-2 border-bottom">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="bi bi-images text-primary"></i>
+                                        <span class="fw-bold text-uppercase" style="font-size: 0.78rem; letter-spacing: 0.04em; color: #334155;">
+                                            Fotografías del producto
+                                        </span>
+                                    </div>
+                                    <span class="badge bg-light text-secondary border" style="font-size: 0.68rem;">
+                                        <i class="bi bi-folder2-open me-1"></i>uploads/productos/&lt;taxonomía&gt;/&lt;SKU&gt;/
+                                    </span>
+                                </div>
+
+                                <!-- Input oculto para registrar qué bloques existentes se desean eliminar al editar -->
+                                <input type="hidden" id="slotsEliminarInput" th:field="*{slotsEliminar}">
 
                                 <div class="row g-3">
                                     <!-- Bloque 1: Imagen 1 -->
@@ -561,7 +695,7 @@
                                                 <span class="badge bg-primary-subtle text-primary" style="font-size: 0.65rem;">Principal</span>
                                             </div>
                                             <div class="image-slot-box" data-slot="1">
-                                                <input type="file" class="d-none slot-file-input" accept="image/png,image/jpeg,image/webp">
+                                                <input type="file" name="imagenSlot1" class="d-none slot-file-input" accept="image/png,image/jpeg,image/webp">
                                                 <div class="slot-placeholder">
                                                     <i class="bi bi-cloud-arrow-up fs-4 text-primary d-block mb-1"></i>
                                                     <span class="text-secondary" style="font-size: 0.72rem;">Subir imagen</span>
@@ -581,7 +715,7 @@
                                                 <span>Imagen 2</span>
                                             </div>
                                             <div class="image-slot-box" data-slot="2">
-                                                <input type="file" class="d-none slot-file-input" accept="image/png,image/jpeg,image/webp">
+                                                <input type="file" name="imagenSlot2" class="d-none slot-file-input" accept="image/png,image/jpeg,image/webp">
                                                 <div class="slot-placeholder">
                                                     <i class="bi bi-cloud-arrow-up fs-4 text-primary d-block mb-1"></i>
                                                     <span class="text-secondary" style="font-size: 0.72rem;">Subir imagen</span>
@@ -601,7 +735,7 @@
                                                 <span>Imagen 3</span>
                                             </div>
                                             <div class="image-slot-box" data-slot="3">
-                                                <input type="file" class="d-none slot-file-input" accept="image/png,image/jpeg,image/webp">
+                                                <input type="file" name="imagenSlot3" class="d-none slot-file-input" accept="image/png,image/jpeg,image/webp">
                                                 <div class="slot-placeholder">
                                                     <i class="bi bi-cloud-arrow-up fs-4 text-primary d-block mb-1"></i>
                                                     <span class="text-secondary" style="font-size: 0.72rem;">Subir imagen</span>
@@ -621,7 +755,7 @@
                                                 <span>Imagen 4</span>
                                             </div>
                                             <div class="image-slot-box" data-slot="4">
-                                                <input type="file" class="d-none slot-file-input" accept="image/png,image/jpeg,image/webp">
+                                                <input type="file" name="imagenSlot4" class="d-none slot-file-input" accept="image/png,image/jpeg,image/webp">
                                                 <div class="slot-placeholder">
                                                     <i class="bi bi-cloud-arrow-up fs-4 text-primary d-block mb-1"></i>
                                                     <span class="text-secondary" style="font-size: 0.72rem;">Subir imagen</span>
@@ -778,6 +912,205 @@
         const precioVentaInput = document.getElementById('precioVenta');
         const stockDisponibleInput = document.getElementById('stockDisponible');
         const stockMinimoInput = document.getElementById('stockMinimo');
+        const labelStockDisponible = document.getElementById('labelStockDisponible');
+        const notaStockNuevo = document.getElementById('notaStockNuevo');
+        const notaStockEdicion = document.getElementById('notaStockEdicion');
+
+        // Referencias del constructor Key -> Value de Metadata (JSONB)
+        const metadataInput = document.getElementById('metadataInput');
+        const metadataRowsContainer = document.getElementById('metadataRowsContainer');
+        const metadataEmptyState = document.getElementById('metadataEmptyState');
+        const metadataCountBadge = document.getElementById('metadataCountBadge');
+        const metadataJsonPreviewBar = document.getElementById('metadataJsonPreviewBar');
+        const metadataJsonPreviewCode = document.getElementById('metadataJsonPreviewCode');
+        const btnAgregarMetadata = document.getElementById('btnAgregarMetadata');
+        const btnLimpiarMetadata = document.getElementById('btnLimpiarMetadata');
+
+        // =========================================================================
+        // A. CONSTRUCTOR DINÁMICO KEY -> VALUE PARA METADATA (JSONB)
+        // =========================================================================
+        function sincronizarMetadataJson() {
+            const filasKv = metadataRowsContainer.querySelectorAll('.metadata-kv-row');
+            const objetoMetadata = {};
+            let totalAtributos = 0;
+
+            filasKv.forEach(function (row) {
+                const keyEl = row.querySelector('.metadata-key-input');
+                const valEl = row.querySelector('.metadata-val-input');
+                const k = keyEl ? keyEl.value.trim() : '';
+                const v = valEl ? valEl.value.trim() : '';
+                if (k !== '') {
+                    objetoMetadata[k] = v;
+                    totalAtributos++;
+                }
+            });
+
+            const tieneFilasDom = filasKv.length > 0;
+            metadataEmptyState.classList.toggle('d-none', tieneFilasDom);
+            metadataCountBadge.textContent = totalAtributos + (totalAtributos === 1 ? ' atributo' : ' atributos');
+
+            if (totalAtributos > 0) {
+                const jsonStr = JSON.stringify(objetoMetadata);
+                metadataInput.value = jsonStr;
+                metadataJsonPreviewCode.textContent = jsonStr;
+                metadataJsonPreviewBar.classList.remove('d-none');
+            } else {
+                metadataInput.value = '';
+                metadataJsonPreviewCode.textContent = '{}';
+                metadataJsonPreviewBar.classList.toggle('d-none', !tieneFilasDom);
+            }
+        }
+
+        function agregarFilaMetadata(claveInicial, valorInicial, enfocarInput) {
+            const row = document.createElement('div');
+            row.className = 'metadata-kv-row';
+
+            const inputKey = document.createElement('input');
+            inputKey.type = 'text';
+            inputKey.className = 'form-control form-control-sm metadata-key-input fw-semibold';
+            inputKey.placeholder = 'Característica (ej. RAM, Color, Talla)';
+            inputKey.value = claveInicial || '';
+
+            const arrowSpan = document.createElement('span');
+            arrowSpan.className = 'metadata-kv-arrow';
+            arrowSpan.innerHTML = '<i class="bi bi-arrow-right"></i>';
+
+            const inputVal = document.createElement('input');
+            inputVal.type = 'text';
+            inputVal.className = 'form-control form-control-sm metadata-val-input';
+            inputVal.placeholder = 'Valor (ej. 16 GB DDR5, Negro, XL)';
+            inputVal.value = (valorInicial !== undefined && valorInicial !== null) ? String(valorInicial) : '';
+
+            const btnRemove = document.createElement('button');
+            btnRemove.type = 'button';
+            btnRemove.className = 'btn-remove-metadata';
+            btnRemove.title = 'Quitar atributo';
+            btnRemove.innerHTML = '<i class="bi bi-trash3"></i>';
+
+            inputKey.addEventListener('input', sincronizarMetadataJson);
+            inputVal.addEventListener('input', sincronizarMetadataJson);
+
+            btnRemove.addEventListener('click', function () {
+                row.remove();
+                sincronizarMetadataJson();
+            });
+
+            row.appendChild(inputKey);
+            row.appendChild(arrowSpan);
+            row.appendChild(inputVal);
+            row.appendChild(btnRemove);
+
+            metadataRowsContainer.appendChild(row);
+            sincronizarMetadataJson();
+
+            if (enfocarInput === 'key') {
+                inputKey.focus();
+            } else if (enfocarInput === 'val') {
+                inputVal.focus();
+            }
+        }
+
+        function cargarMetadataEnModal(rawJson) {
+            metadataRowsContainer.innerHTML = '';
+            if (rawJson && rawJson.trim() !== '') {
+                try {
+                    const parsed = JSON.parse(rawJson);
+                    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                        Object.entries(parsed).forEach(function ([k, v]) {
+                            if (k === 'imagenes') return;
+                            agregarFilaMetadata(k, v, false);
+                        });
+                    }
+                } catch (e) {
+                    // Si no se pudo parsear, iniciar vacío
+                }
+            }
+            sincronizarMetadataJson();
+        }
+
+        if (btnAgregarMetadata) {
+            btnAgregarMetadata.addEventListener('click', function () {
+                agregarFilaMetadata('', '', 'key');
+            });
+        }
+
+        if (btnLimpiarMetadata) {
+            btnLimpiarMetadata.addEventListener('click', function () {
+                metadataRowsContainer.innerHTML = '';
+                sincronizarMetadataJson();
+            });
+        }
+
+        document.querySelectorAll('.btn-metadata-suggestion').forEach(function (pillBtn) {
+            pillBtn.addEventListener('click', function () {
+                const suggestedKey = this.getAttribute('data-key') || '';
+                if (!suggestedKey) return;
+
+                // Si ya existe una fila con esa clave, enfocar su valor
+                let filaExistente = null;
+                metadataRowsContainer.querySelectorAll('.metadata-kv-row').forEach(function (row) {
+                    const kInput = row.querySelector('.metadata-key-input');
+                    if (kInput && kInput.value.trim().toLowerCase() === suggestedKey.toLowerCase()) {
+                        filaExistente = row;
+                    }
+                });
+
+                if (filaExistente) {
+                    const vInput = filaExistente.querySelector('.metadata-val-input');
+                    if (vInput) vInput.focus();
+                } else {
+                    agregarFilaMetadata(suggestedKey, '', 'val');
+                }
+            });
+        });
+
+        formProducto.addEventListener('submit', function () {
+            sincronizarMetadataJson();
+        });
+
+        // Renderizar chips compactos de metadata en las filas de la tabla principal
+        function renderizarChipsMetadataTabla() {
+            document.querySelectorAll('.fila-producto').forEach(function (fila) {
+                const rawMeta = fila.getAttribute('data-metadata') || '';
+                const container = fila.querySelector('.metadata-chips-container');
+                if (!container || !rawMeta.trim()) return;
+
+                try {
+                    const parsed = JSON.parse(rawMeta);
+                    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return;
+                    const entries = Object.entries(parsed).filter(function ([k]) {
+                        return k !== 'imagenes';
+                    });
+                    if (entries.length === 0) return;
+
+                    container.innerHTML = '';
+                    const maxVisible = 3;
+                    entries.slice(0, maxVisible).forEach(function ([k, v]) {
+                        const chip = document.createElement('span');
+                        chip.className = 'metadata-chip';
+                        const keySpan = document.createElement('span');
+                        keySpan.className = 'metadata-chip-key';
+                        keySpan.textContent = k + ':';
+                        const valSpan = document.createElement('span');
+                        valSpan.textContent = String(v);
+                        chip.appendChild(keySpan);
+                        chip.appendChild(valSpan);
+                        container.appendChild(chip);
+                    });
+
+                    if (entries.length > maxVisible) {
+                        const moreChip = document.createElement('span');
+                        moreChip.className = 'metadata-chip text-primary fw-semibold';
+                        moreChip.textContent = '+' + (entries.length - maxVisible) + ' más';
+                        container.appendChild(moreChip);
+                    }
+                    container.classList.remove('d-none');
+                } catch (e) {
+                    // Ignorar si no es JSON válido
+                }
+            });
+        }
+        renderizarChipsMetadataTabla();
 
         // 1. Forzar UPPERCASE al escribir en Nombre del Producto
         if (nombreInput) {
@@ -804,6 +1137,13 @@
             precioCostoInput.value = '';
             precioVentaInput.value = '';
             stockDisponibleInput.value = '';
+            stockDisponibleInput.readOnly = false;
+            stockDisponibleInput.classList.remove('bg-light', 'text-muted');
+            if (labelStockDisponible) {
+                labelStockDisponible.innerHTML = 'Stock inicial disponible <span class="text-danger">*</span>';
+            }
+            if (notaStockNuevo) notaStockNuevo.classList.remove('d-none');
+            if (notaStockEdicion) notaStockEdicion.classList.add('d-none');
             stockMinimoInput.value = '';
 
             if (window.jQuery) {
@@ -815,6 +1155,7 @@
             }
 
             limpiarBloquesFotografias();
+            cargarMetadataEnModal('');
             modalProducto.show();
         });
 
@@ -836,6 +1177,8 @@
                 const venta = fila.getAttribute('data-precio-venta') || '';
                 const stockDisp = fila.getAttribute('data-stock-disponible') || '';
                 const stockMin = fila.getAttribute('data-stock-minimo') || '';
+                const metadataRaw = fila.getAttribute('data-metadata') || '';
+                const imagenesRaw = fila.getAttribute('data-imagenes') || '{}';
 
                 formProducto.setAttribute('action', basePath + '/' + id + '/actualizar');
                 modalTitulo.textContent = 'Editar producto';
@@ -850,6 +1193,13 @@
                 precioCostoInput.value = costo;
                 precioVentaInput.value = venta;
                 stockDisponibleInput.value = stockDisp;
+                stockDisponibleInput.readOnly = true;
+                stockDisponibleInput.classList.add('bg-light', 'text-muted');
+                if (labelStockDisponible) {
+                    labelStockDisponible.innerHTML = 'Stock en bodega (Solo lectura)';
+                }
+                if (notaStockNuevo) notaStockNuevo.classList.add('d-none');
+                if (notaStockEdicion) notaStockEdicion.classList.remove('d-none');
                 stockMinimoInput.value = stockMin;
 
                 if (window.jQuery) {
@@ -861,6 +1211,8 @@
                 }
 
                 limpiarBloquesFotografias();
+                cargarImagenesGuardadasEnModal(imagenesRaw);
+                cargarMetadataEnModal(metadataRaw);
                 modalProducto.show();
             });
         });
@@ -926,7 +1278,17 @@
         });
 
         // 6. Bloques individuales de fotografías (Bloque 1 -> Imagen 1, etc.)
+        const slotsEliminarInput = document.getElementById('slotsEliminarInput');
+        let slotsMarcadosParaEliminar = new Set();
+
+        function actualizarInputSlotsEliminar() {
+            if (slotsEliminarInput) {
+                slotsEliminarInput.value = Array.from(slotsMarcadosParaEliminar).join(',');
+            }
+        }
+
         document.querySelectorAll('.image-slot-box').forEach(function (slotBox) {
+            const slotNum = slotBox.getAttribute('data-slot');
             const fileInput = slotBox.querySelector('.slot-file-input');
             const placeholder = slotBox.querySelector('.slot-placeholder');
             const previewImg = slotBox.querySelector('.image-slot-preview');
@@ -943,6 +1305,10 @@
                 const file = this.files && this.files[0];
                 if (!file) return;
 
+                // Si selecciona un archivo nuevo, ya no se marca como eliminado vacío sino que se reemplaza
+                slotsMarcadosParaEliminar.delete(slotNum);
+                actualizarInputSlotsEliminar();
+
                 const reader = new FileReader();
                 reader.onload = function (ev) {
                     previewImg.src = ev.target.result;
@@ -956,6 +1322,10 @@
 
             removeBtn.addEventListener('click', function (e) {
                 e.stopPropagation();
+                if (slotBox.getAttribute('data-tenia-guardada') === 'true') {
+                    slotsMarcadosParaEliminar.add(slotNum);
+                    actualizarInputSlotsEliminar();
+                }
                 limpiarSlotIndividual(slotBox);
             });
         });
@@ -974,12 +1344,42 @@
             if (removeBtn) removeBtn.classList.add('d-none');
             if (placeholder) placeholder.classList.remove('d-none');
             slotBox.classList.remove('has-image');
+            slotBox.removeAttribute('data-tenia-guardada');
         }
 
         function limpiarBloquesFotografias() {
+            slotsMarcadosParaEliminar.clear();
+            actualizarInputSlotsEliminar();
             document.querySelectorAll('.image-slot-box').forEach(function (slotBox) {
                 limpiarSlotIndividual(slotBox);
             });
+        }
+
+        function cargarImagenesGuardadasEnModal(imagenesRawJson) {
+            if (!imagenesRawJson || imagenesRawJson.trim() === '') return;
+            try {
+                const mapaSlots = JSON.parse(imagenesRawJson);
+                if (!mapaSlots || typeof mapaSlots !== 'object') return;
+
+                document.querySelectorAll('.image-slot-box').forEach(function (slotBox) {
+                    const slotNum = slotBox.getAttribute('data-slot');
+                    const urlGuardada = mapaSlots[slotNum];
+                    if (urlGuardada) {
+                        const placeholder = slotBox.querySelector('.slot-placeholder');
+                        const previewImg = slotBox.querySelector('.image-slot-preview');
+                        const removeBtn = slotBox.querySelector('.image-slot-remove');
+
+                        previewImg.src = urlGuardada;
+                        previewImg.classList.remove('d-none');
+                        removeBtn.classList.remove('d-none');
+                        placeholder.classList.add('d-none');
+                        slotBox.classList.add('has-image');
+                        slotBox.setAttribute('data-tenia-guardada', 'true');
+                    }
+                });
+            } catch (e) {
+                // Ignorar si no es JSON válido
+            }
         }
 
         function limpiarErroresValidacion() {
@@ -993,6 +1393,14 @@
 
         // Si el backend indicó abrir el modal (por errores de validación o ruta directa)
         if (abrirModalInicial) {
+            cargarMetadataEnModal(metadataInput ? metadataInput.value : '');
+            const idActual = idProductoInput ? idProductoInput.value : '';
+            if (idActual) {
+                const filaEditada = document.querySelector('.fila-producto[data-id="' + idActual + '"]');
+                if (filaEditada) {
+                    cargarImagenesGuardadasEnModal(filaEditada.getAttribute('data-imagenes') || '{}');
+                }
+            }
             modalProducto.show();
         }
 
@@ -1027,15 +1435,19 @@
                 const sku = (fila.getAttribute('data-sku') || '').toLowerCase();
                 const nombre = (fila.getAttribute('data-nombre') || '').toLowerCase();
                 const desc = (fila.getAttribute('data-descripcion') || '').toLowerCase();
+                const catRuta = (fila.getAttribute('data-categoria-ruta') || '').toLowerCase();
+                const metaStr = (fila.getAttribute('data-metadata') || '').toLowerCase();
                 const filaCat = fila.getAttribute('data-categoria-id') || '';
+                const filaJerarquia = fila.getAttribute('data-categoria-jerarquia') || (',' + filaCat + ',');
                 const filaMarca = fila.getAttribute('data-marca-id') || '';
                 const filaEstado = fila.getAttribute('data-estado') || '';
                 const filaStockNivel = fila.getAttribute('data-stock-nivel') || '';
 
-                if (termino !== '' && !sku.includes(termino) && !nombre.includes(termino) && !desc.includes(termino)) {
+                if (termino !== '' && !sku.includes(termino) && !nombre.includes(termino) && !desc.includes(termino) && !catRuta.includes(termino) && !metaStr.includes(termino)) {
                     return false;
                 }
-                if (catId !== '' && filaCat !== catId) {
+                // Coincide si el producto pertenece directamente a la categoría seleccionada o a cualquiera de sus subcategorías hijas
+                if (catId !== '' && !filaJerarquia.includes(',' + catId + ',')) {
                     return false;
                 }
                 if (marcaId !== '' && filaMarca !== marcaId) {

@@ -43,4 +43,66 @@ public class Categoria {
     public void setEstado(Character estado) { this.estado = estado; }
     public OffsetDateTime getFechaCreacion() { return fechaCreacion; }
     public void setFechaCreacion(OffsetDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
+
+    public int getNivel() {
+        int nivel = 1;
+        Categoria actual = this.categoriaPadre;
+        while (actual != null && nivel < 3) {
+            nivel++;
+            actual = actual.getCategoriaPadre();
+        }
+        return nivel;
+    }
+
+    public String getRutaJerarquica() {
+        java.util.LinkedList<String> partes = new java.util.LinkedList<>();
+        Categoria actual = this;
+        int guard = 0;
+        while (actual != null && guard < 4) {
+            partes.addFirst(actual.getNombreCategoria());
+            actual = actual.getCategoriaPadre();
+            guard++;
+        }
+        return String.join(" › ", partes);
+    }
+
+    public String getRutaPadres() {
+        java.util.LinkedList<String> partes = new java.util.LinkedList<>();
+        Categoria actual = this.categoriaPadre;
+        int guard = 0;
+        while (actual != null && guard < 3) {
+            partes.addFirst(actual.getNombreCategoria());
+            actual = actual.getCategoriaPadre();
+            guard++;
+        }
+        return String.join(" › ", partes);
+    }
+
+    public String getIdsJerarquia() {
+        StringBuilder sb = new StringBuilder(",");
+        Categoria actual = this;
+        int guard = 0;
+        while (actual != null && guard < 4) {
+            if (actual.getIdCategoria() != null) {
+                sb.append(actual.getIdCategoria()).append(",");
+            }
+            actual = actual.getCategoriaPadre();
+            guard++;
+        }
+        return sb.toString();
+    }
+
+    public boolean perteneceAJerarquia(Integer idBuscado) {
+        if (idBuscado == null) return true;
+        Categoria actual = this;
+        int guard = 0;
+        while (actual != null && guard < 4) {
+            if (idBuscado.equals(actual.getIdCategoria())) {
+                return true;
+            }
+            actual = actual.getCategoriaPadre();
+            guard++;
+        }
+        return false;
+    }
 }

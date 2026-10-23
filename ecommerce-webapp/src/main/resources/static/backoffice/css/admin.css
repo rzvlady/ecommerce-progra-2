@@ -1,4 +1,4 @@
-﻿:root {
+:root {
     --sidebar-bg: #172033;
     --sidebar-hover: #2c4167;
     --sidebar-text: #c5cede;
@@ -209,7 +209,7 @@ body {
 }
 
 .product-desc-truncate {
-    max-width: 280px;
+    max-width: 100%;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -434,4 +434,283 @@ body {
     background-color: #2563eb;
     border-color: #2563eb;
     color: #ffffff;
+}
+
+/* Animación de giro para botones de escaneo / recarga */
+@keyframes spinIcon {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.spin-animation {
+    display: inline-block;
+    animation: spinIcon 0.8s linear infinite;
+}
+
+/* ===== Taxonomía de Categorías (Tabla y Select2) ===== */
+.taxonomy-cell-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+.taxonomy-parent-path {
+    font-size: 0.68rem;
+    color: #64748b;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+}
+
+.taxonomy-level-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.1rem 0.38rem;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.taxonomy-level-pill.nivel-1 {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+}
+
+.taxonomy-level-pill.nivel-2 {
+    background-color: #e0e7ff;
+    color: #4338ca;
+}
+
+.taxonomy-level-pill.nivel-3 {
+    background-color: #f3e8ff;
+    color: #6d28d9;
+}
+
+/* ===== Miniatura de Fotografía Principal en Tabla de Productos ===== */
+.product-thumb-wrapper {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.product-thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.product-thumb-count {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    background-color: rgba(15, 23, 42, 0.8);
+    color: #ffffff;
+    font-size: 0.58rem;
+    font-weight: 700;
+    padding: 0 4px;
+    border-radius: 4px;
+    line-height: 1.3;
+}
+
+/* ===== Chips de Metadata en la Tabla de Productos ===== */
+.metadata-chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.metadata-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.67rem;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 1px 6px;
+    color: #475569;
+}
+
+.metadata-chip-key {
+    font-weight: 700;
+    color: #334155;
+}
+
+/* ===== Card de Especificaciones / Metadata (Key -> Value JSONB) ===== */
+.metadata-quick-pills {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 0.75rem;
+}
+
+.btn-metadata-suggestion {
+    font-size: 0.7rem;
+    padding: 0.18rem 0.55rem;
+    border-radius: 999px;
+    background-color: #f1f5f9;
+    border: 1px dashed #cbd5e1;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-metadata-suggestion:hover {
+    background-color: #eff6ff;
+    border-color: #3b82f6;
+    color: #1d4ed8;
+}
+
+.metadata-kv-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.metadata-kv-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1.25fr auto;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.45rem 0.6rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.metadata-kv-row:focus-within {
+    border-color: #93c5fd;
+    background-color: #ffffff;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.06);
+}
+
+.metadata-kv-arrow {
+    color: #64748b;
+    font-size: 0.85rem;
+    padding: 0 2px;
+    user-select: none;
+}
+
+.btn-remove-metadata {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    border: 1px solid #fee2e2;
+    background-color: #fff1f2;
+    color: #dc2626;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-remove-metadata:hover {
+    background-color: #dc2626;
+    border-color: #dc2626;
+    color: #ffffff;
+}
+
+.metadata-empty-state {
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    background-color: #f8fafc;
+    padding: 0.85rem 1rem;
+    text-align: center;
+    color: #64748b;
+    font-size: 0.78rem;
+}
+
+.metadata-json-preview-bar {
+    margin-top: 0.65rem;
+    padding: 0.45rem 0.7rem;
+    background-color: #0f172a;
+    color: #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    overflow-x: auto;
+}
+
+.metadata-json-preview-code {
+    color: #38bdf8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 575.98px) {
+    .metadata-kv-row {
+        grid-template-columns: 1fr auto;
+    }
+    .metadata-kv-arrow {
+        display: none;
+    }
+}
+
+
+/* ===== Tablas Compactas de Inventario (Cero scroll horizontal) ===== */
+.table-inventario-compact thead th {
+    padding: 0.65rem 0.65rem !important;
+    font-size: 0.70rem !important;
+    vertical-align: middle;
+    letter-spacing: 0.04em;
+}
+
+.table-inventario-compact tbody td {
+    padding: 0.55rem 0.65rem !important;
+    font-size: 0.82rem !important;
+    vertical-align: middle;
+}
+
+.btn-action-icon {
+    width: 28px;
+    height: 28px;
+    padding: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    transition: all 0.15s ease;
+}
+
+.btn-action-icon:hover {
+    transform: translateY(-1px);
+}
+
+/* ===== Monitor de Alertas de Stock (Chips responsivos con truncado seguro) ===== */
+.monitor-chips-scroll {
+    max-height: 280px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 2px;
+}
+
+.alerta-chip-nombre {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1.25;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }

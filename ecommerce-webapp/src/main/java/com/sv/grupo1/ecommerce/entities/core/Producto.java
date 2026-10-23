@@ -57,6 +57,15 @@ public class Producto {
     @Column(name = "precio_costo", precision = 12, scale = 2)
     private BigDecimal precioCosto;
 
+    @Transient
+    private String imagenPrincipalUrl;
+
+    @Transient
+    private Integer totalImagenes = 0;
+
+    @Transient
+    private String imagenesSlotsJson = "{}";
+
     public Producto() {}
 
     // Getters y Setters
@@ -87,4 +96,10 @@ public class Producto {
     public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
     public String getMetadata() { return metadata; }
     public void setMetadata(String metadata) { this.metadata = metadata; }
+    public String getImagenPrincipalUrl() { return imagenPrincipalUrl; }
+    public void setImagenPrincipalUrl(String imagenPrincipalUrl) { this.imagenPrincipalUrl = imagenPrincipalUrl; }
+    public Integer getTotalImagenes() { return totalImagenes; }
+    public void setTotalImagenes(Integer totalImagenes) { this.totalImagenes = totalImagenes; }
+    public String getImagenesSlotsJson() { return imagenesSlotsJson; }
+    public void setImagenesSlotsJson(String imagenesSlotsJson) { this.imagenesSlotsJson = imagenesSlotsJson; }
 }
