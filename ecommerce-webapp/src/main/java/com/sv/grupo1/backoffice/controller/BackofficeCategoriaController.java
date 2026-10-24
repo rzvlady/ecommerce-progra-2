@@ -5,6 +5,7 @@ import com.sv.grupo1.ecommerce.services.CategoriaService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -15,6 +16,7 @@ import java.util.List;
 
 @Controller
 @RequestMapping(path = "/backoffice/categorias")
+@PreAuthorize("hasRole('ADMIN')")
 public class BackofficeCategoriaController {
 
     private static final Logger LOG = LoggerFactory.getLogger(BackofficeCategoriaController.class);

@@ -45,23 +45,14 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
 
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
 
-        boolean tieneRolBackoffice = authorities.stream()
+        boolean esAdmin = authorities.stream()
                 .map(GrantedAuthority::getAuthority)
-                .anyMatch(rol -> rol.startsWith("ROLE_") && !"ROLE_CLIENTE".equals(rol));
+                .anyMatch(rol -> "ROLE_ADMIN".equalsIgnoreCase(rol) || "ADMIN".equalsIgnoreCase(rol));
 
-        boolean esCliente = authorities.stream()
-                .map(GrantedAuthority::getAuthority)
-                .anyMatch("ROLE_CLIENTE"::equals);
+        String targetUrl = esAdmin ? "/backoffice/dashboard" : "/";
 
-        String targetUrl = "/";
-        if (tieneRolBackoffice) {
-            targetUrl = "/backoffice/dashboard";
-        } else if (esCliente) {
-            targetUrl = "/";
-        }
-
-        LOG.info("Usuario '{}' autenticado con roles {}. Redirigiendo a: {}",
-                authentication.getName(), authorities, targetUrl);
+        LOG.info("Usuario '{}' autenticado con roles {}. Es admin: {}. Redirigiendo a: {}",
+                authentication.getName(), authorities, esAdmin, targetUrl);
 
         if (response.isCommitted()) {
             LOG.debug("La respuesta ya fue confirmada. No es posible redirigir a {}", targetUrl);
