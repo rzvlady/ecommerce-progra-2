@@ -42,13 +42,17 @@ public class SecurityConfig {
 
             // 3. Rutas web públicas (las nuestras sin el backoffice)
             .requestMatchers(
-                    "/",
-                    "/registro",
-                    "/inicio-sesion",
-                    "/css/**", "/js/**", "/ecommerce/**",
-                    "/uploads/**",
-                    "/carrito", "/categorias", "/categorias/**",
-                    "/producto/**", "/productos", "/productos/**"
+                "/",
+                "/registro",
+                "/inicio-sesion",
+                "/css/**",
+                "/js/**",
+                "/ecommerce/**",
+                "/uploads/**",
+                "/carrito",
+                "/categorias",
+                "/categorias/**",
+                "/producto/**"
             ).permitAll()
             // 4. LA REGLA FINAL SIEMPRE DEBE SER anyRequest()
             .anyRequest().authenticated()
