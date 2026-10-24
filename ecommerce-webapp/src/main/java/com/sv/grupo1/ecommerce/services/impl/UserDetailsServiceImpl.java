@@ -37,13 +37,18 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         LOG.info("loadUserByUsername() =>  Validando Estado Usuario...");
         boolean cuentaActiva = usuario.getEstado().equals(EstadoEstandarGlobal.ACTIVO.getCodigoEstado());
 
+        LOG.info("loadUserByUsername() =>  Mapeando roles...");
+        String[] privilegios = usuario.getRoles().stream()
+                .map(usuarioRol -> usuarioRol.getRol().getNombre())
+                .toArray(String[]::new);
+
         LOG.info("loadUserByUsername() =>  Completado");
         return User.builder()
-            .username(usuario.getCorreoInicioSesion())
-            .password(usuario.getContrasenia())
-            .roles("CLIENTE")
-            .disabled(!cuentaActiva)
-            .build();
+                .username(usuario.getCorreoInicioSesion())
+                .password(usuario.getContrasenia())
+                .authorities(privilegios)
+                .disabled(!cuentaActiva)
+                .build();
     }
 
 }

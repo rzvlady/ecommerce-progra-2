@@ -121,16 +121,20 @@ CREATE TABLE IF NOT EXISTS catalogo.categorias (
 
 CREATE TABLE IF NOT EXISTS core.productos (
 	id_producto 			INTEGER GENERATED ALWAYS AS IDENTITY,
+	codigo_sku 				VARCHAR(255) NOT NULL,
 	id_categoria 			INTEGER NOT NULL,
 	id_marca 				INTEGER NOT NULL,
 	nombre_producto 		VARCHAR(100) NOT NULL,
 	descripcion_producto 	VARCHAR(255) NOT NULL,
+	precio_venta 			NUMERIC(12,2) NOT NULL,
+	precio_costo 			NUMERIC(12,2),
 	stock_disponible 		INTEGER DEFAULT 0,
 	stock_minimo 			INTEGER DEFAULT 0,
 	estado 					CHAR(1) NOT NULL DEFAULT 'A',
 	fecha_creacion 			TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
 	metadata 				JSONB,
 	CONSTRAINT pk_productos PRIMARY KEY(id_producto),
+	CONSTRAINT uq_productos_codigo_sku UNIQUE(codigo_sku),
 	CONSTRAINT fk_productos_to_categorias FOREIGN KEY(id_categoria) REFERENCES catalogo.categorias(id_categoria),
 	CONSTRAINT fk_productos_to_marcas FOREIGN KEY(id_marca) REFERENCES catalogo.marcas(id_marca),
 	CONSTRAINT chk_productos_stock_disponible CHECK (stock_disponible >= 0)

@@ -2,16 +2,10 @@ package com.sv.grupo1.ecommerce.entities.seguridad;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
-import jakarta.persistence.DiscriminatorColumn;
-import jakarta.persistence.DiscriminatorType;
-import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Inheritance;
-import jakarta.persistence.InheritanceType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
@@ -28,9 +22,6 @@ import java.util.Map;
 @Table(schema = "seguridad", name = "usuarios")
 @SQLDelete(sql = "UPDATE seguridad.usuarios SET eliminado = true WHERE id_usuario = ?")
 @SQLRestriction("eliminado = false")
-/*@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "tipo_usuario", discriminatorType = DiscriminatorType.STRING)
-@DiscriminatorValue("USUARIO")*/
 public class Usuario {
 
     @Id
@@ -68,6 +59,9 @@ public class Usuario {
 
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UsuarioContacto> contactos;
+
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UsuarioRol> roles;
 
     public Usuario() {
         /* Constructor Vacio */
@@ -159,5 +153,13 @@ public class Usuario {
 
     public void setContactos(List<UsuarioContacto> contactos) {
         this.contactos = contactos;
+    }
+
+    public List<UsuarioRol> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<UsuarioRol> roles) {
+        this.roles = roles;
     }
 }

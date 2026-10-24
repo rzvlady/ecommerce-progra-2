@@ -57,149 +57,24 @@
              
           <div class="carousel-inner">
 
-
-            <div class="carousel-item active">
+            <div class="carousel-item" th:classappend="${iterStat.first} ? 'active'" th:each="cat, iterStat : ${categorias}">
               <div class="row g-3">
-
-                  <!-- 1. Tecnología -->
-                <div class="col-6 col-md-3">
-                  <a th:href="@{/categorias/tecnologia}" class="category-card-slide">
+                <div class="col-12">
+                  <a th:href="@{/productos(idCategoria=${cat.id})}" class="category-card-slide">
                     <div class="category-img-container">
-                      <img src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=450&q=80"
-                           alt="Categoría Tecnología"
-                           class="category-slide-img"
-                           loading="lazy">
+                      <img th:src="${cat.imagen}" 
+                          th:alt="${cat.nombre}" 
+                          class="category-slide-img" 
+                          loading="lazy">
                     </div>
                     <div class="category-text-wrap">
-                      <span class="category-title">Tecnología</span>
-                      <small class="category-subtitle">Audio, computación y gadgets</small>
+                      <span class="category-title" th:text="${cat.nombre}">Nombre Categoría</span>
+                      <small class="category-subtitle">Explorar productos</small>
                     </div>
-                  </a>
+                 </a>
                 </div>
-
-                <!-- 2. Hogar -->
-                <div class="col-6 col-md-3">
-                  <a th:href="@{/categorias/hogar}" class="category-card-slide">
-                    <div class="category-img-container">
-                      <img src="https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=450&q=80"
-                           alt="Categoría Hogar"
-                           class="category-slide-img"
-                           loading="lazy">
-                    </div>
-                    <div class="category-text-wrap">
-                      <span class="category-title">Hogar</span>
-                      <small class="category-subtitle">Muebles, confort y decoración</small>
-                    </div>
-                  </a>
-                </div>
-
-                <!-- 3. Moda -->
-                <div class="col-6 col-md-3">
-                  <a th:href="@{/categorias/moda}" class="category-card-slide">
-                    <div class="category-img-container">
-                      <img src="https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=450&q=80"
-                           alt="Categoría Moda"
-                           class="category-slide-img"
-                           loading="lazy">
-                    </div>
-                    <div class="category-text-wrap">
-                      <span class="category-title">Moda</span>
-                      <small class="category-subtitle">Tendencias, ropa y calzado</small>
-                    </div>
-                  </a>
-                </div>
-
-                <!-- 4. Accesorios -->
-                <div class="col-6 col-md-3">
-                  <a th:href="@{/categorias/accesorios}" class="category-card-slide">
-                    <div class="category-img-container">
-                      <img src="https://images.unsplash.com/photo-1523293182086-7651a899d37f?auto=format&fit=crop&w=450&q=80"
-                           alt="Categoría Accesorios"
-                           class="category-slide-img"
-                           loading="lazy">
-                    </div>
-                    <div class="category-text-wrap">
-                      <span class="category-title">Accesorios</span>
-                      <small class="category-subtitle">Relojes, bolsos y complementos</small>
-                    </div>
-                  </a>
-                </div>
-
               </div>
             </div>
-
-
-            <div class="carousel-item">
-              <div class="row g-3">
-
-                <!-- 5. Audio & Sonido -->
-                <div class="col-6 col-md-3">
-                  <a th:href="@{/categorias/audio-sonido}" class="category-card-slide">
-                    <div class="category-img-container">
-                      <img src="https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=450&q=80"
-                           alt="Categoría Audio & Sonido"
-                           class="category-slide-img"
-                           loading="lazy">
-                    </div>
-                    <div class="category-text-wrap">
-                      <span class="category-title">Audio & Sonido</span>
-                      <small class="category-subtitle">Auriculares y altavoces</small>
-                    </div>
-                  </a>
-                </div>
-
-                <!-- 6. Fotografía -->
-                <div class="col-6 col-md-3">
-                  <a th:href="@{/categorias/fotografia}" class="category-card-slide">
-                    <div class="category-img-container">
-                      <img src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=450&q=80"
-                           alt="Categoría Fotografía"
-                           class="category-slide-img"
-                           loading="lazy">
-                    </div>
-                    <div class="category-text-wrap">
-                      <span class="category-title">Fotografía</span>
-                      <small class="category-subtitle">Cámaras y lentes</small>
-                    </div>
-                  </a>
-                </div>
-
-                <div class="col-6 col-md-3">
-                  <a th:href="@{/categorias/ofertas-top}" class="category-card-slide">
-                    <div class="category-img-container">
-                      <img src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=450&q=80"
-                           alt="Categoría Ofertas Top"
-                           class="category-slide-img"
-                           loading="lazy">
-                    </div>
-                    <div class="category-text-wrap">
-                      <span class="category-title">Ofertas Top</span>
-                      <small class="category-subtitle">Descuentos de temporada</small>
-                    </div>
-                  </a>
-                </div>
-
-
-                <div class="col-6 col-md-3">
-                  <a th:href="@{/categorias/novedades}" class="category-card-slide">
-                    <div class="category-img-container">
-                      <img src="https://images.unsplash.com/photo-1511556532299-8f662fc26c06?auto=format&fit=crop&w=450&q=80"
-                           alt="Categoría Novedades"
-                           class="category-slide-img"
-                           loading="lazy">
-                    </div>
-                    <div class="category-text-wrap">
-                      <span class="category-title">Novedades</span>
-                      <small class="category-subtitle">Lo más reciente en tienda</small>
-                    </div>
-                  </a>
-                </div>
-
-              </div>
-            </div>
-
-          </div>
-
 
           <div class="carousel-indicators position-relative mt-3 mb-0">
             <button type="button" data-bs-target="#carouselCategorias" data-bs-slide-to="0" class="active bg-primary" aria-current="true" aria-label="Slide 1"></button>
@@ -220,8 +95,8 @@
             </p>
           </div>
 
-          <a th:href="@{/categorias}" class="btn btn-mustard btn-sm">
-            Ver categorías
+          <a th:href="@{/productos}" class="btn btn-mustard btn-sm">
+            Ver catalogo
             <i class="bi bi-arrow-up-right ms-1"></i>
           </a>
         </div>
@@ -230,12 +105,12 @@
         <div class="row g-3 g-md-4">
 
 
-          <div class="col-6 col-md-4 col-lg-3">
-            <a th:href="@{/producto/auriculares-inalambricos}" class="text-decoration-none d-block h-100">
+          <div class="col-6 col-md-4 col-lg-3" th:each="prod, iterStat : ${productos}" th:if="${iterStat.index <4}">
+            <a th:href="@{/productos/{id}(id=${prod.id})}" class="text-decoration-none d-block h-100">
             <article class="product-card">
               <div class="product-image-container">
                 <img
-                  src="https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb?auto=format&fit=crop&w=800&q=80"
+                  th:src="${prod.imagen}"
                   alt="Auriculares inalámbricos"
                   class="product-image"
                   loading="lazy">
@@ -243,9 +118,9 @@
               </div>
 
               <div class="product-body">
-                <h3 title="Auriculares inalámbricos">Auriculares inalámbricos</h3>
-                <p class="product-price">$39.99</p>
-                <button type="button" class="btn btn-outline-primary btn-sm w-100 fw-semibold"onclick="alert('¡Producto añadido al carrito!')"></button>>
+                <h3 th:title="${prod.nombre}" th:text="${prod.nombre}">Auriculares inalámbricos</h3>
+                <p class="product-price" th:text="${'$'+prod.precio}">$0.00</p>
+                <button type="button" class="btn btn-outline-primary btn-sm w-100 fw-semibold"onclick="event.stopPropagation(); event.preventDefault(); alert('¡Producto añadido al carrito!')">
                   <i class="bi bi-cart-plus me-1"></i>
                   Añadir al carrito
                 </button>
@@ -253,82 +128,6 @@
             </article>
             </a>
           </div>
-
-
-          <div class="col-6 col-md-4 col-lg-3">
-            <a th:href="@{/producto/reloj-de-pulsera}" class="text-decoration-none d-block h-100">
-            <article class="product-card">
-              <div class="product-image-container">
-                <img
-                  src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=500&q=80"
-                  alt="Reloj de pulsera"
-                  class="product-image"
-                  loading="lazy">
-                <span class="product-badge">Popular</span>
-              </div>
-
-              <div class="product-body">
-                <h3 title="Reloj de pulsera clásico">Reloj de pulsera</h3>
-                <p class="product-price">$59.99</p>
-                <button type="button" class="btn btn-outline-primary btn-sm w-100 fw-semibold"onclick="alert('¡Producto añadido al carrito!')"></button>>
-                  <i class="bi bi-cart-plus me-1"></i>
-                  Añadir al carrito
-                </button>
-              </div>
-            </article>
-            </a>
-          </div>
-
-
-          <div class="col-6 col-md-4 col-lg-3">
-            <a th:href="@{/producto/zapatillas-deportivas}" class="text-decoration-none d-block h-100">
-            <article class="product-card">
-              <div class="product-image-container">
-                <img
-                  src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=500&q=80"
-                  alt="Zapatillas deportivas"
-                  class="product-image"
-                  loading="lazy">
-                <span class="product-badge">Colección</span>
-              </div>
-
-              <div class="product-body">
-                <h3 title="Zapatillas deportivas confort">Zapatillas deportivas</h3>
-                <p class="product-price">$49.99</p>
-                <button type="button" class="btn btn-outline-primary btn-sm w-100 fw-semibold"onclick="alert('¡Producto añadido al carrito!')"></button>>
-                  <i class="bi bi-cart-plus me-1"></i>
-                  Añadir al carrito
-                </button>
-              </div>
-            </article>
-            </a>
-          </div>
-
-
-          <div class="col-6 col-md-4 col-lg-3">
-            <a th:href="@{/producto/camara-fotografica}" class="text-decoration-none d-block h-100">
-            <article class="product-card">
-              <div class="product-image-container">
-                <img
-                  src="https://images.unsplash.com/photo-1502920917128-1aa500764cbd?auto=format&fit=crop&w=800&q=80"
-                  alt="Cámara fotográfica"
-                  class="product-image"
-                  loading="lazy">
-                <span class="product-badge">Nuevo</span>
-              </div>
-
-              <div class="product-body">
-                <h3 title="Cámara fotográfica réflex">Cámara fotográfica</h3>
-                <p class="product-price">$89.99</p>
-                <button type="button" class="btn btn-outline-primary btn-sm w-100 fw-semibold" onclick="event.stopPropagation(); event.preventDefault(); alert('¡Producto añadido al carrito!')">
-                  <i class="bi bi-cart-plus me-1"></i>
-                  Añadir al carrito
-                </button>
-              </div>
-            </article>
-            </a>
-          </div>
-
         </div>
       </section>
 
