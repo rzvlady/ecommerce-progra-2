@@ -2,13 +2,14 @@ package com.sv.grupo1.ecommerce.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+
+import java.math.BigDecimal;
 
 public class CheckoutDTO {
 
     private Integer idDireccion;
 
-    @Size(max = 150, message = "La dirección no puede superar los 150 caracteres")
+    @Pattern(regexp = "^$|^.{10,150}$", message = "La dirección debe tener entre 10 y 150 caracteres")
     private String direccionLinea1;
 
     private Integer idMunicipio;
@@ -32,6 +33,8 @@ public class CheckoutDTO {
     @NotBlank(message = "El CVV es obligatorio")
     @Pattern(regexp = "^[0-9]{3,4}$", message = "El CVV debe tener 3 o 4 dígitos")
     private String cvv;
+
+    private BigDecimal totalMostrado;
 
     public CheckoutDTO() {
     }
@@ -98,5 +101,13 @@ public class CheckoutDTO {
 
     public void setCvv(String cvv) {
         this.cvv = cvv;
+    }
+
+    public BigDecimal getTotalMostrado() {
+        return this.totalMostrado;
+    }
+
+    public void setTotalMostrado(BigDecimal totalMostrado) {
+        this.totalMostrado = totalMostrado;
     }
 }

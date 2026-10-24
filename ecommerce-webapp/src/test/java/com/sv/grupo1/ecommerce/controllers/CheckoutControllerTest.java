@@ -7,6 +7,7 @@ import com.sv.grupo1.ecommerce.dto.ResumenCompraDTO;
 import com.sv.grupo1.ecommerce.services.CheckoutService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.ui.ExtendedModelMap;
 import org.springframework.ui.Model;
 import org.springframework.validation.BeanPropertyBindingResult;
@@ -15,6 +16,8 @@ import org.springframework.validation.ObjectError;
 import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
 
 import java.security.Principal;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -23,6 +26,9 @@ import static org.mockito.Mockito.*;
 public class CheckoutControllerTest {
 
     private static final String CORREO = "cliente@example.com";
+    private static final String TOKEN = "token-de-prueba";
+    private static final String VISTA_CHECKOUT = "ecommerce/pages/checkout/checkout";
+    private static final DateTimeFormatter FORMATO_EXPIRACION = DateTimeFormatter.ofPattern("MM/yy");
 
     private final CheckoutService checkoutService = mock(CheckoutService.class);
     private final Principal principal = mock(Principal.class);
@@ -31,6 +37,7 @@ public class CheckoutControllerTest {
 
     private final Model model = new ExtendedModelMap();
     private final RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+    private final MockHttpSession session = new MockHttpSession();
 
     @BeforeEach
     void prepararUsuarioAutenticado() {
@@ -41,38 +48,97 @@ public class CheckoutControllerTest {
     void debeRedirigirAlCarritoCuandoElCarritoEstaVacio() {
         when(checkoutService.obtenerResumenCarrito(CORREO)).thenReturn(new ResumenCompraDTO());
 
-        String vista = controller.mostrarCheckout(model, principal, redirectAttributes);
+        String vista = controller.mostrarCheckout(model, principal, session, redirectAttributes);
 
         assertEquals("redirect:/carrito", vista);
-        assertEquals("Tu carrito está vacío.", redirectAttributes.getFlashAttributes().get("mensajeError"));
+        assertEquals("Tu carrito está vacío.", redirectAttributes.getFlashAttributes().get("error"));
         verify(checkoutService, never()).listarDirecciones(any());
     }
 
     @Test
-    void debeCargarResumenDireccionesYMunicipiosAlMostrarElCheckout() {
+    void debeCargarResumenDireccionesMunicipiosYTokenAlMostrarElCheckout() {
         ResumenCompraDTO resumen = crearResumenConUnItem();
         when(checkoutService.obtenerResumenCarrito(CORREO)).thenReturn(resumen);
 
-        String vista = controller.mostrarCheckout(model, principal, redirectAttributes);
+        String vista = controller.mostrarCheckout(model, principal, session, redirectAttributes);
 
-        assertEquals("ecommerce/pages/checkout/checkout", vista);
+        assertEquals(VISTA_CHECKOUT, vista);
         assertSame(resumen, model.getAttribute("resumen"));
         assertNotNull(model.getAttribute("direcciones"));
         assertNotNull(model.getAttribute("municipios"));
         assertInstanceOf(CheckoutDTO.class, model.getAttribute("checkoutDTO"));
+        assertNotNull(model.getAttribute("tokenPago"));
+        assertEquals(model.getAttribute("tokenPago"), session.getAttribute("tokenPago"));
     }
 
     @Test
-    void noDebePagarCuandoHayErroresDeValidacion() {
+    void noDebePagarCuandoLaPantallaDePagoYaNoEstaVigente() {
+        when(checkoutService.obtenerResumenCarrito(CORREO)).thenReturn(new ResumenCompraDTO());
+        CheckoutDTO dto = crearCheckoutDTO();
+
+        String vista = pagarConTokenValido(dto, crearResultadoSinErrores(dto));
+
+        assertEquals("redirect:/carrito", vista);
+        assertEquals("Esta pantalla de pago ya no está vigente: tu compra ya fue procesada o tu carrito está vacío.",
+                redirectAttributes.getFlashAttributes().get("error"));
+        verify(checkoutService, never()).finalizarCompra(any(), any());
+    }
+
+    @Test
+    void noDebePagarSinTokenDePago() {
         when(checkoutService.obtenerResumenCarrito(CORREO)).thenReturn(crearResumenConUnItem());
         CheckoutDTO dto = crearCheckoutDTO();
-        BindingResult result = crearResultadoConErrores(dto);
 
-        String vista = controller.pagar(dto, result, model, principal, redirectAttributes);
+        String vista = controller.pagar(dto, crearResultadoSinErrores(dto), null,
+                model, principal, session, redirectAttributes);
 
-        assertEquals("ecommerce/pages/checkout/checkout", vista);
+        assertEquals("redirect:/checkout", vista);
+        assertEquals("Esta pantalla de pago ya no está vigente. Revisa tu pedido e ingresa nuevamente los datos de tu tarjeta.",
+                redirectAttributes.getFlashAttributes().get("mensajeError"));
+        verify(checkoutService, never()).finalizarCompra(any(), any());
+    }
+
+    @Test
+    void noDebePagarConUnTokenDistintoAlDeLaSesion() {
+        when(checkoutService.obtenerResumenCarrito(CORREO)).thenReturn(crearResumenConUnItem());
+        session.setAttribute("tokenPago", TOKEN);
+        CheckoutDTO dto = crearCheckoutDTO();
+
+        String vista = controller.pagar(dto, crearResultadoSinErrores(dto), "token-de-otra-pestana",
+                model, principal, session, redirectAttributes);
+
+        assertEquals("redirect:/checkout", vista);
+        assertNull(session.getAttribute("tokenPago"));
+        verify(checkoutService, never()).finalizarCompra(any(), any());
+    }
+
+    @Test
+    void noDebeProcesarDosVecesElMismoFormularioDePago() {
+        when(checkoutService.obtenerResumenCarrito(CORREO)).thenReturn(crearResumenConUnItem());
+        CheckoutDTO dto = crearCheckoutDTO();
+        when(checkoutService.finalizarCompra(CORREO, dto))
+                .thenReturn(crearResultado(false, "Fondos insuficientes"));
+
+        pagarConTokenValido(dto, crearResultadoSinErrores(dto));
+        String vista = controller.pagar(dto, crearResultadoSinErrores(dto), TOKEN,
+                new ExtendedModelMap(), principal, session, redirectAttributes);
+
+        assertEquals("redirect:/checkout", vista);
+        verify(checkoutService, times(1)).finalizarCompra(any(), any());
+    }
+
+    @Test
+    void noDebePagarCuandoHayErroresDeValidacionYDebeGenerarUnTokenNuevo() {
+        when(checkoutService.obtenerResumenCarrito(CORREO)).thenReturn(crearResumenConUnItem());
+        CheckoutDTO dto = crearCheckoutDTO();
+
+        String vista = pagarConTokenValido(dto, crearResultadoConErrores(dto));
+
+        assertEquals(VISTA_CHECKOUT, vista);
         assertNull(dto.getNumeroTarjeta());
         assertNull(dto.getCvv());
+        assertNotEquals(TOKEN, session.getAttribute("tokenPago"));
+        assertEquals(session.getAttribute("tokenPago"), model.getAttribute("tokenPago"));
         verify(checkoutService, never()).finalizarCompra(any(), any());
     }
 
@@ -83,54 +149,102 @@ public class CheckoutControllerTest {
         dto.setFechaExpiracion("01/20");
         BindingResult result = crearResultadoSinErrores(dto);
 
-        String vista = controller.pagar(dto, result, model, principal, redirectAttributes);
+        String vista = pagarConTokenValido(dto, result);
 
-        assertEquals("ecommerce/pages/checkout/checkout", vista);
+        assertEquals(VISTA_CHECKOUT, vista);
         assertEquals("La tarjeta está vencida", result.getFieldError("fechaExpiracion").getDefaultMessage());
         verify(checkoutService, never()).finalizarCompra(any(), any());
     }
 
     @Test
+    void noDebeAceptarUnaFechaDeExpiracionDemasiadoLejana() {
+        when(checkoutService.obtenerResumenCarrito(CORREO)).thenReturn(crearResumenConUnItem());
+        CheckoutDTO dto = crearCheckoutDTO();
+        dto.setFechaExpiracion(YearMonth.now().plusYears(16).format(FORMATO_EXPIRACION));
+        BindingResult result = crearResultadoSinErrores(dto);
+
+        String vista = pagarConTokenValido(dto, result);
+
+        assertEquals(VISTA_CHECKOUT, vista);
+        assertEquals("La fecha de expiración no es válida",
+                result.getFieldError("fechaExpiracion").getDefaultMessage());
+        verify(checkoutService, never()).finalizarCompra(any(), any());
+    }
+
+    @Test
+    void debeAceptarUnaTarjetaQueVenceEsteMes() {
+        when(checkoutService.obtenerResumenCarrito(CORREO)).thenReturn(crearResumenConUnItem());
+        CheckoutDTO dto = crearCheckoutDTO();
+        dto.setFechaExpiracion(YearMonth.now().format(FORMATO_EXPIRACION));
+        when(checkoutService.finalizarCompra(CORREO, dto))
+                .thenReturn(crearResultado(true, "¡Pago aprobado! Tu pedido #7 fue confirmado."));
+
+        String vista = pagarConTokenValido(dto, crearResultadoSinErrores(dto));
+
+        assertEquals("redirect:/checkout/confirmacion/7", vista);
+    }
+
+    @Test
     void debeRedirigirALaConfirmacionCuandoElPagoEsAprobado() {
+        when(checkoutService.obtenerResumenCarrito(CORREO)).thenReturn(crearResumenConUnItem());
         CheckoutDTO dto = crearCheckoutDTO();
         when(checkoutService.finalizarCompra(CORREO, dto))
                 .thenReturn(crearResultado(true, "¡Pago aprobado! Tu pedido #7 fue confirmado."));
 
-        String vista = controller.pagar(dto, crearResultadoSinErrores(dto), model, principal, redirectAttributes);
+        String vista = pagarConTokenValido(dto, crearResultadoSinErrores(dto));
 
         assertEquals("redirect:/checkout/confirmacion/7", vista);
         assertEquals("¡Pago aprobado! Tu pedido #7 fue confirmado.",
                 redirectAttributes.getFlashAttributes().get("mensajeExito"));
+        assertNull(session.getAttribute("tokenPago"));
     }
 
     @Test
     void debeVolverAlCheckoutConMensajeYSinDatosDeTarjetaCuandoElPagoEsRechazado() {
-        CheckoutDTO dto = crearCheckoutDTO();
         when(checkoutService.obtenerResumenCarrito(CORREO)).thenReturn(crearResumenConUnItem());
+        CheckoutDTO dto = crearCheckoutDTO();
         when(checkoutService.finalizarCompra(CORREO, dto))
                 .thenReturn(crearResultado(false, "Fondos insuficientes"));
 
-        String vista = controller.pagar(dto, crearResultadoSinErrores(dto), model, principal, redirectAttributes);
+        String vista = pagarConTokenValido(dto, crearResultadoSinErrores(dto));
 
-        assertEquals("ecommerce/pages/checkout/checkout", vista);
+        assertEquals(VISTA_CHECKOUT, vista);
         assertEquals("Fondos insuficientes", model.getAttribute("mensajeError"));
         assertNull(dto.getNumeroTarjeta());
         assertNull(dto.getCvv());
         assertEquals("Cliente Prueba", dto.getNombreTitular());
+        assertNotNull(session.getAttribute("tokenPago"));
     }
 
     @Test
     void debeMostrarElErrorDeNegocioYVolverAlCheckout() {
-        CheckoutDTO dto = crearCheckoutDTO();
         when(checkoutService.obtenerResumenCarrito(CORREO)).thenReturn(crearResumenConUnItem());
+        CheckoutDTO dto = crearCheckoutDTO();
         when(checkoutService.finalizarCompra(CORREO, dto))
                 .thenThrow(new IllegalArgumentException("Stock insuficiente para 'LAPTOP HP'. Disponible: 1 unidades."));
 
-        String vista = controller.pagar(dto, crearResultadoSinErrores(dto), model, principal, redirectAttributes);
+        String vista = pagarConTokenValido(dto, crearResultadoSinErrores(dto));
 
-        assertEquals("ecommerce/pages/checkout/checkout", vista);
+        assertEquals(VISTA_CHECKOUT, vista);
         assertEquals("Stock insuficiente para 'LAPTOP HP'. Disponible: 1 unidades.", model.getAttribute("mensajeError"));
         assertNull(dto.getCvv());
+    }
+
+    @Test
+    void debeMostrarElResumenActualizadoCuandoElTotalCambio() {
+        ResumenCompraDTO resumenAnterior = crearResumenConUnItem();
+        ResumenCompraDTO resumenActual = crearResumenConUnItem();
+        when(checkoutService.obtenerResumenCarrito(CORREO)).thenReturn(resumenAnterior, resumenActual);
+        CheckoutDTO dto = crearCheckoutDTO();
+        when(checkoutService.finalizarCompra(CORREO, dto))
+                .thenThrow(new IllegalStateException("El total de tu compra cambió de $100.00 a $120.00. Revisa el resumen antes de pagar."));
+
+        String vista = pagarConTokenValido(dto, crearResultadoSinErrores(dto));
+
+        assertEquals(VISTA_CHECKOUT, vista);
+        assertSame(resumenActual, model.getAttribute("resumen"));
+        assertEquals("El total de tu compra cambió de $100.00 a $120.00. Revisa el resumen antes de pagar.",
+                model.getAttribute("mensajeError"));
     }
 
     @Test
@@ -153,6 +267,11 @@ public class CheckoutControllerTest {
 
         assertEquals("redirect:/", vista);
         assertEquals("El pedido no pertenece a tu cuenta.", redirectAttributes.getFlashAttributes().get("mensajeError"));
+    }
+
+    private String pagarConTokenValido(CheckoutDTO dto, BindingResult result) {
+        session.setAttribute("tokenPago", TOKEN);
+        return controller.pagar(dto, result, TOKEN, model, principal, session, redirectAttributes);
     }
 
     private ResumenCompraDTO crearResumenConUnItem() {

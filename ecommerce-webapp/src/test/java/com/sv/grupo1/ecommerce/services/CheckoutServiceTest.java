@@ -13,7 +13,9 @@ import com.sv.grupo1.ecommerce.dao.UsuarioRepository;
 import com.sv.grupo1.ecommerce.dto.CheckoutDTO;
 import com.sv.grupo1.ecommerce.dto.RespuestaPagoPasarelaDTO;
 import com.sv.grupo1.ecommerce.dto.ResultadoCompraDTO;
+import com.sv.grupo1.ecommerce.dto.ResumenCompraDTO;
 import com.sv.grupo1.ecommerce.entities.catalogo.Municipio;
+import com.sv.grupo1.ecommerce.entities.core.DetallePedido;
 import com.sv.grupo1.ecommerce.entities.core.MovimientoInventario;
 import com.sv.grupo1.ecommerce.entities.core.Pago;
 import com.sv.grupo1.ecommerce.entities.core.Pedido;
@@ -266,6 +268,177 @@ public class CheckoutServiceTest {
         );
 
         assertEquals("El pedido no fue confirmado.", error.getMessage());
+    }
+
+    @Test
+    void noDebeFinalizarCompraPorDebajoDelMontoMinimo() {
+        Usuario usuario = crearUsuario(1);
+        Producto producto = crearProducto(10, 5);
+        producto.setPrecioVenta(new BigDecimal("0.25"));
+        prepararCompraValida(usuario, producto, 1);
+
+        IllegalArgumentException error = assertThrows(
+                IllegalArgumentException.class,
+                () -> checkoutService.finalizarCompra(CORREO, crearCheckoutDTO(3))
+        );
+
+        assertEquals("El monto mínimo para pagar con tarjeta es $0.50.", error.getMessage());
+        verify(pedidoRepository, never()).save(any());
+        verifyNoInteractions(pasarelaPagoService);
+    }
+
+    @Test
+    void noDebeFinalizarCompraCuandoElTotalCambioDesdeQueSeMostro() {
+        Usuario usuario = crearUsuario(1);
+        Producto producto = crearProducto(10, 5);
+        prepararCompraValida(usuario, producto, 2);
+        CheckoutDTO dto = crearCheckoutDTO(null);
+        dto.setDireccionLinea1("Calle Nueva 45, Colonia Centro");
+        dto.setIdMunicipio(4);
+        dto.setTotalMostrado(new BigDecimal("150.00"));
+
+        IllegalStateException error = assertThrows(
+                IllegalStateException.class,
+                () -> checkoutService.finalizarCompra(CORREO, dto)
+        );
+
+        assertEquals("El total de tu compra cambió de $150.00 a $200.00. Revisa el resumen antes de pagar.",
+                error.getMessage());
+        verify(pedidoRepository, never()).save(any());
+        verify(usuarioDireccionRepository, never()).save(any());
+        verifyNoInteractions(pasarelaPagoService);
+    }
+
+    @Test
+    void debeFinalizarCompraCuandoElTotalMostradoCoincideAunqueCambieLaEscala() {
+        Usuario usuario = crearUsuario(1);
+        Producto producto = crearProducto(10, 5);
+        prepararCompraValida(usuario, producto, 2);
+        when(pasarelaPagoService.procesarPago(any(), eq("PED-7")))
+                .thenReturn(crearRespuestaPasarela(EstadoPasarela.APPROVED, "Transacción aprobada", "pay_123"));
+        CheckoutDTO dto = crearCheckoutDTO(3);
+        dto.setTotalMostrado(new BigDecimal("200"));
+
+        ResultadoCompraDTO resultado = checkoutService.finalizarCompra(CORREO, dto);
+
+        assertTrue(resultado.isAprobado());
+    }
+
+    @Test
+    void debeReutilizarLaDireccionCuandoYaExisteUnaIgual() {
+        Usuario usuario = crearUsuario(1);
+        Producto producto = crearProducto(10, 5);
+        prepararCompraValida(usuario, producto, 1);
+        UsuarioDireccion existente = new UsuarioDireccion();
+        existente.setIdDireccion(8);
+        existente.setUsuario(usuario);
+        when(usuarioDireccionRepository.findFirstByUsuarioIdUsuarioAndMunicipioIdMunicipioAndDireccionLinea1IgnoreCase(
+                1, 4, "Calle Nueva 45, Colonia Centro")).thenReturn(Optional.of(existente));
+        when(pasarelaPagoService.procesarPago(any(), eq("PED-7")))
+                .thenReturn(crearRespuestaPasarela(EstadoPasarela.APPROVED, "Transacción aprobada", "pay_123"));
+        CheckoutDTO dto = crearCheckoutDTO(null);
+        dto.setDireccionLinea1("  Calle Nueva 45, Colonia Centro  ");
+        dto.setIdMunicipio(4);
+
+        checkoutService.finalizarCompra(CORREO, dto);
+
+        verify(usuarioDireccionRepository, never()).save(any());
+        verify(municipioRepository, never()).findById(any());
+        ArgumentCaptor<Pedido> pedidoCaptor = ArgumentCaptor.forClass(Pedido.class);
+        verify(pedidoRepository, atLeastOnce()).save(pedidoCaptor.capture());
+        assertSame(existente, pedidoCaptor.getValue().getDireccion());
+    }
+
+    @Test
+    void noDebeFinalizarCompraConUnProductoInactivo() {
+        Usuario usuario = crearUsuario(1);
+        Producto producto = crearProducto(10, 5);
+        producto.setEstado('I');
+        prepararCompraValida(usuario, producto, 1);
+
+        IllegalArgumentException error = assertThrows(
+                IllegalArgumentException.class,
+                () -> checkoutService.finalizarCompra(CORREO, crearCheckoutDTO(3))
+        );
+
+        assertEquals("El producto 'LAPTOP HP' ya no está disponible.", error.getMessage());
+        verify(pedidoRepository, never()).save(any());
+        verifyNoInteractions(pasarelaPagoService);
+    }
+
+    @Test
+    void debeAnularPedidoYRechazarPagoCuandoLaPasarelaNoResponde() {
+        Usuario usuario = crearUsuario(1);
+        Producto producto = crearProducto(10, 5);
+        prepararCompraValida(usuario, producto, 1);
+        when(pasarelaPagoService.procesarPago(any(), eq("PED-7")))
+                .thenReturn(crearRespuestaPasarela(EstadoPasarela.ERROR,
+                        "No se pudo comunicar con la pasarela de pago. Intente nuevamente.", null));
+
+        ResultadoCompraDTO resultado = checkoutService.finalizarCompra(CORREO, crearCheckoutDTO(3));
+
+        assertFalse(resultado.isAprobado());
+        assertEquals("No se pudo comunicar con la pasarela de pago. Intente nuevamente.", resultado.getMensaje());
+        assertEquals(5, producto.getStockDisponible());
+
+        ArgumentCaptor<Pago> pagoCaptor = ArgumentCaptor.forClass(Pago.class);
+        verify(pagoRepository).save(pagoCaptor.capture());
+        assertEquals('R', pagoCaptor.getValue().getEstadoTransaccion());
+
+        ArgumentCaptor<Pedido> pedidoCaptor = ArgumentCaptor.forClass(Pedido.class);
+        verify(pedidoRepository, atLeastOnce()).save(pedidoCaptor.capture());
+        assertEquals('A', pedidoCaptor.getValue().getEstadoPedido());
+        verify(carritoService, never()).vaciar();
+    }
+
+    @Test
+    void debeCalcularElResumenDelCarritoConLosPreciosActuales() {
+        Producto producto = crearProducto(10, 5);
+        producto.setPrecioVenta(new BigDecimal("120.00"));
+        when(usuarioRepository.findByCorreoInicioSesionIgnoreCase(CORREO)).thenReturn(Optional.of(crearUsuario(1)));
+        when(productoRepository.findById(10)).thenReturn(Optional.of(producto));
+        when(carritoService.items()).thenReturn(List.of(crearItemCarrito(10, 2)));
+
+        ResumenCompraDTO resumen = checkoutService.obtenerResumenCarrito(CORREO);
+
+        assertEquals(1, resumen.getItems().size());
+        assertEquals(new BigDecimal("120.00"), resumen.getItems().get(0).getPrecioUnitario());
+        assertEquals(new BigDecimal("240.00"), resumen.getTotal());
+    }
+
+    @Test
+    void debeMostrarLaConfirmacionDeUnPedidoConfirmado() {
+        Usuario usuario = crearUsuario(1);
+        Municipio municipio = new Municipio();
+        municipio.setNombreMunicipio("San Salvador");
+        UsuarioDireccion direccion = new UsuarioDireccion();
+        direccion.setDireccionLinea1("Colonia Escalón, Calle Principal #123");
+        direccion.setMunicipio(municipio);
+        Pedido pedido = crearPedido(usuario, 'C');
+        pedido.setDireccion(direccion);
+        pedido.setTotal(new BigDecimal("200.00"));
+        Pago pago = new Pago();
+        pago.setReferenciaPasarela("pay_123");
+
+        DetallePedido detalle = new DetallePedido();
+        detalle.setProducto(crearProducto(10, 5));
+        detalle.setCantidad(2);
+        detalle.setPrecioUnitario(new BigDecimal("100.00"));
+        detalle.setSubtotal(new BigDecimal("200.00"));
+
+        when(usuarioRepository.findByCorreoInicioSesionIgnoreCase(CORREO)).thenReturn(Optional.of(usuario));
+        when(pedidoRepository.findById(7)).thenReturn(Optional.of(pedido));
+        when(detallePedidoRepository.findByPedido_IdPedido(7)).thenReturn(List.of(detalle));
+        when(pagoRepository.findFirstByPedido_IdPedidoOrderByIdPagoDesc(7)).thenReturn(Optional.of(pago));
+
+        ResumenCompraDTO resumen = checkoutService.obtenerConfirmacion(CORREO, 7);
+
+        assertEquals(7, resumen.getIdPedido());
+        assertEquals(new BigDecimal("200.00"), resumen.getTotal());
+        assertEquals("Colonia Escalón, Calle Principal #123, San Salvador", resumen.getDireccionEntrega());
+        assertEquals("pay_123", resumen.getReferenciaPago());
+        assertEquals(1, resumen.getItems().size());
+        assertEquals("LAPTOP HP", resumen.getItems().get(0).getNombreProducto());
     }
 
     private void prepararCompraValida(Usuario usuario, Producto producto, int cantidad) {

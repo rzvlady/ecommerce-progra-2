@@ -25,7 +25,11 @@
                 <span th:text="${mensajeError}"></span>
             </div>
 
-            <form th:action="@{/checkout/pagar}" th:object="${checkoutDTO}" method="post" class="row g-4" id="formCheckout">
+            <form th:action="@{/checkout/pagar}" th:object="${checkoutDTO}" method="post" class="row g-4" id="formCheckout"
+                  th:attr="data-url-checkout=@{/checkout}">
+
+                <input type="hidden" name="tokenPago" th:value="${tokenPago}">
+                <input type="hidden" name="totalMostrado" th:value="${resumen.total}">
 
                 <div class="col-12 col-lg-7">
 
@@ -77,6 +81,7 @@
                                            class="form-control"
                                            th:field="*{direccionLinea1}"
                                            th:classappend="${#fields.hasErrors('direccionLinea1')} ? 'is-invalid'"
+                                           minlength="10"
                                            maxlength="150"
                                            autocomplete="off"
                                            placeholder="Colonia, calle y número">
@@ -277,8 +282,11 @@
                         var hoy = new Date();
                         var mes = parseInt(expiracion.value.substring(0, 2), 10);
                         var anio = 2000 + parseInt(expiracion.value.substring(3), 10);
-                        if (anio < hoy.getFullYear() || (anio === hoy.getFullYear() && mes < hoy.getMonth() + 1)) {
+                        var mesesHastaVencimiento = (anio - hoy.getFullYear()) * 12 + (mes - (hoy.getMonth() + 1));
+                        if (mesesHastaVencimiento < 0) {
                             expiracion.setCustomValidity('La tarjeta está vencida');
+                        } else if (mesesHastaVencimiento > 15 * 12) {
+                            expiracion.setCustomValidity('La fecha de expiración no es válida');
                         }
                     }
                 }
@@ -313,8 +321,7 @@
 
                 window.addEventListener('pageshow', function (evento) {
                     if (evento.persisted) {
-                        botonPagar.disabled = false;
-                        botonPagar.querySelector('span').textContent = 'Pagar ahora';
+                        window.location.replace(formulario.dataset.urlCheckout);
                     }
                 });
             });

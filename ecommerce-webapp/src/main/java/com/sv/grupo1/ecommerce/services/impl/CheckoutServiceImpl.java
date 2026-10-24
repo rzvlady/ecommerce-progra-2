@@ -37,9 +37,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CheckoutServiceImpl implements CheckoutService {
@@ -47,6 +49,7 @@ public class CheckoutServiceImpl implements CheckoutService {
     private static final Logger LOG = LoggerFactory.getLogger(CheckoutServiceImpl.class);
     private static final String MONEDA = "USD";
     private static final String PREFIJO_ORDEN = "PED-";
+    private static final BigDecimal MONTO_MINIMO_PAGO = new BigDecimal("0.50");
 
     private final UsuarioRepository usuarioRepository;
     private final UsuarioDireccionRepository usuarioDireccionRepository;
@@ -85,7 +88,7 @@ public class CheckoutServiceImpl implements CheckoutService {
     @Override
     @Transactional(readOnly = true)
     public ResumenCompraDTO obtenerResumenCarrito(String correo) {
-        Usuario usuario = buscarUsuario(correo);
+        buscarUsuario(correo);
         List<DetallePedido> detalles = construirDetallesDesdeCarrito();
 
         ResumenCompraDTO resumen = new ResumenCompraDTO();
@@ -119,8 +122,11 @@ public class CheckoutServiceImpl implements CheckoutService {
         }
         validarDisponibilidad(detalles);
 
-        UsuarioDireccion direccion = resolverDireccion(usuario, dto);
         BigDecimal total = calcularTotal(detalles);
+        validarMontoMinimo(total);
+        validarTotalMostrado(dto, total);
+
+        UsuarioDireccion direccion = resolverDireccion(usuario, dto);
         Pedido pedido = crearPedido(usuario, direccion, total, detalles);
 
         String referenciaOrden = PREFIJO_ORDEN + pedido.getIdPedido();
@@ -222,13 +228,21 @@ public class CheckoutServiceImpl implements CheckoutService {
         if (dto.getDireccionLinea1() == null || dto.getDireccionLinea1().isBlank() || dto.getIdMunicipio() == null) {
             throw new IllegalArgumentException("Selecciona una dirección de entrega o ingresa una nueva.");
         }
+        String direccionLinea1 = dto.getDireccionLinea1().trim();
+        Optional<UsuarioDireccion> direccionExistente = usuarioDireccionRepository
+                .findFirstByUsuarioIdUsuarioAndMunicipioIdMunicipioAndDireccionLinea1IgnoreCase(
+                        usuario.getIdUsuario(), dto.getIdMunicipio(), direccionLinea1);
+        if (direccionExistente.isPresent()) {
+            return direccionExistente.get();
+        }
+
         Municipio municipio = municipioRepository.findById(dto.getIdMunicipio())
                 .orElseThrow(() -> new IllegalArgumentException("El municipio seleccionado no existe."));
 
         UsuarioDireccion nueva = new UsuarioDireccion();
         nueva.setUsuario(usuario);
         nueva.setMunicipio(municipio);
-        nueva.setDireccionLinea1(dto.getDireccionLinea1().trim());
+        nueva.setDireccionLinea1(direccionLinea1);
         nueva.setCodigoPostal(dto.getCodigoPostal() != null && !dto.getCodigoPostal().isBlank()
                 ? dto.getCodigoPostal().trim()
                 : null);
@@ -322,6 +336,25 @@ public class CheckoutServiceImpl implements CheckoutService {
         return respuesta.getResponseMessage() != null
                 ? respuesta.getResponseMessage()
                 : "El pago no pudo ser procesado.";
+    }
+
+    private void validarMontoMinimo(BigDecimal total) {
+        if (total.compareTo(MONTO_MINIMO_PAGO) < 0) {
+            throw new IllegalArgumentException(
+                    "El monto mínimo para pagar con tarjeta es $" + formatearMonto(MONTO_MINIMO_PAGO) + ".");
+        }
+    }
+
+    private void validarTotalMostrado(CheckoutDTO dto, BigDecimal total) {
+        if (dto.getTotalMostrado() != null && dto.getTotalMostrado().compareTo(total) != 0) {
+            throw new IllegalStateException(
+                    "El total de tu compra cambió de $" + formatearMonto(dto.getTotalMostrado())
+                            + " a $" + formatearMonto(total) + ". Revisa el resumen antes de pagar.");
+        }
+    }
+
+    private String formatearMonto(BigDecimal monto) {
+        return monto.setScale(2, RoundingMode.HALF_UP).toPlainString();
     }
 
     private BigDecimal calcularTotal(List<DetallePedido> detalles) {

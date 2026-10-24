@@ -8,12 +8,16 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface UsuarioDireccionRepository extends JpaRepository<UsuarioDireccion, Integer> {
 
     @EntityGraph(attributePaths = {"municipio", "municipio.departamento", "municipio.departamento.pais"})
     List<UsuarioDireccion> findByUsuarioIdUsuarioOrderByIdDireccionAsc(Integer idUsuario);
+
+    Optional<UsuarioDireccion> findFirstByUsuarioIdUsuarioAndMunicipioIdMunicipioAndDireccionLinea1IgnoreCase(
+            Integer idUsuario, Integer idMunicipio, String direccionLinea1);
 
     @Query("SELECT d FROM UsuarioDireccion d " +
             "JOIN FETCH d.municipio " +

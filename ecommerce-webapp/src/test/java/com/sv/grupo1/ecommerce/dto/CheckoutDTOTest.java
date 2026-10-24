@@ -99,6 +99,22 @@ public class CheckoutDTOTest {
         assertEquals(1, validarCampo(dto, "direccionLinea1").size());
     }
 
+    @Test
+    void noDebeAceptarUnaDireccionDeMenosDeDiezCaracteres() {
+        CheckoutDTO dto = crearCheckoutDTO();
+        dto.setDireccionLinea1("Calle 1");
+
+        assertEquals(1, validarCampo(dto, "direccionLinea1").size());
+    }
+
+    @Test
+    void debeAceptarLaDireccionVaciaCuandoSeEligeUnaExistente() {
+        CheckoutDTO dto = crearCheckoutDTO();
+        dto.setDireccionLinea1("");
+
+        assertTrue(validarCampo(dto, "direccionLinea1").isEmpty());
+    }
+
     private Set<ConstraintViolation<CheckoutDTO>> validarCampo(CheckoutDTO dto, String campo) {
         return validator.validateProperty(dto, campo);
     }
