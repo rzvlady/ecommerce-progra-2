@@ -27,11 +27,12 @@
             <div class="col-12 col-sm-6 col-xl-3">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-body">
-                        <div class="text-secondary small">
-                            Ventas del día
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <div class="text-secondary small">Ventas del día</div>
+                            <i class="bi bi-currency-dollar text-primary fs-5"></i>
                         </div>
                         <div class="fs-3 fw-bold">$0.00</div>
-                        <i class="bi bi-currency-dollar text-primary"></i>
+                        <div class="small text-muted mt-2">Cierre en tiempo real</div>
                     </div>
                 </div>
             </div>
@@ -39,11 +40,14 @@
             <div class="col-12 col-sm-6 col-xl-3">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-body">
-                        <div class="text-secondary small">
-                            Pedidos pendientes
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <div class="text-secondary small">Pedidos pendientes</div>
+                            <i class="bi bi-cart text-warning fs-5"></i>
                         </div>
                         <div class="fs-3 fw-bold">0</div>
-                        <i class="bi bi-cart text-warning"></i>
+                        <div class="small text-muted mt-2">
+                            <a th:href="@{/backoffice/pedidos}" class="text-decoration-none text-secondary">Ver pedidos</a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -51,23 +55,50 @@
             <div class="col-12 col-sm-6 col-xl-3">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-body">
-                        <div class="text-secondary small">
-                            Productos registrados
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <div class="text-secondary small">Productos registrados</div>
+                            <i class="bi bi-box-seam text-success fs-5"></i>
                         </div>
                         <div class="fs-3 fw-bold" th:text="${totalProductos != null ? totalProductos : 0}">0</div>
-                        <i class="bi bi-box-seam text-success"></i>
+                        <div class="small text-muted mt-2">
+                            <a th:href="@{/backoffice/productos}" class="text-decoration-none text-secondary">Ver catálogo</a>
+                        </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Tarjeta Clientes Enriquecida con Operaciones y Métricas -->
             <div class="col-12 col-sm-6 col-xl-3">
                 <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body">
-                        <div class="text-secondary small">
-                            Clientes registrados
+                    <div class="card-body d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="text-secondary small fw-medium">Clientes registrados</span>
+                                <i class="bi bi-people text-info fs-5"></i>
+                            </div>
+                            <div class="d-flex align-items-baseline justify-content-between">
+                                <div class="fs-3 fw-bold" th:text="${totalClientes != null ? totalClientes : 0}">0</div>
+                                <span class="badge bg-info-subtle text-info rounded-pill px-2 py-1 small"
+                                      th:if="${clientesNuevosMes != null && clientesNuevosMes > 0}">
+                                    <i class="bi bi-arrow-up-short"></i>+<span th:text="${clientesNuevosMes}">0</span> este mes
+                                </span>
+                            </div>
+                            <div class="small text-muted mt-2 d-flex align-items-center gap-2">
+                                <span><i class="bi bi-circle-fill text-success" style="font-size: 0.5rem;"></i> <strong th:text="${clientesActivos != null ? clientesActivos : 0}">0</strong> activos</span>
+                                <span class="text-secondary">•</span>
+                                <span><i class="bi bi-circle-fill text-secondary" style="font-size: 0.5rem;"></i> <strong th:text="${clientesInactivos != null ? clientesInactivos : 0}">0</strong> inactivos</span>
+                            </div>
                         </div>
-                        <div class="fs-3 fw-bold">0</div>
-                        <i class="bi bi-people text-info"></i>
+
+                        <div class="pt-2 border-top mt-3 d-flex justify-content-between align-items-center">
+                            <a th:href="@{/backoffice/clientes}" class="text-decoration-none small text-primary fw-medium d-flex align-items-center gap-1">
+                                <span>Gestionar clientes</span>
+                                <i class="bi bi-arrow-right-short fs-6"></i>
+                            </a>
+                            <a th:href="@{/backoffice/clientes(abrirModal='true')}" class="btn btn-xs btn-outline-primary py-0 px-2 rounded" style="font-size: 0.75rem;" title="Registrar nuevo cliente">
+                                <i class="bi bi-plus-lg"></i> Nuevo
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
