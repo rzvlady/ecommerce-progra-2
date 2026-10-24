@@ -3,8 +3,8 @@ package com.sv.grupo1.ecommerce.entities.core;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 
-//@Entity
-//@Table(name = "detalles_pedido", schema = "core")
+@Entity
+@Table(name = "detalles_pedido", schema = "core")
 public class DetallePedido {
 
     @Id
@@ -26,6 +26,9 @@ public class DetallePedido {
     @Column(name = "precio_unitario", nullable = false, precision = 10, scale = 2)
     private BigDecimal precioUnitario;
 
+    @Column(name = "descuento", precision = 10, scale = 2)
+    private BigDecimal descuento = BigDecimal.ZERO;
+
     @Column(name = "subtotal", nullable = false, precision = 10, scale = 2)
     private BigDecimal subtotal;
 
@@ -42,6 +45,8 @@ public class DetallePedido {
     public void setCantidad(Integer cantidad) { this.cantidad = cantidad; }
     public BigDecimal getPrecioUnitario() { return precioUnitario; }
     public void setPrecioUnitario(BigDecimal precioUnitario) { this.precioUnitario = precioUnitario; }
+    public BigDecimal getDescuento() { return descuento; }
+    public void setDescuento(BigDecimal descuento) { this.descuento = descuento; }
     public BigDecimal getSubtotal() { return subtotal; }
     public void setSubtotal(BigDecimal subtotal) { this.subtotal = subtotal; }
 }
