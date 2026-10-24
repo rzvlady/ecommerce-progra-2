@@ -38,7 +38,7 @@ public class PedidoService {
         //Pedido pedido = pedidoRepository.findById(idPedido).orElseThrow(() -> new IllegalArgumentException("Pedido no encontrado: " + idPedido));
         Pedido pedido = new Pedido();
 
-        if (!Character.valueOf(EstadoPedido.CONFIRMADO.getCodigoEstado()).equals(pedido.getEstadoPedido())) {
+        if (!pedido.getEstadoPedido().equals(EstadoPedido.CONFIRMADO.getCodigoEstado())) {
             throw new IllegalStateException(
                     "Solo se pueden despachar pedidos en estado CONFIRMADO. Estado actual: " + pedido.getEstadoPedido());
         }
