@@ -2,15 +2,23 @@ package com.sv.grupo1.ecommerce.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 public class CheckoutDTO {
 
     private Integer idDireccion;
+
+    @Size(max = 150, message = "La dirección no puede superar los 150 caracteres")
     private String direccionLinea1;
+
     private Integer idMunicipio;
+
+    @Pattern(regexp = "^$|^[0-9]{4,10}$", message = "El código postal debe tener entre 4 y 10 dígitos")
     private String codigoPostal;
 
     @NotBlank(message = "El nombre del titular es obligatorio")
+    @Pattern(regexp = "^$|^\\p{L}[\\p{L} .'-]{2,99}$",
+            message = "El nombre del titular debe tener entre 3 y 100 letras, sin números")
     private String nombreTitular;
 
     @NotBlank(message = "El número de tarjeta es obligatorio")
@@ -73,7 +81,7 @@ public class CheckoutDTO {
     }
 
     public void setNumeroTarjeta(String numeroTarjeta) {
-        this.numeroTarjeta = numeroTarjeta;
+        this.numeroTarjeta = numeroTarjeta == null ? null : numeroTarjeta.replaceAll("[\\s-]", "");
     }
 
     public String getFechaExpiracion() {

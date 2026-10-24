@@ -25,7 +25,7 @@
                 <span th:text="${mensajeError}"></span>
             </div>
 
-            <form th:action="@{/checkout/pagar}" th:object="${checkoutDTO}" method="post" class="row g-4" novalidate>
+            <form th:action="@{/checkout/pagar}" th:object="${checkoutDTO}" method="post" class="row g-4" id="formCheckout">
 
                 <div class="col-12 col-lg-7">
 
@@ -76,11 +76,15 @@
                                            id="direccionLinea1"
                                            class="form-control"
                                            th:field="*{direccionLinea1}"
+                                           th:classappend="${#fields.hasErrors('direccionLinea1')} ? 'is-invalid'"
+                                           maxlength="150"
+                                           autocomplete="off"
                                            placeholder="Colonia, calle y número">
+                                    <div class="invalid-feedback" th:errors="*{direccionLinea1}"></div>
                                 </div>
                                 <div class="col-12 col-md-8">
                                     <label class="form-label" for="idMunicipio">Municipio</label>
-                                    <select id="idMunicipio" class="form-select" th:field="*{idMunicipio}">
+                                    <select id="idMunicipio" class="form-select" th:field="*{idMunicipio}" autocomplete="off">
                                         <option value="">Selecciona un municipio</option>
                                         <option th:each="municipio : ${municipios}"
                                                 th:value="${municipio.idMunicipio}"
@@ -95,7 +99,13 @@
                                            id="codigoPostal"
                                            class="form-control"
                                            th:field="*{codigoPostal}"
-                                           maxlength="10">
+                                           th:classappend="${#fields.hasErrors('codigoPostal')} ? 'is-invalid'"
+                                           inputmode="numeric"
+                                           maxlength="10"
+                                           pattern="[0-9]{4,10}"
+                                           title="Entre 4 y 10 dígitos"
+                                           autocomplete="off">
+                                    <div class="invalid-feedback" th:errors="*{codigoPostal}"></div>
                                 </div>
                             </div>
                         </div>
@@ -116,6 +126,10 @@
                                            class="form-control"
                                            th:field="*{nombreTitular}"
                                            th:classappend="${#fields.hasErrors('nombreTitular')} ? 'is-invalid'"
+                                           required
+                                           minlength="3"
+                                           maxlength="100"
+                                           title="Entre 3 y 100 letras, sin números"
                                            autocomplete="off">
                                     <div class="invalid-feedback" th:errors="*{nombreTitular}"></div>
                                 </div>
@@ -127,8 +141,11 @@
                                            th:field="*{numeroTarjeta}"
                                            th:classappend="${#fields.hasErrors('numeroTarjeta')} ? 'is-invalid'"
                                            inputmode="numeric"
-                                           maxlength="16"
-                                           placeholder="16 dígitos"
+                                           required
+                                           maxlength="19"
+                                           pattern="[0-9]{4} [0-9]{4} [0-9]{4} [0-9]{4}"
+                                           title="16 dígitos"
+                                           placeholder="0000 0000 0000 0000"
                                            autocomplete="off">
                                     <div class="invalid-feedback" th:errors="*{numeroTarjeta}"></div>
                                 </div>
@@ -139,7 +156,10 @@
                                            class="form-control"
                                            th:field="*{fechaExpiracion}"
                                            th:classappend="${#fields.hasErrors('fechaExpiracion')} ? 'is-invalid'"
+                                           required
                                            maxlength="5"
+                                           pattern="(0[1-9]|1[0-2])/[0-9]{2}"
+                                           title="Formato MM/AA"
                                            placeholder="MM/AA"
                                            autocomplete="off">
                                     <div class="invalid-feedback" th:errors="*{fechaExpiracion}"></div>
@@ -152,7 +172,10 @@
                                            th:field="*{cvv}"
                                            th:classappend="${#fields.hasErrors('cvv')} ? 'is-invalid'"
                                            inputmode="numeric"
+                                           required
                                            maxlength="4"
+                                           pattern="[0-9]{3,4}"
+                                           title="3 o 4 dígitos"
                                            autocomplete="off">
                                     <div class="invalid-feedback" th:errors="*{cvv}"></div>
                                 </div>
@@ -189,9 +212,9 @@
                                 <span th:text="${'$' + #numbers.formatDecimal(resumen.total, 1, 'COMMA', 2, 'POINT')}">$0.00</span>
                             </div>
 
-                            <button type="submit" class="btn btn-mustard w-100">
+                            <button type="submit" id="btnPagar" class="btn btn-mustard w-100">
                                 <i class="bi bi-lock me-2"></i>
-                                Pagar ahora
+                                <span>Pagar ahora</span>
                             </button>
                             <a th:href="@{/carrito}" class="btn btn-link w-100 mt-2">Volver al carrito</a>
                         </div>
@@ -201,6 +224,101 @@
             </form>
 
         </section>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var formulario = document.getElementById('formCheckout');
+                var radios = formulario.querySelectorAll('input[name="idDireccion"]');
+                var direccion = document.getElementById('direccionLinea1');
+                var municipio = document.getElementById('idMunicipio');
+                var codigoPostal = document.getElementById('codigoPostal');
+                var titular = document.getElementById('nombreTitular');
+                var tarjeta = document.getElementById('numeroTarjeta');
+                var expiracion = document.getElementById('fechaExpiracion');
+                var cvv = document.getElementById('cvv');
+                var botonPagar = document.getElementById('btnPagar');
+
+                function soloDigitos(valor) {
+                    return valor.replace(/\D/g, '');
+                }
+
+                function actualizarDireccionNueva() {
+                    var seleccionada = formulario.querySelector('input[name="idDireccion"]:checked');
+                    var esNueva = seleccionada === null || seleccionada.value === '';
+                    [direccion, municipio, codigoPostal].forEach(function (campo) {
+                        campo.disabled = !esNueva;
+                    });
+                    direccion.required = esNueva;
+                    municipio.required = esNueva;
+                }
+
+                radios.forEach(function (radio) {
+                    radio.addEventListener('change', function () {
+                        actualizarDireccionNueva();
+                        if (radio.value === '') {
+                            direccion.focus();
+                        }
+                    });
+                });
+                actualizarDireccionNueva();
+
+                titular.addEventListener('input', function () {
+                    titular.value = titular.value.replace(/[^\p{L} .'-]/gu, '');
+                });
+
+                tarjeta.addEventListener('input', function () {
+                    var digitos = soloDigitos(tarjeta.value).substring(0, 16);
+                    tarjeta.value = digitos.replace(/(.{4})(?=.)/g, '$1 ');
+                });
+
+                function validarVencimiento() {
+                    expiracion.setCustomValidity('');
+                    if (/^(0[1-9]|1[0-2])\/[0-9]{2}$/.test(expiracion.value)) {
+                        var hoy = new Date();
+                        var mes = parseInt(expiracion.value.substring(0, 2), 10);
+                        var anio = 2000 + parseInt(expiracion.value.substring(3), 10);
+                        if (anio < hoy.getFullYear() || (anio === hoy.getFullYear() && mes < hoy.getMonth() + 1)) {
+                            expiracion.setCustomValidity('La tarjeta está vencida');
+                        }
+                    }
+                }
+
+                expiracion.addEventListener('input', function () {
+                    var digitos = soloDigitos(expiracion.value).substring(0, 4);
+                    if (digitos.length === 1 && digitos > '1') {
+                        digitos = '0' + digitos;
+                    }
+                    if (digitos.length >= 2 && digitos.substring(0, 2) > '12') {
+                        digitos = '12' + digitos.substring(2);
+                    }
+                    expiracion.value = digitos.length > 2 ? digitos.substring(0, 2) + '/' + digitos.substring(2) : digitos;
+                    validarVencimiento();
+                });
+                validarVencimiento();
+
+                cvv.addEventListener('input', function () {
+                    cvv.value = soloDigitos(cvv.value);
+                });
+
+                codigoPostal.addEventListener('input', function () {
+                    codigoPostal.value = soloDigitos(codigoPostal.value);
+                });
+
+                formulario.addEventListener('submit', function () {
+                    if (formulario.checkValidity()) {
+                        botonPagar.disabled = true;
+                        botonPagar.querySelector('span').textContent = 'Procesando pago...';
+                    }
+                });
+
+                window.addEventListener('pageshow', function (evento) {
+                    if (evento.persisted) {
+                        botonPagar.disabled = false;
+                        botonPagar.querySelector('span').textContent = 'Pagar ahora';
+                    }
+                });
+            });
+        </script>
 
     </th:block>
 </div>

@@ -77,6 +77,20 @@ public class CheckoutControllerTest {
     }
 
     @Test
+    void noDebePagarConUnaTarjetaVencida() {
+        when(checkoutService.obtenerResumenCarrito(CORREO)).thenReturn(crearResumenConUnItem());
+        CheckoutDTO dto = crearCheckoutDTO();
+        dto.setFechaExpiracion("01/20");
+        BindingResult result = crearResultadoSinErrores(dto);
+
+        String vista = controller.pagar(dto, result, model, principal, redirectAttributes);
+
+        assertEquals("ecommerce/pages/checkout/checkout", vista);
+        assertEquals("La tarjeta está vencida", result.getFieldError("fechaExpiracion").getDefaultMessage());
+        verify(checkoutService, never()).finalizarCompra(any(), any());
+    }
+
+    @Test
     void debeRedirigirALaConfirmacionCuandoElPagoEsAprobado() {
         CheckoutDTO dto = crearCheckoutDTO();
         when(checkoutService.finalizarCompra(CORREO, dto))
@@ -170,7 +184,7 @@ public class CheckoutControllerTest {
         dto.setIdDireccion(1);
         dto.setNombreTitular("Cliente Prueba");
         dto.setNumeroTarjeta("4111111111111234");
-        dto.setFechaExpiracion("12/29");
+        dto.setFechaExpiracion("12/35");
         dto.setCvv("123");
         return dto;
     }

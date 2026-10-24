@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
+import java.time.YearMonth;
 
 @Controller
 @RequestMapping("/checkout")
@@ -55,6 +56,7 @@ public class CheckoutController {
             RedirectAttributes redirectAttributes) {
         LOG.info("pagar() => Iniciando");
 
+        validarFechaExpiracion(dto, result);
         if (result.hasErrors()) {
             return volverAlCheckout(model, principal.getName(), dto);
         }
@@ -87,6 +89,18 @@ public class CheckoutController {
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("mensajeError", e.getMessage());
             return "redirect:/";
+        }
+    }
+
+    private void validarFechaExpiracion(CheckoutDTO dto, BindingResult result) {
+        String fecha = dto.getFechaExpiracion();
+        if (fecha == null || result.hasFieldErrors("fechaExpiracion")) {
+            return;
+        }
+        YearMonth vencimiento = YearMonth.of(
+                2000 + Integer.parseInt(fecha.substring(3)), Integer.parseInt(fecha.substring(0, 2)));
+        if (vencimiento.isBefore(YearMonth.now())) {
+            result.rejectValue("fechaExpiracion", "tarjetaVencida", "La tarjeta está vencida");
         }
     }
 
