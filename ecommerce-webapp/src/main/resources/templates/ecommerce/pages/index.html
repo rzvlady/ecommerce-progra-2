@@ -211,14 +211,16 @@
                     Ver producto
                   </a>
 
-                  <button type="button"
-                          class="btn btn-mustard btn-sm btn-agregar-carrito"
-                          th:attr="data-producto-id=${prod.idProducto}"
-                          th:disabled="${prod.stockDisponible != null and prod.stockDisponible <= 0}"
-                          onclick="alert('¡Producto añadido al carrito!')">
-                    <i class="bi bi-cart-plus me-1"></i>
-                    Agregar al carrito
-                  </button>
+                     <form th:action="@{/carrito/agregar}" method="post" class="d-grid">
+                        <input type="hidden" name="idProducto" th:value="${prod.idProducto}">
+                        <input type="hidden" name="cantidad" value="1">
+                         <button type="submit"
+                                  class="btn btn-mustard btn-sm btn-agregar-carrito"
+                                  th:disabled="${prod.stockDisponible != null and prod.stockDisponible <= 0}">
+                        <i class="bi bi-cart-plus me-1"></i>
+                         Agregar al carrito
+                      </button>
+                    </form>
                 </div>
 
               </div>

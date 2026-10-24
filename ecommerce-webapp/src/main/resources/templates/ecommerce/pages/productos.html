@@ -199,39 +199,32 @@
                                     Ver producto
                                 </a>
 
-                                <button type="button"
-                                        class="btn btn-mustard btn-sm btn-agregar-carrito"
-                                        th:attr="data-producto-id=${producto.idProducto}"
-                                        th:disabled="${producto.stockDisponible == null
-                                            or producto.stockDisponible <= 0}">
-                                    <i class="bi bi-cart-plus me-1"></i>
-                                    Agregar al carrito
-                                </button>
+                                <form th:action="@{/carrito/agregar}" method="post" class="d-grid">
+                                    <input type="hidden" name="idProducto" th:value="${producto.idProducto}">
+                                    <input type="hidden" name="cantidad" value="1">
+                                    <button type="submit"
+                                            class="btn btn-mustard btn-sm btn-agregar-carrito"
+                                            th:disabled="${producto.stockDisponible == null or producto.stockDisponible <= 0}"
+                                        <i class="bi bi-cart-plus me-1"></i>
+                                        Agregar al carrito
+                                    </button>
+                              </form> 
 
                             </div>
-
                         </div>
-
                     </div>
-
                 </div>
-
             </div>
 
-            <!-- Sin resultados -->
+                        <!-- Sin resultados -->
             <div th:if="${#lists.isEmpty(productos)}"
                  class="text-center py-5">
 
-                <i class="bi bi-search"
-                   style="font-size: 3rem; color: #aaa;"></i>
+                <i class="bi bi-search" style="font-size: 3rem; color: #aaa;"></i>
 
-                <h3 class="h5 mt-3">
-                    No encontramos productos
-                </h3>
+                <h3 class="h5 mt-3">No encontramos productos</h3>
 
-                <p class="text-secondary">
-                    Intenta cambiar la búsqueda o los filtros.
-                </p>
+                <p class="text-secondary">Intenta cambiar la búsqueda o los filtros.</p>
 
                 <a th:href="@{/productos}" class="btn btn-mustard">
                     Ver todos los productos
