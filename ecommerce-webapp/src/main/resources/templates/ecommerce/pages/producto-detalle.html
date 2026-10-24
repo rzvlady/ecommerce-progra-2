@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 
-<head th:replace="~{ecommerce/fragments/ecommerce-head :: head('Producto')}">
+<head th:replace="~{ecommerce/fragments/ecommerce-head :: head(${producto != null ? producto.nombreProducto : 'Detalle de Producto'})}">
 </head>
 
 <body class="store-body">
@@ -14,48 +14,67 @@
         <nav aria-label="breadcrumb" class="mb-4">
           <ol class="breadcrumb" style="font-size: 0.85rem;">
             <li class="breadcrumb-item"><a th:href="@{/}" class="text-decoration-none">Inicio</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/productos}" class="text-decoration-none">Productos</a></li>
             <li class="breadcrumb-item active" aria-current="page"
-                th:text="${nombreProducto != null ? nombreProducto : 'Producto'}">Producto</li>
+                th:text="${producto.nombreProducto}">Producto</li>
           </ol>
         </nav>
 
-        <div class="row g-4">
+        <div class="row g-4 align-items-center">
 
           <div class="col-md-5">
-            <div style="width: 100%; height: 320px; background: #f1f5f9; border-radius: 14px;
-                        border: 1px solid var(--store-border, #eadcc0);
-                        display: flex; align-items: center; justify-content: center;">
-              <i class="bi bi-image" style="font-size: 4rem; color: #94a3b8;"></i>
+            <div class="product-image-container p-3 bg-white rounded-3 shadow-xs text-center border" style="min-height: 320px; display: flex; align-items: center; justify-content: center;">
+              <img th:if="${producto.imagenPrincipalUrl != null and !producto.imagenPrincipalUrl.isBlank()}"
+                   th:src="${producto.imagenPrincipalUrl}"
+                   th:alt="${producto.nombreProducto}"
+                   class="img-fluid rounded"
+                   style="max-height: 320px; object-fit: contain;">
+              <i th:unless="${producto.imagenPrincipalUrl != null and !producto.imagenPrincipalUrl.isBlank()}"
+                 class="bi bi-image" style="font-size: 4rem; color: #94a3b8;"></i>
             </div>
           </div>
 
           <div class="col-md-7">
-            <span class="section-eyebrow">DETALLE DE PRODUCTO</span>
-            <h1 class="section-title mt-1 text-capitalize"
-                th:text="${nombreProducto != null ? nombreProducto : 'Nombre del producto'}">
+            <span class="section-eyebrow"
+                  th:text="${producto.categoria != null ? #strings.toUpperCase(producto.categoria.nombreCategoria) : 'CATÁLOGO'}">
+              CATÁLOGO
+            </span>
+            <h1 class="section-title mt-1"
+                th:text="${producto.nombreProducto}">
+              Nombre del producto
             </h1>
 
-            <p class="section-description mt-2 mb-4">
-
-            </p>
-
-            <div class="benefit-card mb-4" style="padding: 20px 18px;">
-              <i class="bi bi-info-circle" style="font-size: 1.6rem; color: var(--store-primary, #d99b00);"></i>
-              <div>
-                <h3 style="font-size: 0.95rem;"></h3>
-                <p>
-                </p>
-              </div>
+            <div class="d-flex align-items-center gap-2 mb-3">
+              <span class="badge bg-light text-dark border"
+                    th:if="${producto.marca != null}"
+                    th:text="${producto.marca.nombreMarca}">Marca</span>
+              <span class="badge bg-light text-muted border"
+                    th:text="${'SKU: ' + producto.codigoSku}">SKU</span>
+              <span class="badge"
+                    th:classappend="${producto.stockDisponible > 0 ? 'bg-success' : 'bg-danger'}"
+                    th:text="${producto.stockDisponible > 0 ? 'En stock (' + producto.stockDisponible + ')' : 'Agotado'}">
+                Stock
+              </span>
             </div>
 
+            <h2 class="text-primary fw-bold mb-3"
+                th:text="${'$' + #numbers.formatDecimal(producto.precioVenta, 1, 2)}">
+              $0.00
+            </h2>
+
+            <p class="section-description mt-2 mb-4"
+               th:text="${producto.descripcionProducto}">
+              Descripción detallada del producto.
+            </p>
+
             <div class="d-flex gap-2 flex-wrap">
-              <a th:href="@{/carrito}" class="btn btn-mustard">
+              <button type="button" class="btn btn-mustard" onclick="alert('¡Producto añadido al carrito!')">
                 <i class="bi bi-cart3 me-2"></i>
-                Ver mi carrito
-              </a>
-              <a th:href="@{/}" class="btn btn-outline-secondary btn-sm align-self-center">
+                Añadir al carrito
+              </button>
+              <a th:href="@{/productos}" class="btn btn-outline-secondary btn-sm align-self-center">
                 <i class="bi bi-arrow-left me-1"></i>
-                Inicio
+                Volver a la tienda
               </a>
             </div>
           </div>

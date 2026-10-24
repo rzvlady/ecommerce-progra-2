@@ -1,41 +1,47 @@
--- Datos de prueba para desarrollo local.
--- Requiere haber corrido antes db/schema-ecommerce.sql y
--- db/migracion-productos-sku-precio.sql (agrega codigo_sku/precio_venta/precio_costo,
--- columnas que este seed ya llena).
---
--- Uso:
---   psql -U <usuario> -h localhost -d <base_de_datos> -f db/seed-data.sql
---
--- Re-ejecutable: al inicio vacía las tablas sembradas por este script antes
--- de volver a insertar, para poder reiniciar los datos de prueba las veces
--- que haga falta sin dejar residuos de una corrida anterior.
---
--- Password de los usuarios sembrados: "password" (hash BCrypt de referencia de
--- Spring Security). Es solo para desarrollo local, no usar en ningún ambiente real.
+-- ==========================================================================
+-- E-COMMERCE SEED DATA
+-- Datos de prueba para catálogo, productos y movimientos de inventario.
+-- Alineado a las nuevas configuraciones:
+--   - Categorías en catalogo.categorias (jerarquía y prefijos de taxonomía)
+--   - Marcas en catalogo.marcas con descripciones y estado activo
+--   - SKU estandarizado: [TAXONOMIA_CATEGORIA]-[CODIGO_MARCA]-[CORRELATIVO]
+--   - Metadata técnica JSONB con atributos (sin URLs de imágenes)
+--   - Movimientos iniciales en core.movimientos_inventario para auditoría
+--   - Omite el esquema seguridad (roles, usuarios y perfiles gestionados por separado)
+--   - Las tablas geográficas se insertan con idempotencia (ON CONFLICT DO NOTHING)
+--     para evitar borrados en cascada hacia seguridad.usuarios_direccion.
+-- ==========================================================================
 
 BEGIN;
 
+-- 1. Limpieza de tablas de catálogo de productos e inventario
 TRUNCATE TABLE
-  core.movimientos_inventario, core.envios, core.pagos, core.detalles_pedido, core.pedidos,
-  core.productos, core.categorias,
-  seguridad.usuarios_direccion, seguridad.usuarios_contacto, seguridad.usuarios_perfil, seguridad.usuarios,
-  catalogo.marcas, catalogo.municipios, catalogo.departamentos, catalogo.paises
+  core.movimientos_inventario,
+  core.detalles_pedido,
+  core.pagos,
+  core.envios,
+  core.pedidos,
+  core.productos,
+  catalogo.categorias,
+  catalogo.marcas
 RESTART IDENTITY CASCADE;
 
 -- ==========================================================================
--- catalogo
+-- 2. CATALOGO GEOGRAFICO (PAISES, DEPARTAMENTOS, MUNICIPIOS)
 -- ==========================================================================
 
-INSERT INTO catalogo.paises (id_pais, nombre_pais) VALUES
-  (1, 'El Salvador');
+INSERT INTO catalogo.paises (id_pais, nombre_pais) OVERRIDING SYSTEM VALUE VALUES
+  (1, 'El Salvador')
+ON CONFLICT (id_pais) DO NOTHING;
 
-INSERT INTO catalogo.departamentos (id_departamento, id_pais, nombre_departamento) VALUES
+INSERT INTO catalogo.departamentos (id_departamento, id_pais, nombre_departamento) OVERRIDING SYSTEM VALUE VALUES
   (1, 1, 'San Salvador'),
   (2, 1, 'La Libertad'),
   (3, 1, 'Santa Ana'),
-  (4, 1, 'San Miguel');
+  (4, 1, 'San Miguel')
+ON CONFLICT (id_departamento) DO NOTHING;
 
-INSERT INTO catalogo.municipios (id_municipio, id_departamento, nombre_municipio) VALUES
+INSERT INTO catalogo.municipios (id_municipio, id_departamento, nombre_municipio) OVERRIDING SYSTEM VALUE VALUES
   (1, 1, 'San Salvador'),
   (2, 1, 'Soyapango'),
   (3, 1, 'Mejicanos'),
@@ -43,435 +49,137 @@ INSERT INTO catalogo.municipios (id_municipio, id_departamento, nombre_municipio
   (5, 2, 'Santa Tecla'),
   (6, 2, 'Antiguo Cuscatlán'),
   (7, 3, 'Santa Ana'),
-  (8, 4, 'San Miguel');
-
-INSERT INTO catalogo.marcas (id_marca, nombre_marca) VALUES
-  (1, 'Samsung'),
-  (2, 'LG'),
-  (3, 'Sony'),
-  (4, 'HP'),
-  (5, 'Logitech'),
-  (6, 'Xiaomi'),
-  (7, 'Apple'),
-  (8, 'Dell'),
-  (9, 'Lenovo'),
-  (10, 'JBL'),
-  (11, 'Philips'),
-  (12, 'Whirlpool'),
-  (13, 'Nintendo');
+  (8, 4, 'San Miguel')
+ON CONFLICT (id_municipio) DO NOTHING;
 
 -- ==========================================================================
--- seguridad
+-- 3. CATALOGO DE MARCAS
 -- ==========================================================================
 
-INSERT INTO seguridad.usuarios (id_usuario, correo_inicio_sesion, contrasenia, eliminado, estado) VALUES
-  (1, 'ana.martinez@example.com', '$2a$10$GRLdNijSQMUvl/au9ofL.eDwmoohzzS7.rmNSJZ.0FxO/BTk76klW', false, 'A'),
-  (2, 'carlos.lopez@example.com', '$2a$10$GRLdNijSQMUvl/au9ofL.eDwmoohzzS7.rmNSJZ.0FxO/BTk76klW', false, 'A'),
-  (3, 'maria.hernandez@example.com', '$2a$10$GRLdNijSQMUvl/au9ofL.eDwmoohzzS7.rmNSJZ.0FxO/BTk76klW', false, 'A'),
-  (4, 'jose.ramirez@example.com', '$2a$10$GRLdNijSQMUvl/au9ofL.eDwmoohzzS7.rmNSJZ.0FxO/BTk76klW', false, 'A'),
-  (5, 'lucia.flores@example.com', '$2a$10$GRLdNijSQMUvl/au9ofL.eDwmoohzzS7.rmNSJZ.0FxO/BTk76klW', false, 'A'),
-  (6, 'pedro.gomez@example.com', '$2a$10$GRLdNijSQMUvl/au9ofL.eDwmoohzzS7.rmNSJZ.0FxO/BTk76klW', false, 'A'),
-  (7, 'sofia.rivas@example.com', '$2a$10$GRLdNijSQMUvl/au9ofL.eDwmoohzzS7.rmNSJZ.0FxO/BTk76klW', false, 'A'),
-  (8, 'diego.cruz@example.com', '$2a$10$GRLdNijSQMUvl/au9ofL.eDwmoohzzS7.rmNSJZ.0FxO/BTk76klW', false, 'A'),
-  (9, 'valeria.mejia@example.com', '$2a$10$GRLdNijSQMUvl/au9ofL.eDwmoohzzS7.rmNSJZ.0FxO/BTk76klW', false, 'A'),
-  (10, 'andres.pineda@example.com', '$2a$10$GRLdNijSQMUvl/au9ofL.eDwmoohzzS7.rmNSJZ.0FxO/BTk76klW', false, 'A'),
-  (11, 'camila.escobar@example.com', '$2a$10$GRLdNijSQMUvl/au9ofL.eDwmoohzzS7.rmNSJZ.0FxO/BTk76klW', false, 'A'),
-  (12, 'ricardo.alas@example.com', '$2a$10$GRLdNijSQMUvl/au9ofL.eDwmoohzzS7.rmNSJZ.0FxO/BTk76klW', true, 'I');
-
-INSERT INTO seguridad.usuarios_perfil (id_perfil, id_usuario, nombres, apellidos, dui, genero, fecha_nacimiento) VALUES
-  (1, 1, 'Ana', 'Martínez', '00000001-1', 'F', '2005-02-02'),
-  (2, 2, 'Carlos', 'López', '00000002-2', 'M', '1996-08-16'),
-  (3, 3, 'María', 'Hernández', '00000003-3', 'F', '1994-05-26'),
-  (4, 4, 'José', 'Ramírez', '00000004-4', 'M', '1988-04-02'),
-  (5, 5, 'Lucía', 'Flores', '00000005-5', 'F', '2000-09-28'),
-  (6, 6, 'Pedro', 'Gómez', '00000006-6', 'M', '1974-11-28'),
-  (7, 7, 'Sofía', 'Rivas', '00000007-7', 'F', '1975-07-22'),
-  (8, 8, 'Diego', 'Cruz', '00000008-8', 'M', '1985-05-13'),
-  (9, 9, 'Valeria', 'Mejía', '00000009-9', 'F', '1976-02-18'),
-  (10, 10, 'Andrés', 'Pineda', '00000010-0', 'M', '1993-05-06'),
-  (11, 11, 'Camila', 'Escobar', '00000011-1', 'F', '1978-05-04'),
-  (12, 12, 'Ricardo', 'Alas', '00000012-2', 'M', '1986-09-16');
-
-INSERT INTO seguridad.usuarios_contacto (id_contacto, id_usuario, tipo_contacto, valor, principal, verificado) VALUES
-  (1, 1, 1, '7093-9856', true, true),
-  (2, 2, 1, '7037-7570', true, true),
-  (3, 3, 1, '7068-5673', true, true),
-  (4, 4, 1, '7084-9883', true, true),
-  (5, 4, 2, 'jose.ramirez@example.com', false, true),
-  (6, 5, 1, '7077-3579', true, true),
-  (7, 5, 2, 'lucia.flores@example.com', false, true),
-  (8, 6, 1, '7040-7615', true, true),
-  (9, 6, 2, 'pedro.gomez@example.com', false, true),
-  (10, 7, 1, '7084-9565', true, true),
-  (11, 7, 2, 'sofia.rivas@example.com', false, true),
-  (12, 8, 1, '7026-5915', true, true),
-  (13, 9, 1, '7037-9288', true, true),
-  (14, 9, 2, 'valeria.mejia@example.com', false, true),
-  (15, 10, 1, '7066-9900', true, true),
-  (16, 11, 1, '7023-3546', true, true),
-  (17, 11, 2, 'camila.escobar@example.com', false, true),
-  (18, 12, 1, '7042-1832', true, true),
-  (19, 12, 2, 'ricardo.alas@example.com', false, true);
-
-INSERT INTO seguridad.usuarios_direccion (id_direccion, id_usuario, id_municipio, direccion_linea_1, codigo_postal, tipo_direccion) VALUES
-  (1, 1, 2, 'Dirección de prueba #1, Res. Las Palmeras', 1002, 'C'),
-  (2, 2, 3, 'Dirección de prueba #2, Col. Escalón', 1003, 'T'),
-  (3, 3, 8, 'Dirección de prueba #3, Res. Las Palmeras', 1008, 'C'),
-  (4, 4, 6, 'Dirección de prueba #4, Col. Escalón', 1006, 'C'),
-  (5, 5, 2, 'Dirección de prueba #5, Col. Escalón', 1002, 'C'),
-  (6, 6, 4, 'Dirección de prueba #6, Res. El Trébol', 1004, 'C'),
-  (7, 7, 5, 'Dirección de prueba #7, Barrio San José', 1005, 'C'),
-  (8, 8, 2, 'Dirección de prueba #8, Col. Miramonte', 1002, 'C'),
-  (9, 9, 6, 'Dirección de prueba #9, Res. Las Palmeras', 1006, 'C'),
-  (10, 10, 1, 'Dirección de prueba #10, Col. Escalón', 1001, 'T'),
-  (11, 11, 4, 'Dirección de prueba #11, Res. Las Palmeras', 1004, 'T'),
-  (12, 12, 7, 'Dirección de prueba #12, Col. Escalón', 1007, 'T');
+INSERT INTO catalogo.marcas (id_marca, nombre_marca, descripcion_marca, estado) OVERRIDING SYSTEM VALUE VALUES
+  (1,  'Samsung',   'Tecnología, electrónica de consumo y telefonía móvil de vanguardia.', 'A'),
+  (2,  'LG',        'Líder en pantallas de alta definición y línea blanca para el hogar.',   'A'),
+  (3,  'Sony',      'Excelencia en imagen, audio profesional y entretenimiento interactivo.', 'A'),
+  (4,  'HP',        'Cómputo personal, soluciones empresariales y equipos de impresión.',    'A'),
+  (5,  'Logitech',  'Periféricos y accesorios para productividad, streaming y videojuegos.', 'A'),
+  (6,  'Xiaomi',    'Dispositivos inteligentes con alta relación costo-beneficio.',          'A'),
+  (7,  'Apple',     'Ecosistema premium de computación, telefonía móvil y wearables.',       'A'),
+  (8,  'Dell',      'Estaciones de trabajo, portátiles de alto rendimiento y monitores.',    'A'),
+  (9,  'Lenovo',    'Laptops ThinkPad, portátiles ultraligeras e innovación en hardware.',    'A'),
+  (10, 'JBL',       'Acústica portátil, parlantes para exteriores y audífonos deportivos.',  'A'),
+  (11, 'Philips',   'Electrodomésticos para cocina, iluminación y cuidado personal.',         'A'),
+  (12, 'Whirlpool', 'Línea blanca de máxima durabilidad y refrigeración inteligente.',       'A'),
+  (13, 'Nintendo',  'Consolas híbridas familiares, videojuegos y periféricos gamer.',        'A');
 
 -- ==========================================================================
--- core: catálogo de productos
+-- 4. CATALOGO DE CATEGORIAS (TAXONOMIA JERARQUICA)
+-- Nivel 1 (Departamentos): id_categoria_padre = NULL
+-- Nivel 2 (Categorías): id_categoria_padre apunta al Departamento
 -- ==========================================================================
 
-INSERT INTO core.categorias (id_categoria, id_categoria_padre, nombre_categoria, descripccion) VALUES
-  (1, NULL, 'Electrónica', 'Categoría raíz de dispositivos electrónicos'),
-  (2, 1, 'Computación', 'Laptops, monitores y accesorios de cómputo'),
-  (3, 1, 'Celulares', 'Teléfonos, tablets y accesorios móviles'),
-  (4, 1, 'Audio', 'Audífonos, parlantes y equipos de sonido'),
-  (5, 1, 'Televisores', 'Smart TVs y accesorios de video'),
-  (6, 1, 'Gaming', 'Consolas, controles y accesorios de videojuegos'),
-  (7, NULL, 'Hogar', 'Categoría raíz de artículos para el hogar'),
-  (8, 7, 'Electrodomésticos', 'Línea blanca y pequeños electrodomésticos'),
-  (9, 7, 'Cuidado Personal', 'Equipos de cuidado e higiene personal'),
-  (10, NULL, 'Accesorios', 'Accesorios transversales: cables, cargadores, fundas');
-
--- stock_disponible y stock_minimo quedan variados a propósito (agotados,
--- críticos y saludables) para poder probar la alerta de stock bajo con casos reales.
-INSERT INTO core.productos (id_producto, id_categoria, id_marca, codigo_sku, nombre_producto, descripcion_producto, precio_venta, precio_costo, stock_disponible, stock_minimo, estado) VALUES
-  (1, 2, 4, 'SKU-0001', 'Laptop HP ThinkPad', 'Laptop 15", i5, 8GB RAM, 1024GB SSD', 743.89, 556.36, 5, 11, 'A'),
-  (2, 2, 8, 'SKU-0002', 'Laptop Dell Pavilion', 'Laptop 15", i7, 8GB RAM, 1024GB SSD', 1089.49, 748.4, 44, 11, 'A'),
-  (3, 2, 9, 'SKU-0003', 'Laptop Lenovo Inspiron', 'Laptop 15", i5, 8GB RAM, 256GB SSD', 731.66, 435.93, 27, 15, 'A'),
-  (4, 2, 7, 'SKU-0004', 'Laptop Apple MacBook Air', 'Laptop 15", M2, 8GB RAM, 1024GB SSD', 697.84, 439.8, 0, 8, 'A'),
-  (5, 2, 1, 'SKU-0005', 'Monitor Samsung 27" QHD', 'Monitor curvo 27 pulgadas, 2560x1440, 144Hz', 270.98, 160.56, 0, 8, 'A'),
-  (6, 2, 5, 'SKU-0006', 'Mouse inalámbrico Logitech MX Master', 'Mouse ergonómico inalámbrico, múltiples dispositivos', 64.97, 37.59, 76, 13, 'A'),
-  (7, 2, 5, 'SKU-0007', 'Teclado mecánico Logitech G413', 'Teclado mecánico retroiluminado, switches táctiles', 71.02, 49.67, 0, 7, 'A'),
-  (8, 2, 4, 'SKU-0008', 'Impresora HP DeskJet 2720', 'Impresora multifuncional a color con WiFi', 83.57, 52.01, 68, 12, 'A'),
-  (9, 3, 1, 'SKU-0009', 'Smartphone Samsung Galaxy A54', 'Smartphone 128GB, cámara múltiple, 5G', 811.11, 526.17, 75, 5, 'A'),
-  (10, 3, 7, 'SKU-0010', 'Smartphone Apple iPhone 13', 'Smartphone 128GB, cámara múltiple, 5G', 763.85, 515.97, 28, 4, 'A'),
-  (11, 3, 6, 'SKU-0011', 'Smartphone Xiaomi Redmi Note 13', 'Smartphone 256GB, cámara múltiple, 5G', 436.46, 245.6, 90, 9, 'A'),
-  (12, 3, 2, 'SKU-0012', 'Smartphone LG Wing', 'Smartphone 128GB, cámara múltiple, 5G', 965.67, 579.68, 9, 12, 'A'),
-  (13, 3, 1, 'SKU-0013', 'Tablet Samsung Galaxy Tab A9', 'Tablet 64GB, pantalla 11", ideal para trabajo y estudio', 193.76, 134.5, 95, 3, 'A'),
-  (14, 3, 1, 'SKU-0014', 'Cargador rápido Samsung 25W', 'Cargador USB-C de carga rápida 25W', 10.93, 7.69, 50, 11, 'A'),
-  (15, 3, 6, 'SKU-0015', 'Funda protectora Xiaomi Redmi Note 13', 'Funda de silicona con protección de esquinas', 6.87, 4.0, 7, 9, 'A'),
-  (16, 4, 3, 'SKU-0016', 'Audífonos Sony WH-1000XM4', 'Audífonos inalámbricos con cancelación de ruido', 275.01, 204.71, 0, 7, 'A'),
-  (17, 4, 10, 'SKU-0017', 'Audífonos JBL Tune 510BT', 'Audífonos inalámbricos con cancelación de ruido', 203.1, 147.07, 29, 11, 'A'),
-  (18, 4, 5, 'SKU-0018', 'Audífonos Logitech G435', 'Audífonos inalámbricos con cancelación de ruido', 263.1, 176.75, 9, 15, 'A'),
-  (19, 4, 11, 'SKU-0019', 'Audífonos Philips TAH4205', 'Audífonos inalámbricos con cancelación de ruido', 240.27, 177.97, 5, 7, 'A'),
-  (20, 4, 10, 'SKU-0020', 'Parlante Bluetooth JBL Flip 6', 'Parlante portátil resistente al agua IP67', 112.17, 68.97, 84, 3, 'A'),
-  (21, 4, 3, 'SKU-0021', 'Barra de sonido Sony HT-S100F', 'Barra de sonido 2.0 canales, 120W', 158.12, 114.75, 0, 8, 'A'),
-  (22, 5, 1, 'SKU-0022', 'Smart TV Samsung 50" 4K UHD', 'Televisor LED 50" 4K con HDR10 y sistema operativo smart', 514.69, 289.04, 42, 7, 'A'),
-  (23, 5, 2, 'SKU-0023', 'Smart TV LG 55" 4K UHD', 'Televisor LED 55" 4K con HDR10 y sistema operativo smart', 622.27, 433.34, 19, 4, 'A'),
-  (24, 5, 3, 'SKU-0024', 'Smart TV Sony 43" 4K UHD', 'Televisor LED 43" 4K con HDR10 y sistema operativo smart', 794.23, 558.48, 88, 15, 'A'),
-  (25, 5, 1, 'SKU-0025', 'Smart TV Samsung 65" 4K UHD', 'Televisor LED 65" 4K con HDR10 y sistema operativo smart', 663.48, 490.56, 0, 10, 'A'),
-  (26, 6, 13, 'SKU-0026', 'Consola Nintendo Switch OLED', 'Consola híbrida con pantalla OLED de 7 pulgadas', 331.7, 210.51, 10, 13, 'A'),
-  (27, 6, 3, 'SKU-0027', 'Control inalámbrico Sony DualSense', 'Control inalámbrico para PlayStation 5', 66.55, 46.32, 13, 13, 'A'),
-  (28, 6, 5, 'SKU-0028', 'Audífonos gaming Logitech G335', 'Audífonos con micrófono para gaming, sonido envolvente', 62.61, 46.9, 7, 9, 'A'),
-  (29, 6, 13, 'SKU-0029', 'Control Nintendo Joy-Con (par)', 'Par de controles Joy-Con para Nintendo Switch', 71.15, 45.56, 81, 10, 'A'),
-  (30, 8, 2, 'SKU-0030', 'Refrigeradora LG 14 pies', 'Refrigeradora No Frost, dispensador de agua', 809.23, 448.48, 3, 6, 'A'),
-  (31, 8, 1, 'SKU-0031', 'Refrigeradora Samsung 14 pies', 'Refrigeradora No Frost, dispensador de agua', 842.13, 464.38, 45, 12, 'A'),
-  (32, 8, 12, 'SKU-0032', 'Refrigeradora Whirlpool 14 pies', 'Refrigeradora No Frost, dispensador de agua', 652.05, 367.42, 37, 3, 'A'),
-  (33, 8, 11, 'SKU-0033', 'Lavadora Philips 18kg', 'Lavadora carga superior, digital inverter', 540.71, 305.05, 0, 8, 'A'),
-  (34, 8, 11, 'SKU-0034', 'Licuadora Philips Serie 5000', 'Licuadora 600W, vaso de vidrio 1.5L', 44.12, 26.16, 8, 15, 'A'),
-  (35, 8, 12, 'SKU-0035', 'Aspiradora Whirlpool WVC-2200', 'Aspiradora sin bolsa, 1200W', 78.51, 47.0, 0, 10, 'A'),
-  (36, 9, 11, 'SKU-0036', 'Afeitadora eléctrica Philips Serie 3000', 'Afeitadora recargable con cabezales flexibles', 35.24, 20.05, 38, 9, 'A'),
-  (37, 9, 11, 'SKU-0037', 'Secadora de cabello Philips EssentialCare', 'Secadora 2100W, 6 configuraciones de calor', 25.34, 16.02, 67, 8, 'A'),
-  (38, 9, 6, 'SKU-0038', 'Báscula inteligente Xiaomi Body Composition', 'Báscula con medición de composición corporal, Bluetooth', 34.05, 23.18, 94, 3, 'A'),
-  (39, 10, 6, 'SKU-0039', 'Power bank Xiaomi 20000mAh', 'Batería portátil de carga rápida 20000mAh', 29.02, 20.19, 59, 3, 'A'),
-  (40, 10, 5, 'SKU-0040', 'Mochila para laptop Logitech 15.6"', 'Mochila acolchada con compartimento para laptop', 37.18, 21.87, 40, 4, 'A'),
-  (41, 10, 7, 'SKU-0041', 'Hub USB-C Apple multipuerto', 'Adaptador USB-C a HDMI, USB-A y carga', 34.28, 20.11, 64, 5, 'A'),
-  (42, 10, 1, 'SKU-0042', 'Cargador inalámbrico Samsung 15W', 'Base de carga inalámbrica rápida Qi', 25.94, 18.46, 65, 4, 'A');
+INSERT INTO catalogo.categorias (id_categoria, id_categoria_padre, nombre_categoria, descripcion_categoria, estado) OVERRIDING SYSTEM VALUE VALUES
+  (1,  NULL, 'Electrónica',        'Departamento raíz de tecnología y dispositivos electrónicos.',   'A'),
+  (2,  1,    'Computación',        'Laptops, computadoras de escritorio, monitores y componentes.',    'A'),
+  (3,  1,    'Celulares',          'Smartphones, tablets y accesorios de telefonía móvil.',           'A'),
+  (4,  1,    'Audio',              'Audífonos, barras de sonido y parlantes portátiles.',             'A'),
+  (5,  1,    'Televisores',        'Smart TVs 4K, pantallas UHD y accesorios de video.',              'A'),
+  (6,  1,    'Gaming',             'Consolas de videojuegos, controles y periféricos gamer.',          'A'),
+  (7,  NULL, 'Hogar',              'Departamento de confort, equipamiento del hogar y línea blanca.', 'A'),
+  (8,  7,    'Electrodomésticos',  'Refrigeradoras, lavadoras y pequeños electrodomésticos de cocina.', 'A'),
+  (9,  7,    'Cuidado Personal',   'Dispositivos de afeitado, secado y cuidado corporal.',             'A'),
+  (10, NULL, 'Accesorios',         'Accesorios transversales de conectividad, carga y transporte.',   'A');
 
 -- ==========================================================================
--- core: pedidos y su detalle (montos en USD, moneda oficial de El Salvador)
+-- 5. CORE DE PRODUCTOS
+-- SKU estandarizado por Backoffice:
+--   - Prefijos de categoría: ELC-COM, ELC-CEL, ELC-AUD, ELC-TEL, ELC-GAM, HOG-ELD, HOG-CUI, ACC
+--   - Prefijos de marca: SAM, LG, SON, HP, LOG, XIA, APP, DEL, LEN, JBL, PHI, WHI, NIN
+--   - Correlativo a 4 dígitos: %04d
+--   - Nombres en MAYÚSCULAS según estándar de registro de backoffice
+--   - Metadata técnica JSONB sin campo de imágenes (gestionadas físicamente)
 -- ==========================================================================
 
-INSERT INTO core.pedidos (id_pedido, id_usuario, id_direccion, estado_pedido, total, fecha_creacion) VALUES
-  (1, 10, 10, 'ENTREGADO', 2072.62, now() - interval '58 days'),
-  (2, 7, 7, 'ENTREGADO', 678.49, now() - interval '59 days'),
-  (3, 7, 7, 'ENTREGADO', 2190.09, now() - interval '9 days'),
-  (4, 9, 9, 'ENVIADO', 289.98, now() - interval '19 days'),
-  (5, 8, 8, 'ENTREGADO', 3306.52, now() - interval '14 days'),
-  (6, 4, 4, 'PAGADO', 550.02, now() - interval '2 days'),
-  (7, 2, 2, 'ENTREGADO', 1979.01, now() - interval '57 days'),
-  (8, 7, 7, 'PAGADO', 2231.65, now() - interval '52 days'),
-  (9, 9, 9, 'CANCELADO', 873.38, now() - interval '58 days'),
-  (10, 11, 11, 'CANCELADO', 1456.66, now() - interval '50 days'),
-  (11, 9, 9, 'PAGADO', 2754.29, now() - interval '10 days'),
-  (12, 7, 7, 'ENVIADO', 4294.54, now() - interval '35 days'),
-  (13, 1, 1, 'ENVIADO', 283.39, now() - interval '49 days'),
-  (14, 7, 7, 'ENTREGADO', 3852.37, now() - interval '44 days'),
-  (15, 11, 11, 'PAGADO', 4362.34, now() - interval '56 days'),
-  (16, 7, 7, 'CANCELADO', 3825.32, now() - interval '54 days'),
-  (17, 11, 11, 'CANCELADO', 1670.77, now() - interval '2 days'),
-  (18, 11, 11, 'ENTREGADO', 4330.39, now() - interval '14 days'),
-  (19, 10, 10, 'ENVIADO', 1881.41, now() - interval '37 days'),
-  (20, 11, 11, 'CANCELADO', 1866.81, now() - interval '37 days'),
-  (21, 2, 2, 'PENDIENTE', 3080.25, now() - interval '55 days'),
-  (22, 7, 7, 'ENTREGADO', 2757.77, now() - interval '34 days'),
-  (23, 4, 4, 'ENVIADO', 2531.35, now() - interval '57 days'),
-  (24, 3, 3, 'PAGADO', 2157.33, now() - interval '23 days'),
-  (25, 9, 9, 'PENDIENTE', 4296.15, now() - interval '16 days'),
-  (26, 1, 1, 'ENVIADO', 2577.14, now() - interval '15 days'),
-  (27, 6, 6, 'ENVIADO', 678.59, now() - interval '20 days'),
-  (28, 4, 4, 'ENTREGADO', 141.24, now() - interval '31 days');
-
-INSERT INTO core.detalles_pedido (id_detalle, id_pedido, id_producto, cantidad, precio_unitario, subtotal) VALUES
-  (1, 1, 17, 3, 203.1, 609.3),
-  (2, 1, 3, 2, 731.66, 1463.32),
-  (3, 2, 40, 3, 37.18, 111.54),
-  (4, 2, 21, 2, 158.12, 316.24),
-  (5, 2, 8, 3, 83.57, 250.71),
-  (6, 3, 27, 3, 66.55, 199.65),
-  (7, 3, 25, 3, 663.48, 1990.44),
-  (8, 4, 28, 3, 62.61, 187.83),
-  (9, 4, 38, 3, 34.05, 102.15),
-  (10, 5, 11, 3, 436.46, 1309.38),
-  (11, 5, 6, 3, 64.97, 194.91),
-  (12, 5, 19, 3, 240.27, 720.81),
-  (13, 5, 33, 2, 540.71, 1081.42),
-  (14, 6, 16, 2, 275.01, 550.02),
-  (15, 7, 25, 2, 663.48, 1326.96),
-  (16, 7, 32, 1, 652.05, 652.05),
-  (17, 8, 4, 2, 697.84, 1395.68),
-  (18, 8, 36, 1, 35.24, 35.24),
-  (19, 8, 16, 2, 275.01, 550.02),
-  (20, 8, 8, 3, 83.57, 250.71),
-  (21, 9, 40, 2, 37.18, 74.36),
-  (22, 9, 33, 1, 540.71, 540.71),
-  (23, 9, 28, 3, 62.61, 187.83),
-  (24, 9, 36, 2, 35.24, 70.48),
-  (25, 10, 41, 1, 34.28, 34.28),
-  (26, 10, 16, 3, 275.01, 825.03),
-  (27, 10, 18, 2, 263.1, 526.2),
-  (28, 10, 29, 1, 71.15, 71.15),
-  (29, 11, 25, 3, 663.48, 1990.44),
-  (30, 11, 10, 1, 763.85, 763.85),
-  (31, 12, 27, 3, 66.55, 199.65),
-  (32, 12, 4, 3, 697.84, 2093.52),
-  (33, 12, 14, 1, 10.93, 10.93),
-  (34, 12, 25, 3, 663.48, 1990.44),
-  (35, 13, 27, 2, 66.55, 133.1),
-  (36, 13, 35, 1, 78.51, 78.51),
-  (37, 13, 39, 2, 29.02, 58.04),
-  (38, 13, 15, 2, 6.87, 13.74),
-  (39, 14, 11, 3, 436.46, 1309.38),
-  (40, 14, 30, 1, 809.23, 809.23),
-  (41, 14, 9, 2, 811.11, 1622.22),
-  (42, 14, 40, 3, 37.18, 111.54),
-  (43, 15, 12, 2, 965.67, 1931.34),
-  (44, 15, 4, 1, 697.84, 697.84),
-  (45, 15, 17, 2, 203.1, 406.2),
-  (46, 15, 25, 2, 663.48, 1326.96),
-  (47, 16, 17, 3, 203.1, 609.3),
-  (48, 16, 6, 3, 64.97, 194.91),
-  (49, 16, 31, 1, 842.13, 842.13),
-  (50, 16, 2, 2, 1089.49, 2178.98),
-  (51, 17, 13, 3, 193.76, 581.28),
-  (52, 17, 2, 1, 1089.49, 1089.49),
-  (53, 18, 17, 3, 203.1, 609.3),
-  (54, 18, 24, 3, 794.23, 2382.69),
-  (55, 18, 11, 3, 436.46, 1309.38),
-  (56, 18, 39, 1, 29.02, 29.02),
-  (57, 19, 26, 3, 331.7, 995.1),
-  (58, 19, 13, 3, 193.76, 581.28),
-  (59, 19, 5, 1, 270.98, 270.98),
-  (60, 19, 38, 1, 34.05, 34.05),
-  (61, 20, 23, 3, 622.27, 1866.81),
-  (62, 21, 32, 3, 652.05, 1956.15),
-  (63, 21, 7, 2, 71.02, 142.04),
-  (64, 21, 28, 3, 62.61, 187.83),
-  (65, 21, 24, 1, 794.23, 794.23),
-  (66, 22, 40, 2, 37.18, 74.36),
-  (67, 22, 35, 2, 78.51, 157.02),
-  (68, 22, 31, 3, 842.13, 2526.39),
-  (69, 23, 16, 3, 275.01, 825.03),
-  (70, 23, 30, 2, 809.23, 1618.46),
-  (71, 23, 37, 2, 25.34, 50.68),
-  (72, 23, 40, 1, 37.18, 37.18),
-  (73, 24, 22, 3, 514.69, 1544.07),
-  (74, 24, 18, 2, 263.1, 526.2),
-  (75, 24, 39, 3, 29.02, 87.06),
-  (76, 25, 32, 3, 652.05, 1956.15),
-  (77, 25, 36, 3, 35.24, 105.72),
-  (78, 25, 16, 2, 275.01, 550.02),
-  (79, 25, 31, 2, 842.13, 1684.26),
-  (80, 26, 16, 2, 275.01, 550.02),
-  (81, 26, 20, 3, 112.17, 336.51),
-  (82, 26, 38, 3, 34.05, 102.15),
-  (83, 26, 24, 2, 794.23, 1588.46),
-  (84, 27, 15, 2, 6.87, 13.74),
-  (85, 27, 8, 1, 83.57, 83.57),
-  (86, 27, 13, 3, 193.76, 581.28),
-  (87, 28, 38, 2, 34.05, 68.1),
-  (88, 28, 34, 1, 44.12, 44.12),
-  (89, 28, 39, 1, 29.02, 29.02);
-
-INSERT INTO core.pagos (id_pago, id_pedido, metodo_pago, monto, estado_transaccion, fecha_pago) VALUES
-  (1, 1, 'TARJETA_CREDITO', 2072.62, 'APROBADO', now() - interval '58 days'),
-  (2, 2, 'PAYPAL', 678.49, 'APROBADO', now() - interval '59 days'),
-  (3, 3, 'TARJETA_CREDITO', 2190.09, 'APROBADO', now() - interval '9 days'),
-  (4, 4, 'PAYPAL', 289.98, 'APROBADO', now() - interval '19 days'),
-  (5, 5, 'TARJETA_CREDITO', 3306.52, 'APROBADO', now() - interval '14 days'),
-  (6, 6, 'TRANSFERENCIA', 550.02, 'APROBADO', now() - interval '2 days'),
-  (7, 7, 'TARJETA_CREDITO', 1979.01, 'APROBADO', now() - interval '57 days'),
-  (8, 8, 'TRANSFERENCIA', 2231.65, 'APROBADO', now() - interval '52 days'),
-  (9, 9, 'TARJETA_CREDITO', 873.38, 'RECHAZADO', now() - interval '58 days'),
-  (10, 10, 'PAYPAL', 1456.66, 'RECHAZADO', now() - interval '50 days'),
-  (11, 11, 'TARJETA_CREDITO', 2754.29, 'APROBADO', now() - interval '10 days'),
-  (12, 12, 'PAYPAL', 4294.54, 'APROBADO', now() - interval '35 days'),
-  (13, 13, 'PAYPAL', 283.39, 'APROBADO', now() - interval '49 days'),
-  (14, 14, 'TRANSFERENCIA', 3852.37, 'APROBADO', now() - interval '44 days'),
-  (15, 15, 'PAYPAL', 4362.34, 'APROBADO', now() - interval '56 days'),
-  (16, 16, 'TARJETA_CREDITO', 3825.32, 'RECHAZADO', now() - interval '54 days'),
-  (17, 17, 'PAYPAL', 1670.77, 'RECHAZADO', now() - interval '2 days'),
-  (18, 18, 'TARJETA_CREDITO', 4330.39, 'APROBADO', now() - interval '14 days'),
-  (19, 19, 'TRANSFERENCIA', 1881.41, 'APROBADO', now() - interval '37 days'),
-  (20, 20, 'PAYPAL', 1866.81, 'RECHAZADO', now() - interval '37 days'),
-  (21, 22, 'TRANSFERENCIA', 2757.77, 'APROBADO', now() - interval '34 days'),
-  (22, 23, 'PAYPAL', 2531.35, 'APROBADO', now() - interval '57 days'),
-  (23, 24, 'TARJETA_CREDITO', 2157.33, 'APROBADO', now() - interval '23 days'),
-  (24, 26, 'PAYPAL', 2577.14, 'APROBADO', now() - interval '15 days'),
-  (25, 27, 'TRANSFERENCIA', 678.59, 'APROBADO', now() - interval '20 days'),
-  (26, 28, 'PAYPAL', 141.24, 'APROBADO', now() - interval '31 days');
-
-INSERT INTO core.envios (id_envio, id_pedido, empresa_transporte, numero_seguimiento, estado_envio, fecha_despacho, fecha_entrega) VALUES
-  (1, 1, 'Fedex', 'TRK-100001', 'ENTREGADO', now() - interval '57 days', now() - interval '55 days'),
-  (2, 2, 'Fedex', 'TRK-100002', 'ENTREGADO', now() - interval '58 days', now() - interval '54 days'),
-  (3, 3, 'UPS', 'TRK-100003', 'ENTREGADO', now() - interval '8 days', now() - interval '5 days'),
-  (4, 4, 'UPS', 'TRK-100004', 'EN_TRANSITO', now() - interval '18 days', NULL),
-  (5, 5, 'Fedex', 'TRK-100005', 'ENTREGADO', now() - interval '13 days', now() - interval '11 days'),
-  (6, 7, 'Correos de El Salvador', 'TRK-100007', 'ENTREGADO', now() - interval '56 days', now() - interval '55 days'),
-  (7, 12, 'UPS', 'TRK-100012', 'EN_TRANSITO', now() - interval '34 days', NULL),
-  (8, 13, 'Correos de El Salvador', 'TRK-100013', 'EN_TRANSITO', now() - interval '48 days', NULL),
-  (9, 14, 'Correos de El Salvador', 'TRK-100014', 'ENTREGADO', now() - interval '43 days', now() - interval '42 days'),
-  (10, 18, 'Correos de El Salvador', 'TRK-100018', 'ENTREGADO', now() - interval '13 days', now() - interval '10 days'),
-  (11, 19, 'Fedex', 'TRK-100019', 'EN_TRANSITO', now() - interval '36 days', NULL),
-  (12, 22, 'Fedex', 'TRK-100022', 'ENTREGADO', now() - interval '33 days', now() - interval '30 days'),
-  (13, 23, 'Fedex', 'TRK-100023', 'EN_TRANSITO', now() - interval '56 days', NULL),
-  (14, 26, 'Fedex', 'TRK-100026', 'EN_TRANSITO', now() - interval '14 days', NULL),
-  (15, 27, 'DHL', 'TRK-100027', 'EN_TRANSITO', now() - interval '19 days', NULL),
-  (16, 28, 'Fedex', 'TRK-100028', 'ENTREGADO', now() - interval '30 days', now() - interval '28 days');
-
--- Movimientos de inventario: entrada inicial por producto, salidas por venta
--- ligadas a pedidos ya despachados/entregados, y algunos ajustes manuales.
-INSERT INTO core.movimientos_inventario (id_movimiento, id_producto, tipo_movimiento, cantidad, motivo, id_pedido, fecha_movimiento) VALUES
-  (1, 1, 'ENTRADA', 10, 'COMPRA_PROVEEDOR', NULL, now() - interval '66 days'),
-  (2, 2, 'ENTRADA', 57, 'COMPRA_PROVEEDOR', NULL, now() - interval '85 days'),
-  (3, 3, 'ENTRADA', 48, 'COMPRA_PROVEEDOR', NULL, now() - interval '55 days'),
-  (4, 4, 'ENTRADA', 33, 'COMPRA_PROVEEDOR', NULL, now() - interval '80 days'),
-  (5, 5, 'ENTRADA', 32, 'COMPRA_PROVEEDOR', NULL, now() - interval '80 days'),
-  (6, 6, 'ENTRADA', 81, 'COMPRA_PROVEEDOR', NULL, now() - interval '52 days'),
-  (7, 7, 'ENTRADA', 9, 'COMPRA_PROVEEDOR', NULL, now() - interval '89 days'),
-  (8, 8, 'ENTRADA', 82, 'COMPRA_PROVEEDOR', NULL, now() - interval '79 days'),
-  (9, 9, 'ENTRADA', 82, 'COMPRA_PROVEEDOR', NULL, now() - interval '68 days'),
-  (10, 10, 'ENTRADA', 68, 'COMPRA_PROVEEDOR', NULL, now() - interval '54 days'),
-  (11, 11, 'ENTRADA', 122, 'COMPRA_PROVEEDOR', NULL, now() - interval '53 days'),
-  (12, 12, 'ENTRADA', 16, 'COMPRA_PROVEEDOR', NULL, now() - interval '64 days'),
-  (13, 13, 'ENTRADA', 123, 'COMPRA_PROVEEDOR', NULL, now() - interval '47 days'),
-  (14, 14, 'ENTRADA', 77, 'COMPRA_PROVEEDOR', NULL, now() - interval '58 days'),
-  (15, 15, 'ENTRADA', 27, 'COMPRA_PROVEEDOR', NULL, now() - interval '87 days'),
-  (16, 16, 'ENTRADA', 11, 'COMPRA_PROVEEDOR', NULL, now() - interval '67 days'),
-  (17, 17, 'ENTRADA', 69, 'COMPRA_PROVEEDOR', NULL, now() - interval '71 days'),
-  (18, 18, 'ENTRADA', 23, 'COMPRA_PROVEEDOR', NULL, now() - interval '60 days'),
-  (19, 19, 'ENTRADA', 20, 'COMPRA_PROVEEDOR', NULL, now() - interval '56 days'),
-  (20, 20, 'ENTRADA', 115, 'COMPRA_PROVEEDOR', NULL, now() - interval '46 days'),
-  (21, 21, 'ENTRADA', 16, 'COMPRA_PROVEEDOR', NULL, now() - interval '66 days'),
-  (22, 22, 'ENTRADA', 73, 'COMPRA_PROVEEDOR', NULL, now() - interval '87 days'),
-  (23, 23, 'ENTRADA', 39, 'COMPRA_PROVEEDOR', NULL, now() - interval '62 days'),
-  (24, 24, 'ENTRADA', 103, 'COMPRA_PROVEEDOR', NULL, now() - interval '89 days'),
-  (25, 25, 'ENTRADA', 11, 'COMPRA_PROVEEDOR', NULL, now() - interval '69 days'),
-  (26, 26, 'ENTRADA', 17, 'COMPRA_PROVEEDOR', NULL, now() - interval '75 days'),
-  (27, 27, 'ENTRADA', 32, 'COMPRA_PROVEEDOR', NULL, now() - interval '57 days'),
-  (28, 28, 'ENTRADA', 41, 'COMPRA_PROVEEDOR', NULL, now() - interval '67 days'),
-  (29, 29, 'ENTRADA', 105, 'COMPRA_PROVEEDOR', NULL, now() - interval '59 days'),
-  (30, 30, 'ENTRADA', 22, 'COMPRA_PROVEEDOR', NULL, now() - interval '46 days'),
-  (31, 31, 'ENTRADA', 62, 'COMPRA_PROVEEDOR', NULL, now() - interval '70 days'),
-  (32, 32, 'ENTRADA', 63, 'COMPRA_PROVEEDOR', NULL, now() - interval '62 days'),
-  (33, 33, 'ENTRADA', 9, 'COMPRA_PROVEEDOR', NULL, now() - interval '62 days'),
-  (34, 34, 'ENTRADA', 35, 'COMPRA_PROVEEDOR', NULL, now() - interval '86 days'),
-  (35, 35, 'ENTRADA', 37, 'COMPRA_PROVEEDOR', NULL, now() - interval '70 days'),
-  (36, 36, 'ENTRADA', 77, 'COMPRA_PROVEEDOR', NULL, now() - interval '66 days'),
-  (37, 37, 'ENTRADA', 73, 'COMPRA_PROVEEDOR', NULL, now() - interval '52 days'),
-  (38, 38, 'ENTRADA', 115, 'COMPRA_PROVEEDOR', NULL, now() - interval '56 days'),
-  (39, 39, 'ENTRADA', 80, 'COMPRA_PROVEEDOR', NULL, now() - interval '47 days'),
-  (40, 40, 'ENTRADA', 51, 'COMPRA_PROVEEDOR', NULL, now() - interval '83 days'),
-  (41, 41, 'ENTRADA', 96, 'COMPRA_PROVEEDOR', NULL, now() - interval '67 days'),
-  (42, 42, 'ENTRADA', 90, 'COMPRA_PROVEEDOR', NULL, now() - interval '72 days'),
-  (43, 17, 'SALIDA', 3, 'VENTA', 1, now() - interval '58 days'),
-  (44, 3, 'SALIDA', 2, 'VENTA', 1, now() - interval '58 days'),
-  (45, 40, 'SALIDA', 3, 'VENTA', 2, now() - interval '59 days'),
-  (46, 21, 'SALIDA', 2, 'VENTA', 2, now() - interval '59 days'),
-  (47, 8, 'SALIDA', 3, 'VENTA', 2, now() - interval '59 days'),
-  (48, 27, 'SALIDA', 3, 'VENTA', 3, now() - interval '9 days'),
-  (49, 25, 'SALIDA', 3, 'VENTA', 3, now() - interval '9 days'),
-  (50, 28, 'SALIDA', 3, 'VENTA', 4, now() - interval '19 days'),
-  (51, 38, 'SALIDA', 3, 'VENTA', 4, now() - interval '19 days'),
-  (52, 11, 'SALIDA', 3, 'VENTA', 5, now() - interval '14 days'),
-  (53, 6, 'SALIDA', 3, 'VENTA', 5, now() - interval '14 days'),
-  (54, 19, 'SALIDA', 3, 'VENTA', 5, now() - interval '14 days'),
-  (55, 33, 'SALIDA', 2, 'VENTA', 5, now() - interval '14 days'),
-  (56, 25, 'SALIDA', 2, 'VENTA', 7, now() - interval '57 days'),
-  (57, 32, 'SALIDA', 1, 'VENTA', 7, now() - interval '57 days'),
-  (58, 27, 'SALIDA', 3, 'VENTA', 12, now() - interval '35 days'),
-  (59, 4, 'SALIDA', 3, 'VENTA', 12, now() - interval '35 days'),
-  (60, 14, 'SALIDA', 1, 'VENTA', 12, now() - interval '35 days'),
-  (61, 25, 'SALIDA', 3, 'VENTA', 12, now() - interval '35 days'),
-  (62, 27, 'SALIDA', 2, 'VENTA', 13, now() - interval '49 days'),
-  (63, 35, 'SALIDA', 1, 'VENTA', 13, now() - interval '49 days'),
-  (64, 39, 'SALIDA', 2, 'VENTA', 13, now() - interval '49 days'),
-  (65, 15, 'SALIDA', 2, 'VENTA', 13, now() - interval '49 days'),
-  (66, 11, 'SALIDA', 3, 'VENTA', 14, now() - interval '44 days'),
-  (67, 30, 'SALIDA', 1, 'VENTA', 14, now() - interval '44 days'),
-  (68, 9, 'SALIDA', 2, 'VENTA', 14, now() - interval '44 days'),
-  (69, 40, 'SALIDA', 3, 'VENTA', 14, now() - interval '44 days'),
-  (70, 17, 'SALIDA', 3, 'VENTA', 18, now() - interval '14 days'),
-  (71, 24, 'SALIDA', 3, 'VENTA', 18, now() - interval '14 days'),
-  (72, 11, 'SALIDA', 3, 'VENTA', 18, now() - interval '14 days'),
-  (73, 39, 'SALIDA', 1, 'VENTA', 18, now() - interval '14 days'),
-  (74, 26, 'SALIDA', 3, 'VENTA', 19, now() - interval '37 days'),
-  (75, 13, 'SALIDA', 3, 'VENTA', 19, now() - interval '37 days'),
-  (76, 5, 'SALIDA', 1, 'VENTA', 19, now() - interval '37 days'),
-  (77, 38, 'SALIDA', 1, 'VENTA', 19, now() - interval '37 days'),
-  (78, 40, 'SALIDA', 2, 'VENTA', 22, now() - interval '34 days'),
-  (79, 35, 'SALIDA', 2, 'VENTA', 22, now() - interval '34 days'),
-  (80, 31, 'SALIDA', 3, 'VENTA', 22, now() - interval '34 days'),
-  (81, 16, 'SALIDA', 3, 'VENTA', 23, now() - interval '57 days'),
-  (82, 30, 'SALIDA', 2, 'VENTA', 23, now() - interval '57 days'),
-  (83, 37, 'SALIDA', 2, 'VENTA', 23, now() - interval '57 days'),
-  (84, 40, 'SALIDA', 1, 'VENTA', 23, now() - interval '57 days'),
-  (85, 16, 'SALIDA', 2, 'VENTA', 26, now() - interval '15 days'),
-  (86, 20, 'SALIDA', 3, 'VENTA', 26, now() - interval '15 days'),
-  (87, 38, 'SALIDA', 3, 'VENTA', 26, now() - interval '15 days'),
-  (88, 24, 'SALIDA', 2, 'VENTA', 26, now() - interval '15 days'),
-  (89, 15, 'SALIDA', 2, 'VENTA', 27, now() - interval '20 days'),
-  (90, 8, 'SALIDA', 1, 'VENTA', 27, now() - interval '20 days'),
-  (91, 13, 'SALIDA', 3, 'VENTA', 27, now() - interval '20 days'),
-  (92, 38, 'SALIDA', 2, 'VENTA', 28, now() - interval '31 days'),
-  (93, 34, 'SALIDA', 1, 'VENTA', 28, now() - interval '31 days'),
-  (94, 39, 'SALIDA', 1, 'VENTA', 28, now() - interval '31 days'),
-  (95, 12, 'AJUSTE', 3, 'AJUSTE', NULL, now() - interval '1 days'),
-  (96, 35, 'AJUSTE', 2, 'AJUSTE', NULL, now() - interval '9 days'),
-  (97, 3, 'AJUSTE', 1, 'AJUSTE', NULL, now() - interval '18 days'),
-  (98, 19, 'AJUSTE', 2, 'AJUSTE', NULL, now() - interval '16 days'),
-  (99, 7, 'AJUSTE', 1, 'AJUSTE', NULL, now() - interval '19 days'),
-  (100, 19, 'AJUSTE', 4, 'AJUSTE', NULL, now() - interval '16 days');
+INSERT INTO core.productos (
+  id_producto, codigo_sku, id_categoria, id_marca,
+  nombre_producto, descripcion_producto,
+  precio_venta, precio_costo,
+  stock_disponible, stock_minimo, estado, metadata
+) OVERRIDING SYSTEM VALUE VALUES
+  (1,  'ELC-COM-HP-0001',  2,  4,  'LAPTOP HP THINKPAD',                         'Laptop 15", i5, 8GB RAM, 1024GB SSD',                       743.89,  556.36, 5,  11, 'A', '{"procesador": "Intel Core i5", "ram": "8GB", "almacenamiento": "1TB SSD", "pantalla": "15.6 pulgadas"}'::jsonb),
+  (2,  'ELC-COM-DEL-0002', 2,  8,  'LAPTOP DELL PAVILION',                       'Laptop 15", i7, 8GB RAM, 1024GB SSD',                       1089.49, 748.40, 44, 11, 'A', '{"procesador": "Intel Core i7", "ram": "8GB", "almacenamiento": "1TB SSD", "pantalla": "15.6 pulgadas"}'::jsonb),
+  (3,  'ELC-COM-LEN-0003', 2,  9,  'LAPTOP LENOVO INSPIRON',                     'Laptop 15", i5, 8GB RAM, 256GB SSD',                        731.66,  435.93, 27, 15, 'A', '{"procesador": "Intel Core i5", "ram": "8GB", "almacenamiento": "256GB SSD", "pantalla": "15.6 pulgadas"}'::jsonb),
+  (4,  'ELC-COM-APP-0004', 2,  7,  'LAPTOP APPLE MACBOOK AIR',                   'Laptop 15", M2, 8GB RAM, 1024GB SSD',                       697.84,  439.80, 0,  8,  'A', '{"procesador": "Apple M2", "ram": "8GB", "almacenamiento": "1TB SSD", "pantalla": "15.3 Liquid Retina"}'::jsonb),
+  (5,  'ELC-COM-SAM-0005', 2,  1,  'MONITOR SAMSUNG 27" QHD',                    'Monitor curvo 27 pulgadas, 2560x1440, 144Hz',               270.98,  160.56, 0,  8,  'A', '{"resolucion": "2560x1440 QHD", "tasa_refresco": "144Hz", "panel": "Curvo VA", "tamano": "27 pulgadas"}'::jsonb),
+  (6,  'ELC-COM-LOG-0006', 2,  5,  'MOUSE INALÁMBRICO LOGITECH MX MASTER',       'Mouse ergonómico inalámbrico, múltiples dispositivos',       64.97,   37.59,  76, 13, 'A', '{"conectividad": "Bluetooth / Wireless 2.4GHz", "sensor": "Darkfield 4000 DPI", "bateria": "Recargable USB-C"}'::jsonb),
+  (7,  'ELC-COM-LOG-0007', 2,  5,  'TECLADO MECÁNICO LOGITECH G413',             'Teclado mecánico retroiluminado, switches táctiles',         71.02,   49.67,  0,  7,  'A', '{"tipo_switch": "Mecánico Romer-G Táctil", "retroiluminacion": "LED Blanco", "estructura": "Aluminio cepillado"}'::jsonb),
+  (8,  'ELC-COM-HP-0008',  2,  4,  'IMPRESORA HP DESKJET 2720',                  'Impresora multifuncional a color con WiFi',                 83.57,   52.01,  68, 12, 'A', '{"tipo": "Inyección térmica de tinta", "funciones": "Impresión, copia, escaneo", "conectividad": "WiFi, USB 2.0"}'::jsonb),
+  (9,  'ELC-CEL-SAM-0009', 3,  1,  'SMARTPHONE SAMSUNG GALAXY A54',              'Smartphone 128GB, cámara múltiple, 5G',                     811.11,  526.17, 75, 5,  'A', '{"pantalla": "6.4 Super AMOLED 120Hz", "almacenamiento": "128GB", "ram": "8GB", "red": "5G"}'::jsonb),
+  (10, 'ELC-CEL-APP-0010', 3,  7,  'SMARTPHONE APPLE IPHONE 13',                 'Smartphone 128GB, cámara múltiple, 5G',                     763.85,  515.97, 28, 4,  'A', '{"pantalla": "6.1 Super Retina XDR", "almacenamiento": "128GB", "chip": "A15 Bionic", "red": "5G"}'::jsonb),
+  (11, 'ELC-CEL-XIA-0011', 3,  6,  'SMARTPHONE XIAOMI REDMI NOTE 13',            'Smartphone 256GB, cámara múltiple, 5G',                     436.46,  245.60, 90, 9,  'A', '{"pantalla": "6.67 AMOLED 120Hz", "almacenamiento": "256GB", "ram": "8GB", "camara": "108MP"}'::jsonb),
+  (12, 'ELC-CEL-LG-0012',  3,  2,  'SMARTPHONE LG WING',                         'Smartphone 128GB, cámara múltiple, 5G',                     965.67,  579.68, 9,  12, 'A', '{"pantalla": "6.8 P-OLED Giratoria", "almacenamiento": "128GB", "ram": "8GB", "conectividad": "5G"}'::jsonb),
+  (13, 'ELC-CEL-SAM-0013', 3,  1,  'TABLET SAMSUNG GALAXY TAB A9',               'Tablet 64GB, pantalla 11", ideal para trabajo y estudio',   193.76,  134.50, 95, 3,  'A', '{"pantalla": "11 WQXGA", "almacenamiento": "64GB", "bateria": "7040mAh", "wifi": "Doble Banda"}'::jsonb),
+  (14, 'ELC-CEL-SAM-0014', 3,  1,  'CARGADOR RÁPIDO SAMSUNG 25W',                'Cargador USB-C de carga rápida 25W',                        10.93,   7.69,   50, 11, 'A', '{"potencia": "25W", "puerto": "USB Tipo C", "tecnologia": "Power Delivery (PD 3.0)"}'::jsonb),
+  (15, 'ELC-CEL-XIA-0015', 3,  6,  'FUNDA PROTECTORA XIAOMI REDMI NOTE 13',       'Funda de silicona con protección de esquinas',              6.87,    4.00,   7,  9,  'A', '{"material": "Silicona TPU Flexible", "compatibilidad": "Xiaomi Redmi Note 13", "color": "Negro Mate"}'::jsonb),
+  (16, 'ELC-AUD-SON-0016', 4,  3,  'AUDÍFONOS SONY WH-1000XM4',                  'Audífonos inalámbricos con cancelación de ruido',           275.01,  204.71, 0,  7,  'A', '{"tipo": "Over-Ear", "cancelacion_ruido": "Activa (ANC)", "autonomia": "30 horas", "bluetooth": "5.0"}'::jsonb),
+  (17, 'ELC-AUD-JBL-0017', 4,  10, 'AUDÍFONOS JBL TUNE 510BT',                   'Audífonos inalámbricos con cancelación de ruido',           203.10,  147.07, 29, 11, 'A', '{"tipo": "On-Ear", "sonido": "JBL Pure Bass", "autonomia": "40 horas", "carga_rapida": "Sí"}'::jsonb),
+  (18, 'ELC-AUD-LOG-0018', 4,  5,  'AUDÍFONOS LOGITECH G435',                    'Audífonos inalámbricos con cancelación de ruido',           263.10,  176.75, 9,  15, 'A', '{"conectividad": "Lightspeed Wireless / Bluetooth", "peso": "165g", "microfonos": "Doble haz"}'::jsonb),
+  (19, 'ELC-AUD-PHI-0019', 4,  11, 'AUDÍFONOS PHILIPS TAH4205',                  'Audífonos inalámbricos con cancelación de ruido',           240.27,  177.97, 5,  7,  'A', '{"tipo": "On-Ear", "controladores": "32mm", "autonomia": "29 horas", "boton_bass": "Sí"}'::jsonb),
+  (20, 'ELC-AUD-JBL-0020', 4,  10, 'PARLANTE BLUETOOTH JBL FLIP 6',              'Parlante portátil resistente al agua IP67',                 112.17,  68.97,  84, 3,  'A', '{"potencia": "20W RMS", "resistencia_agua": "IP67", "autonomia": "12 horas", "bluetooth": "5.1"}'::jsonb),
+  (21, 'ELC-AUD-SON-0021', 4,  3,  'BARRA DE SONIDO SONY HT-S100F',              'Barra de sonido 2.0 canales, 120W',                         158.12,  114.75, 0,  8,  'A', '{"potencia": "120W", "canales": "2.0 con Bass Reflex", "conectividad": "HDMI ARC, Bluetooth, Óptico"}'::jsonb),
+  (22, 'ELC-TEL-SAM-0022', 5,  1,  'SMART TV SAMSUNG 50" 4K UHD',                'Televisor LED 50" 4K con HDR10 y sistema operativo smart',  514.69,  289.04, 42, 7,  'A', '{"tamano": "50 pulgadas", "resolucion": "4K UHD (3840x2160)", "hdr": "HDR10+", "so": "Tizen"}'::jsonb),
+  (23, 'ELC-TEL-LG-0023',  5,  2,  'SMART TV LG 55" 4K UHD',                     'Televisor LED 55" 4K con HDR10 y sistema operativo smart',  622.27,  433.34, 19, 4,  'A', '{"tamano": "55 pulgadas", "resolucion": "4K UHD (3840x2160)", "procesador": "a5 Gen5 AI", "so": "webOS"}'::jsonb),
+  (24, 'ELC-TEL-SON-0024', 5,  3,  'SMART TV SONY 43" 4K UHD',                   'Televisor LED 43" 4K con HDR10 y sistema operativo smart',  794.23,  558.48, 88, 15, 'A', '{"tamano": "43 pulgadas", "resolucion": "4K UHD (3840x2160)", "motor": "4K X-Reality PRO", "so": "Google TV"}'::jsonb),
+  (25, 'ELC-TEL-SAM-0025', 5,  1,  'SMART TV SAMSUNG 65" 4K UHD',                'Televisor LED 65" 4K con HDR10 y sistema operativo smart',  663.48,  490.56, 0,  10, 'A', '{"tamano": "65 pulgadas", "resolucion": "4K UHD (3840x2160)", "purcolor": "Sí", "so": "Tizen"}'::jsonb),
+  (26, 'ELC-GAM-NIN-0026', 6,  13, 'CONSOLA NINTENDO SWITCH OLED',               'Consola híbrida con pantalla OLED de 7 pulgadas',           331.70,  210.51, 10, 13, 'A', '{"pantalla": "7.0 pulgadas OLED", "almacenamiento": "64GB", "audio": "Altavoces integrados optimizados"}'::jsonb),
+  (27, 'ELC-GAM-SON-0027', 6,  3,  'CONTROL INALÁMBRICO SONY DUALSENSE',         'Control inalámbrico para PlayStation 5',                    66.55,   46.32,  13, 13, 'A', '{"compatibilidad": "PS5, PC, Móvil", "retroalimentacion": "Háptica inmersiva", "gatillos": "Adaptativos"}'::jsonb),
+  (28, 'ELC-GAM-LOG-0028', 6,  5,  'AUDÍFONOS GAMING LOGITECH G335',             'Audífonos con micrófono para gaming, sonido envolvente',    62.61,   46.90,  7,  9,  'A', '{"conexion": "Jack 3.5mm", "peso": "240g", "transductores": "Neodimio 40mm", "certificacion": "Discord"}'::jsonb),
+  (29, 'ELC-GAM-NIN-0029', 6,  13, 'CONTROL NINTENDO JOY-CON (PAR)',             'Par de controles Joy-Con para Nintendo Switch',             71.15,   45.56,  81, 10, 'A', '{"color": "Azul Neón / Rojo Neón", "sensores": "Giroscopio, Acelerómetro", "vibracion": "HD Rumble"}'::jsonb),
+  (30, 'HOG-ELD-LG-0030',  8,  2,  'REFRIGERADORA LG 14 PIES',                   'Refrigeradora No Frost, dispensador de agua',               809.23,  448.48, 3,  6,  'A', '{"capacidad": "14 pies cúbicos", "tecnologia": "Smart Inverter", "enfriamiento": "DoorCooling+", "color": "Acero Inox"}'::jsonb),
+  (31, 'HOG-ELD-SAM-0031', 8,  1,  'REFRIGERADORA SAMSUNG 14 PIES',              'Refrigeradora No Frost, dispensador de agua',               842.13,  464.38, 45, 12, 'A', '{"capacidad": "14 pies cúbicos", "compresor": "Digital Inverter", "sistema": "All Around Cooling", "color": "Plata"}'::jsonb),
+  (32, 'HOG-ELD-WHI-0032', 8,  12, 'REFRIGERADORA WHIRLPOOL 14 PIES',            'Refrigeradora No Frost, dispensador de agua',               652.05,  367.42, 37, 3,  'A', '{"capacidad": "14 pies cúbicos", "tecnologia": "Evox anti-huellas", "dispensador": "Agua exterior", "color": "Gris Titanio"}'::jsonb),
+  (33, 'HOG-ELD-PHI-0033', 8,  11, 'LAVADORA PHILIPS 18KG',                      'Lavadora carga superior, digital inverter',                 540.71,  305.05, 0,  8,  'A', '{"capacidad": "18 kg", "tipo_carga": "Superior", "tina": "Acero inoxidable", "programas_lavado": "8"}'::jsonb),
+  (34, 'HOG-ELD-PHI-0034', 8,  11, 'LICUADORA PHILIPS SERIE 5000',               'Licuadora 600W, vaso de vidrio 1.5L',                       44.12,   26.16,  8,  15, 'A', '{"potencia": "600W", "vaso": "Vidrio 1.5L resistente", "cuchillas": "ProBlend 4 de acero inoxidable"}'::jsonb),
+  (35, 'HOG-ELD-WHI-0035', 8,  12, 'ASPIRADORA WHIRLPOOL WVC-2200',              'Aspiradora sin bolsa, 1200W',                               78.51,   47.00,  0,  10, 'A', '{"potencia": "1200W", "filtro": "HEPA lavable", "capacidad_deposito": "2.2L", "cable": "5 metros retráctil"}'::jsonb),
+  (36, 'HOG-CUI-PHI-0036', 9,  11, 'AFEITADORA ELÉCTRICA PHILIPS SERIE 3000',    'Afeitadora recargable con cabezales flexibles',             35.24,   20.05,  38, 9,  'A', '{"cabezales": "Flex 5D pivotantes", "uso": "Seco y húmedo", "autonomia": "60 minutos inalámbrica"}'::jsonb),
+  (37, 'HOG-CUI-PHI-0037', 9,  11, 'SECADORA DE CABELLO PHILIPS ESSENTIALCARE',  'Secadora 2100W, 6 configuraciones de calor',                 25.34,   16.02,  67, 8,  'A', '{"potencia": "2100W", "ajustes": "6 velocidades y temperaturas", "boquilla": "Concentradora 14mm"}'::jsonb),
+  (38, 'HOG-CUI-XIA-0038', 9,  6,  'BÁSCULA INTELIGENTE XIAOMI BODY COMPOSITION','Báscula con medición de composición corporal, Bluetooth',      34.05,   23.18,  94, 3,  'A', '{"metricas": "13 datos corporales", "sensores": "Bioimpedancia de alta precisión", "conectividad": "Bluetooth 5.0"}'::jsonb),
+  (39, 'ACC-XIA-0039',     10, 6,  'POWER BANK XIAOMI 20000MAH',                 'Batería portátil de carga rápida 20000mAh',                 29.02,   20.19,  59, 3,  'A', '{"capacidad": "20000mAh 74Wh", "salidas": "2x USB-A + 1x USB-C", "potencia_maxima": "18W Fast Charge"}'::jsonb),
+  (40, 'ACC-LOG-0040',     10, 5,  'MOCHILA PARA LAPTOP LOGITECH 15.6"',         'Mochila acolchada con compartimento para laptop',           37.18,   21.87,  40, 4,  'A', '{"compatibilidad": "Laptops hasta 15.6 pulgadas", "material": "Poliéster impermeable", "compartimentos": "Multiuso con cierre"}'::jsonb),
+  (41, 'ACC-APP-0041',     10, 7,  'HUB USB-C APPLE MULTIPUERTO',                'Adaptador USB-C a HDMI, USB-A y carga',                      34.28,   20.11,  64, 5,  'A', '{"puertos": "1x HDMI 4K, 1x USB 3.0, 1x USB-C Pass-through", "compatibilidad": "MacBook / iPad Pro"}'::jsonb),
+  (42, 'ACC-SAM-0042',     10, 1,  'CARGADOR INALÁMBRICO SAMSUNG 15W',           'Base de carga inalámbrica rápida Qi',                       25.94,   18.46,  65, 4,  'A', '{"potencia": "15W Fast Wireless Charging", "compatibilidad": "Qi Certified", "enfriamiento": "Ventilador integrado"}'::jsonb);
 
 -- ==========================================================================
--- Reajusta las secuencias de las columnas identity para que el próximo
--- INSERT hecho por la aplicación no choque con los IDs sembrados a mano.
+-- 6. MOVIMIENTOS INICIALES DE INVENTARIO
+-- Se registran entradas de auditoría para productos con stock disponible > 0,
+-- consistente con BackofficeProductoServiceImpl.registrarProducto().
 -- ==========================================================================
-SELECT setval(pg_get_serial_sequence('core.pedidos', 'id_pedido'), (SELECT MAX(id_pedido) FROM core.pedidos));
-SELECT setval(pg_get_serial_sequence('core.detalles_pedido', 'id_detalle'), (SELECT MAX(id_detalle) FROM core.detalles_pedido));
-SELECT setval(pg_get_serial_sequence('core.pagos', 'id_pago'), (SELECT MAX(id_pago) FROM core.pagos));
-SELECT setval(pg_get_serial_sequence('core.envios', 'id_envio'), (SELECT MAX(id_envio) FROM core.envios));
-SELECT setval(pg_get_serial_sequence('core.movimientos_inventario', 'id_movimiento'), (SELECT MAX(id_movimiento) FROM core.movimientos_inventario));
+
+INSERT INTO core.movimientos_inventario (
+  id_producto, tipo_movimiento, cantidad, motivo, fecha_movimiento
+)
+SELECT
+  id_producto,
+  'ENTRADA',
+  stock_disponible,
+  'COMPRA_PROVEEDOR - Stock inicial de registro',
+  CURRENT_TIMESTAMP
+FROM
+  core.productos
+WHERE
+  stock_disponible > 0;
+
+-- ==========================================================================
+-- 7. REAJUSTE DE SECUENCIAS IDENTITY
+-- Garantiza que las próximas inserciones generadas por la aplicación no
+-- colisionen con las llaves primarias sembradas.
+-- ==========================================================================
+
+SELECT setval(pg_get_serial_sequence('catalogo.paises', 'id_pais'), coalesce(max(id_pais), 1)) FROM catalogo.paises;
+SELECT setval(pg_get_serial_sequence('catalogo.departamentos', 'id_departamento'), coalesce(max(id_departamento), 1)) FROM catalogo.departamentos;
+SELECT setval(pg_get_serial_sequence('catalogo.municipios', 'id_municipio'), coalesce(max(id_municipio), 1)) FROM catalogo.municipios;
+SELECT setval(pg_get_serial_sequence('catalogo.marcas', 'id_marca'), coalesce(max(id_marca), 1)) FROM catalogo.marcas;
+SELECT setval(pg_get_serial_sequence('catalogo.categorias', 'id_categoria'), coalesce(max(id_categoria), 1)) FROM catalogo.categorias;
+SELECT setval(pg_get_serial_sequence('core.productos', 'id_producto'), coalesce(max(id_producto), 1)) FROM core.productos;
+SELECT setval(pg_get_serial_sequence('core.movimientos_inventario', 'id_movimiento'), coalesce(max(id_movimiento), 1)) FROM core.movimientos_inventario;
 
 COMMIT;

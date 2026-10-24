@@ -44,4 +44,12 @@ public interface ProductoRepository extends JpaRepository<Producto, Integer> {
 
     @Query("SELECT COALESCE(MAX(p.idProducto), 0) FROM Producto p")
     Integer obtenerMaxIdProducto();
+
+    @Query("SELECT p FROM Producto p " +
+            "JOIN FETCH p.categoria c " +
+            "LEFT JOIN FETCH c.categoriaPadre cp " +
+            "JOIN FETCH p.marca " +
+            "WHERE p.estado = 'A' " +
+            "ORDER BY p.idProducto ASC")
+    List<Producto> findProductosActivosHome();
 }
