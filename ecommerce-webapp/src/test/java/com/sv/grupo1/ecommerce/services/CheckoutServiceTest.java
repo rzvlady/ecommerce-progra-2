@@ -11,6 +11,7 @@ import com.sv.grupo1.ecommerce.dao.UsuarioRepository;
 import com.sv.grupo1.ecommerce.dto.CheckoutDTO;
 import com.sv.grupo1.ecommerce.dto.RespuestaPagoPasarelaDTO;
 import com.sv.grupo1.ecommerce.dto.ResultadoCompraDTO;
+import com.sv.grupo1.ecommerce.entities.catalogo.Municipio;
 import com.sv.grupo1.ecommerce.entities.core.DetallePedido;
 import com.sv.grupo1.ecommerce.entities.core.MovimientoInventario;
 import com.sv.grupo1.ecommerce.entities.core.Pago;
@@ -194,6 +195,78 @@ public class CheckoutServiceTest {
         verify(carritoService, never()).vaciarCarrito(any());
     }
 
+    @Test
+    void noDebeFinalizarCompraSinDireccionNiDatosDeDireccionNueva() {
+        Usuario usuario = crearUsuario(1);
+        Producto producto = crearProducto(10, 5);
+        prepararCompraValida(usuario, producto, 1);
+
+        IllegalArgumentException error = assertThrows(
+                IllegalArgumentException.class,
+                () -> checkoutService.finalizarCompra(CORREO, crearCheckoutDTO(null))
+        );
+
+        assertEquals("Selecciona una dirección de entrega o ingresa una nueva.", error.getMessage());
+        verify(pedidoRepository, never()).save(any());
+        verifyNoInteractions(pasarelaPagoService);
+    }
+
+    @Test
+    void debeCrearDireccionNuevaCuandoNoSeEligeUnaExistente() {
+        Usuario usuario = crearUsuario(1);
+        Producto producto = crearProducto(10, 5);
+        prepararCompraValida(usuario, producto, 1);
+        Municipio municipio = new Municipio();
+        municipio.setIdMunicipio(4);
+        when(municipioRepository.findById(4)).thenReturn(Optional.of(municipio));
+        when(usuarioDireccionRepository.save(any(UsuarioDireccion.class)))
+                .thenAnswer(invocacion -> invocacion.getArgument(0));
+        when(pasarelaPagoService.procesarPago(any(), eq("PED-7")))
+                .thenReturn(crearRespuestaPasarela(EstadoPasarela.APPROVED, "Transacción aprobada", "pay_321"));
+
+        CheckoutDTO dto = crearCheckoutDTO(null);
+        dto.setDireccionLinea1("  Calle Nueva 45  ");
+        dto.setIdMunicipio(4);
+        dto.setCodigoPostal("1501");
+
+        ResultadoCompraDTO resultado = checkoutService.finalizarCompra(CORREO, dto);
+
+        assertTrue(resultado.isAprobado());
+        ArgumentCaptor<UsuarioDireccion> direccionCaptor = ArgumentCaptor.forClass(UsuarioDireccion.class);
+        verify(usuarioDireccionRepository).save(direccionCaptor.capture());
+        assertEquals("Calle Nueva 45", direccionCaptor.getValue().getDireccionLinea1());
+        assertEquals("1501", direccionCaptor.getValue().getCodigoPostal());
+        assertSame(usuario, direccionCaptor.getValue().getUsuario());
+        assertSame(municipio, direccionCaptor.getValue().getMunicipio());
+    }
+
+    @Test
+    void noDebeMostrarConfirmacionDePedidoDeOtroUsuario() {
+        when(usuarioRepository.findByCorreoInicioSesionIgnoreCase(CORREO)).thenReturn(Optional.of(crearUsuario(1)));
+        when(pedidoRepository.findById(7)).thenReturn(Optional.of(crearPedido(crearUsuario(2), 'C')));
+
+        IllegalArgumentException error = assertThrows(
+                IllegalArgumentException.class,
+                () -> checkoutService.obtenerConfirmacion(CORREO, 7)
+        );
+
+        assertEquals("El pedido no pertenece a tu cuenta.", error.getMessage());
+    }
+
+    @Test
+    void noDebeMostrarConfirmacionDePedidoNoConfirmado() {
+        Usuario usuario = crearUsuario(1);
+        when(usuarioRepository.findByCorreoInicioSesionIgnoreCase(CORREO)).thenReturn(Optional.of(usuario));
+        when(pedidoRepository.findById(7)).thenReturn(Optional.of(crearPedido(usuario, 'A')));
+
+        IllegalArgumentException error = assertThrows(
+                IllegalArgumentException.class,
+                () -> checkoutService.obtenerConfirmacion(CORREO, 7)
+        );
+
+        assertEquals("El pedido no fue confirmado.", error.getMessage());
+    }
+
     private void prepararCompraValida(Usuario usuario, Producto producto, int cantidad) {
         UsuarioDireccion direccion = new UsuarioDireccion();
         direccion.setIdDireccion(3);
@@ -216,6 +289,14 @@ public class CheckoutServiceTest {
         usuario.setIdUsuario(idUsuario);
         usuario.setCorreoInicioSesion(CORREO);
         return usuario;
+    }
+
+    private Pedido crearPedido(Usuario usuario, Character estado) {
+        Pedido pedido = new Pedido();
+        pedido.setIdPedido(7);
+        pedido.setUsuario(usuario);
+        pedido.setEstadoPedido(estado);
+        return pedido;
     }
 
     private Producto crearProducto(Integer idProducto, int stock) {
