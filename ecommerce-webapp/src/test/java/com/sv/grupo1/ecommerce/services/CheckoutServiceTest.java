@@ -1,5 +1,7 @@
 package com.sv.grupo1.ecommerce.services;
 
+import com.sv.grupo1.ecommerce.carrito.CarritoItem;
+import com.sv.grupo1.ecommerce.carrito.CarritoSesionService;
 import com.sv.grupo1.ecommerce.dao.DetallePedidoRepository;
 import com.sv.grupo1.ecommerce.dao.MovimientoInventarioRepository;
 import com.sv.grupo1.ecommerce.dao.MunicipioRepository;
@@ -12,7 +14,6 @@ import com.sv.grupo1.ecommerce.dto.CheckoutDTO;
 import com.sv.grupo1.ecommerce.dto.RespuestaPagoPasarelaDTO;
 import com.sv.grupo1.ecommerce.dto.ResultadoCompraDTO;
 import com.sv.grupo1.ecommerce.entities.catalogo.Municipio;
-import com.sv.grupo1.ecommerce.entities.core.DetallePedido;
 import com.sv.grupo1.ecommerce.entities.core.MovimientoInventario;
 import com.sv.grupo1.ecommerce.entities.core.Pago;
 import com.sv.grupo1.ecommerce.entities.core.Pedido;
@@ -43,7 +44,7 @@ public class CheckoutServiceTest {
     private final DetallePedidoRepository detallePedidoRepository = mock(DetallePedidoRepository.class);
     private final PagoRepository pagoRepository = mock(PagoRepository.class);
     private final MovimientoInventarioRepository movimientoInventarioRepository = mock(MovimientoInventarioRepository.class);
-    private final CarritoService carritoService = mock(CarritoService.class);
+    private final CarritoSesionService carritoService = mock(CarritoSesionService.class);
     private final PasarelaPagoService pasarelaPagoService = mock(PasarelaPagoService.class);
 
     private final CheckoutService checkoutService = new CheckoutServiceImpl(
@@ -63,7 +64,7 @@ public class CheckoutServiceTest {
     void noDebeFinalizarCompraConCarritoVacio() {
         Usuario usuario = crearUsuario(1);
         when(usuarioRepository.findByCorreoInicioSesionIgnoreCase(CORREO)).thenReturn(Optional.of(usuario));
-        when(carritoService.obtenerCarrito(1)).thenReturn(List.of());
+        when(carritoService.items()).thenReturn(List.of());
 
         IllegalArgumentException error = assertThrows(
                 IllegalArgumentException.class,
@@ -81,7 +82,7 @@ public class CheckoutServiceTest {
         Producto producto = crearProducto(10, 1);
         when(usuarioRepository.findByCorreoInicioSesionIgnoreCase(CORREO)).thenReturn(Optional.of(usuario));
         when(productoRepository.findById(10)).thenReturn(Optional.of(producto));
-        when(carritoService.obtenerCarrito(1)).thenReturn(List.of(crearItemCarrito(10, 3)));
+        when(carritoService.items()).thenReturn(List.of(crearItemCarrito(10, 3)));
 
         IllegalArgumentException error = assertThrows(
                 IllegalArgumentException.class,
@@ -101,7 +102,7 @@ public class CheckoutServiceTest {
         direccionAjena.setUsuario(crearUsuario(2));
         when(usuarioRepository.findByCorreoInicioSesionIgnoreCase(CORREO)).thenReturn(Optional.of(usuario));
         when(productoRepository.findById(10)).thenReturn(Optional.of(crearProducto(10, 5)));
-        when(carritoService.obtenerCarrito(1)).thenReturn(List.of(crearItemCarrito(10, 2)));
+        when(carritoService.items()).thenReturn(List.of(crearItemCarrito(10, 2)));
         when(usuarioDireccionRepository.findById(3)).thenReturn(Optional.of(direccionAjena));
 
         IllegalArgumentException error = assertThrows(
@@ -146,7 +147,7 @@ public class CheckoutServiceTest {
         assertEquals(2, movimientoCaptor.getValue().getCantidad());
         assertEquals(7, movimientoCaptor.getValue().getIdPedido());
 
-        verify(carritoService).vaciarCarrito(1);
+        verify(carritoService).vaciar();
     }
 
     @Test
@@ -173,7 +174,7 @@ public class CheckoutServiceTest {
         assertNull(pagoCaptor.getValue().getFechaPago());
 
         verify(movimientoInventarioRepository, never()).save(any());
-        verify(carritoService, never()).vaciarCarrito(any());
+        verify(carritoService, never()).vaciar();
     }
 
     @Test
@@ -192,7 +193,7 @@ public class CheckoutServiceTest {
         ArgumentCaptor<Pago> pagoCaptor = ArgumentCaptor.forClass(Pago.class);
         verify(pagoRepository).save(pagoCaptor.capture());
         assertEquals('P', pagoCaptor.getValue().getEstadoTransaccion());
-        verify(carritoService, never()).vaciarCarrito(any());
+        verify(carritoService, never()).vaciar();
     }
 
     @Test
@@ -274,7 +275,7 @@ public class CheckoutServiceTest {
 
         when(usuarioRepository.findByCorreoInicioSesionIgnoreCase(CORREO)).thenReturn(Optional.of(usuario));
         when(productoRepository.findById(producto.getIdProducto())).thenReturn(Optional.of(producto));
-        when(carritoService.obtenerCarrito(usuario.getIdUsuario()))
+        when(carritoService.items())
                 .thenReturn(List.of(crearItemCarrito(producto.getIdProducto(), cantidad)));
         when(usuarioDireccionRepository.findById(3)).thenReturn(Optional.of(direccion));
         when(pedidoRepository.save(any(Pedido.class))).thenAnswer(invocacion -> {
@@ -310,14 +311,8 @@ public class CheckoutServiceTest {
         return producto;
     }
 
-    private DetallePedido crearItemCarrito(Integer idProducto, int cantidad) {
-        Producto producto = new Producto();
-        producto.setIdProducto(idProducto);
-
-        DetallePedido item = new DetallePedido();
-        item.setProducto(producto);
-        item.setCantidad(cantidad);
-        return item;
+    private CarritoItem crearItemCarrito(Integer idProducto, int cantidad) {
+        return new CarritoItem(idProducto, "ELC-COM-LAP-HP-0001", "LAPTOP HP", new BigDecimal("100.00"), cantidad, 10);
     }
 
     private CheckoutDTO crearCheckoutDTO(Integer idDireccion) {

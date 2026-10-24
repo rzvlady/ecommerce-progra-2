@@ -1,5 +1,7 @@
 package com.sv.grupo1.ecommerce.services.impl;
 
+import com.sv.grupo1.ecommerce.carrito.CarritoItem;
+import com.sv.grupo1.ecommerce.carrito.CarritoSesionService;
 import com.sv.grupo1.ecommerce.dao.DetallePedidoRepository;
 import com.sv.grupo1.ecommerce.dao.MovimientoInventarioRepository;
 import com.sv.grupo1.ecommerce.dao.MunicipioRepository;
@@ -26,7 +28,6 @@ import com.sv.grupo1.ecommerce.enums.EstadoEstandarGlobal;
 import com.sv.grupo1.ecommerce.enums.EstadoPasarela;
 import com.sv.grupo1.ecommerce.enums.EstadoPedido;
 import com.sv.grupo1.ecommerce.enums.EstadoTransaccion;
-import com.sv.grupo1.ecommerce.services.CarritoService;
 import com.sv.grupo1.ecommerce.services.CheckoutService;
 import com.sv.grupo1.ecommerce.services.PasarelaPagoService;
 import com.sv.grupo1.ecommerce.utils.Constantes;
@@ -55,7 +56,7 @@ public class CheckoutServiceImpl implements CheckoutService {
     private final DetallePedidoRepository detallePedidoRepository;
     private final PagoRepository pagoRepository;
     private final MovimientoInventarioRepository movimientoInventarioRepository;
-    private final CarritoService carritoService;
+    private final CarritoSesionService carritoService;
     private final PasarelaPagoService pasarelaPagoService;
 
     public CheckoutServiceImpl(
@@ -67,7 +68,7 @@ public class CheckoutServiceImpl implements CheckoutService {
             DetallePedidoRepository detallePedidoRepository,
             PagoRepository pagoRepository,
             MovimientoInventarioRepository movimientoInventarioRepository,
-            CarritoService carritoService,
+            CarritoSesionService carritoService,
             PasarelaPagoService pasarelaPagoService) {
         this.usuarioRepository = usuarioRepository;
         this.usuarioDireccionRepository = usuarioDireccionRepository;
@@ -85,7 +86,7 @@ public class CheckoutServiceImpl implements CheckoutService {
     @Transactional(readOnly = true)
     public ResumenCompraDTO obtenerResumenCarrito(String correo) {
         Usuario usuario = buscarUsuario(correo);
-        List<DetallePedido> detalles = construirDetallesDesdeCarrito(usuario.getIdUsuario());
+        List<DetallePedido> detalles = construirDetallesDesdeCarrito();
 
         ResumenCompraDTO resumen = new ResumenCompraDTO();
         resumen.setItems(convertirAItems(detalles));
@@ -112,7 +113,7 @@ public class CheckoutServiceImpl implements CheckoutService {
         LOG.info("finalizarCompra() => Iniciando");
         Usuario usuario = buscarUsuario(correo);
 
-        List<DetallePedido> detalles = construirDetallesDesdeCarrito(usuario.getIdUsuario());
+        List<DetallePedido> detalles = construirDetallesDesdeCarrito();
         if (detalles.isEmpty()) {
             throw new IllegalArgumentException("Tu carrito está vacío.");
         }
@@ -130,7 +131,7 @@ public class CheckoutServiceImpl implements CheckoutService {
         boolean aprobado = EstadoPasarela.APPROVED.equals(respuesta.getStatus());
         if (aprobado) {
             confirmarPedido(pedido, detalles);
-            carritoService.vaciarCarrito(usuario.getIdUsuario());
+            carritoService.vaciar();
         } else {
             anularPedido(pedido);
         }
@@ -176,10 +177,10 @@ public class CheckoutServiceImpl implements CheckoutService {
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
     }
 
-    private List<DetallePedido> construirDetallesDesdeCarrito(Integer idUsuario) {
+    private List<DetallePedido> construirDetallesDesdeCarrito() {
         List<DetallePedido> detalles = new ArrayList<>();
-        for (DetallePedido itemCarrito : carritoService.obtenerCarrito(idUsuario)) {
-            Producto producto = productoRepository.findById(itemCarrito.getProducto().getIdProducto())
+        for (CarritoItem itemCarrito : carritoService.items()) {
+            Producto producto = productoRepository.findById(itemCarrito.getIdProducto())
                     .orElseThrow(() -> new IllegalArgumentException("Un producto de tu carrito ya no existe."));
 
             DetallePedido detalle = new DetallePedido();
