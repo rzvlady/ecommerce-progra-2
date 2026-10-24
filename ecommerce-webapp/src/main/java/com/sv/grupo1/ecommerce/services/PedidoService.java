@@ -2,6 +2,7 @@ package com.sv.grupo1.ecommerce.services;
 
 import com.sv.grupo1.ecommerce.dao.*;
 import com.sv.grupo1.ecommerce.entities.core.*;
+import com.sv.grupo1.ecommerce.enums.EstadoPedido;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,9 +38,9 @@ public class PedidoService {
         //Pedido pedido = pedidoRepository.findById(idPedido).orElseThrow(() -> new IllegalArgumentException("Pedido no encontrado: " + idPedido));
         Pedido pedido = new Pedido();
 
-        if (!"PAGADO".equalsIgnoreCase(pedido.getEstadoPedido())) {
+        if (!pedido.getEstadoPedido().equals(EstadoPedido.CONFIRMADO.getCodigoEstado())) {
             throw new IllegalStateException(
-                    "Solo se pueden despachar pedidos en estado PAGADO. Estado actual: " + pedido.getEstadoPedido());
+                    "Solo se pueden despachar pedidos en estado CONFIRMADO. Estado actual: " + pedido.getEstadoPedido());
         }
 
         List<DetallePedido> detalles = detallePedidoRepository.findByPedido_IdPedido(idPedido);
@@ -78,7 +79,7 @@ public class PedidoService {
         //envioRepository.save(envio);
 
         // Actualizar estado del pedido
-        pedido.setEstadoPedido("DESPACHADO");
+        pedido.setEstadoPedido(EstadoPedido.ENVIADO.getCodigoEstado());
         //pedidoRepository.save(pedido);
 
         return envio;

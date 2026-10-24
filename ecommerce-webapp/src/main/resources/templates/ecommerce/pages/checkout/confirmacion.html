@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{ecommerce/fragments/ecommerce-head :: head('Compra confirmada')}">
+</head>
+
+<body class="store-body">
+
+<div th:replace="~{ecommerce/layout/ecommerce-layout :: layout(~{::contenido})}">
+    <th:block th:fragment="contenido">
+
+        <section class="container store-section"
+                 style="padding-top: 40px; padding-bottom: 55px; min-height: 60vh;">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+
+                    <div class="text-center mb-4">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                        <h1 class="section-title mt-3">¡Gracias por tu compra!</h1>
+                        <p class="section-description">
+                            Tu pedido <strong th:text="${'#' + resumen.idPedido}">#0</strong> fue confirmado.
+                        </p>
+                    </div>
+
+                    <div th:if="${mensajeExito}" class="alert alert-success" role="alert">
+                        <span th:text="${mensajeExito}"></span>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h2 class="h5 mb-3">Detalle del pedido</h2>
+
+                            <ul class="list-group list-group-flush mb-3">
+                                <li class="list-group-item px-0 d-flex justify-content-between"
+                                    th:each="item : ${resumen.items}">
+                                    <div>
+                                        <span th:text="${item.nombreProducto}">Producto</span>
+                                        <small class="text-secondary d-block"
+                                               th:text="${item.cantidad + ' x $' + #numbers.formatDecimal(item.precioUnitario, 1, 'COMMA', 2, 'POINT')}">
+                                            1 x $0.00
+                                        </small>
+                                    </div>
+                                    <span th:text="${'$' + #numbers.formatDecimal(item.subtotal, 1, 'COMMA', 2, 'POINT')}">$0.00</span>
+                                </li>
+                            </ul>
+
+                            <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
+                                <span>Total pagado</span>
+                                <span th:text="${'$' + #numbers.formatDecimal(resumen.total, 1, 'COMMA', 2, 'POINT')}">$0.00</span>
+                            </div>
+
+                            <p class="mb-1">
+                                <i class="bi bi-geo-alt me-2"></i>
+                                <strong>Entrega en:</strong>
+                                <span th:text="${resumen.direccionEntrega}">Dirección</span>
+                            </p>
+                            <p class="mb-0" th:if="${resumen.referenciaPago != null}">
+                                <i class="bi bi-receipt me-2"></i>
+                                <strong>Referencia de pago:</strong>
+                                <span th:text="${resumen.referenciaPago}">TX-0000</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <a th:href="@{/productos}" class="btn btn-mustard">
+                            <i class="bi bi-bag me-2"></i>
+                            Seguir comprando
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+    </th:block>
+</div>
+
+</body>
+</html>

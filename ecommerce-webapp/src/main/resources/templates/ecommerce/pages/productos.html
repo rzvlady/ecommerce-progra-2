@@ -204,7 +204,7 @@
                                     <input type="hidden" name="cantidad" value="1">
                                     <button type="submit"
                                             class="btn btn-mustard btn-sm btn-agregar-carrito"
-                                            th:disabled="${producto.stockDisponible == null or producto.stockDisponible <= 0}"
+                                            th:disabled="${producto.stockDisponible == null or producto.stockDisponible <= 0}">
                                         <i class="bi bi-cart-plus me-1"></i>
                                         Agregar al carrito
                                     </button>
