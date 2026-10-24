@@ -24,10 +24,4 @@ public class HomeController {
         model.addAttribute("categoriasNavbar", productoService.listarCategorias());
         return "ecommerce/pages/index";
     }
-
-    /** Vista del carrito de compras */
-    @GetMapping("/carrito")
-    public String carrito() {
-        return "ecommerce/pages/carrito";
-    }
 }

@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{backoffice/fragments/head :: head('Mi Perfil')}">
+</head>
+
+<body>
+<div th:replace="~{backoffice/layout/admin :: layout(
+            'Mi Perfil',
+            'perfil',
+            ~{::pageContent}
+        )}">
+
+    <th:block th:fragment="pageContent">
+
+        <!-- Alertas flotantes con auto-cierre (timeout) -->
+        <div class="floating-alert-container">
+            <div th:if="${mensajeExito}"
+                 id="alertaFlotanteExito"
+                 class="alert alert-success alert-dismissible fade show border-0 floating-alert d-flex align-items-center mb-2"
+                 role="alert">
+                <i class="bi bi-check-circle-fill fs-5 me-2 text-success"></i>
+                <div class="small fw-medium" th:text="${mensajeExito}"></div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+
+            <div th:if="${mensajeError}"
+                 id="alertaFlotanteError"
+                 class="alert alert-danger alert-dismissible fade show border-0 floating-alert d-flex align-items-center mb-2"
+                 role="alert">
+                <i class="bi bi-exclamation-triangle-fill fs-5 me-2 text-danger"></i>
+                <div class="small fw-medium" th:text="${mensajeError}"></div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+        </div>
+
+        <!-- Encabezado de la página -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+            <div>
+                <h2 class="h4 fw-bold mb-1">Mi Perfil Administrativo</h2>
+                <p class="text-secondary mb-0">
+                    Gestiona tus datos personales, medios de contacto y dirección asociada a tu cuenta de colaborador.
+                </p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span th:if="${perfilDTO.perfilCompletado}"
+                      class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-patch-check-fill"></i>
+                    <span>Perfil verificado y completo</span>
+                </span>
+                <span th:unless="${perfilDTO.perfilCompletado}"
+                      class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    <span>Datos pendientes por completar</span>
+                </span>
+                <a th:href="@{/backoffice/dashboard}" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1">
+                    <i class="bi bi-arrow-left"></i>
+                    <span>Dashboard</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Resumen rápido en tarjetas superiores -->
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <div class="rounded-3 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center flex-shrink-0"
+                             style="width: 48px; height: 48px;">
+                            <i class="bi bi-person-badge fs-4"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-secondary small">Titular de la cuenta</div>
+                            <div class="fw-bold text-dark text-truncate"
+                                 th:text="${(perfilDTO.nombres != null and !perfilDTO.nombres.isEmpty()) ? (perfilDTO.nombres + ' ' + perfilDTO.apellidos) : 'Sin nombres registrados'}">
+                                Administrador
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <div class="rounded-3 bg-info bg-opacity-10 text-info d-flex align-items-center justify-content-center flex-shrink-0"
+                             style="width: 48px; height: 48px;">
+                            <i class="bi bi-envelope-at fs-4"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-secondary small">Correo de sesión (Principal)</div>
+                            <div class="fw-bold text-dark text-truncate" th:text="${perfilDTO.correoPrincipal}">
+                                admin@testing.com
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <div class="rounded-3 bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center flex-shrink-0"
+                             style="width: 48px; height: 48px;">
+                            <i class="bi bi-phone fs-4"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-secondary small">Móvil principal</div>
+                            <div class="fw-bold text-dark text-truncate"
+                                 th:text="${(perfilDTO.telefonoMovil != null and !perfilDTO.telefonoMovil.isEmpty()) ? ('+503 ' + perfilDTO.telefonoMovil) : 'No registrado'}">
+                                +503 7000-0000
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario Unificado en Layout Administrativo -->
+        <form th:action="@{/backoffice/perfil}" th:object="${perfilDTO}" method="post" novalidate id="formBackofficePerfil">
+
+            <input type="hidden" th:field="*{idUsuario}">
+            <input type="hidden" th:field="*{idPerfil}">
+            <input type="hidden" th:field="*{idContactoCorreo}">
+            <input type="hidden" th:field="*{idContactoMovil}">
+            <input type="hidden" th:field="*{idDireccion}">
+
+            <!-- ============================================================== -->
+            <!-- SECCIÓN 1: DATOS PERSONALES (seguridad.usuarios_perfil)         -->
+            <!-- ============================================================== -->
+            <div class="modal-section-card mb-4">
+                <div class="modal-section-title">
+                    <i class="bi bi-person-vcard"></i>
+                    <span>1. Datos de Identidad Personal (usuarios_perfil)</span>
+                </div>
+
+                <div class="row g-3">
+                    <!-- Nombres -->
+                    <div class="col-12 col-md-6">
+                        <label for="nombres" class="form-label small fw-bold mb-1">
+                            Nombres <span class="text-danger">*</span>
+                        </label>
+                        <input type="text"
+                               id="nombres"
+                               class="form-control"
+                               th:field="*{nombres}"
+                               th:classappend="${#fields.hasErrors('nombres')} ? 'is-invalid' : ''"
+                               placeholder="Ej. Alexander Alberto"
+                               required>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('nombres')}" th:errors="*{nombres}"></div>
+                    </div>
+
+                    <!-- Apellidos -->
+                    <div class="col-12 col-md-6">
+                        <label for="apellidos" class="form-label small fw-bold mb-1">
+                            Apellidos <span class="text-danger">*</span>
+                        </label>
+                        <input type="text"
+                               id="apellidos"
+                               class="form-control"
+                               th:field="*{apellidos}"
+                               th:classappend="${#fields.hasErrors('apellidos')} ? 'is-invalid' : ''"
+                               placeholder="Ej. Emestica Ramirez"
+                               required>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('apellidos')}" th:errors="*{apellidos}"></div>
+                    </div>
+
+                    <!-- DUI -->
+                    <div class="col-12 col-md-4">
+                        <label for="dui" class="form-label small fw-bold mb-1">
+                            Documento Único de Identidad (DUI) <span class="text-danger">*</span>
+                        </label>
+                        <input type="text"
+                               id="dui"
+                               class="form-control"
+                               th:field="*{dui}"
+                               th:classappend="${#fields.hasErrors('dui')} ? 'is-invalid' : ''"
+                               placeholder="00000000-0"
+                               maxlength="10"
+                               required>
+                        <div class="form-text small">Formato: 8 dígitos, guion y dígito verificador.</div>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('dui')}" th:errors="*{dui}"></div>
+                    </div>
+
+                    <!-- Género -->
+                    <div class="col-12 col-md-4">
+                        <label for="genero" class="form-label small fw-bold mb-1">
+                            Género <span class="text-danger">*</span>
+                        </label>
+                        <select id="genero"
+                                class="form-select select2-global"
+                                th:field="*{genero}"
+                                th:classappend="${#fields.hasErrors('genero')} ? 'is-invalid' : ''"
+                                data-placeholder="Seleccione género..."
+                                required>
+                            <option value="">Seleccione...</option>
+                            <option th:each="gen : ${generos}"
+                                    th:value="${gen.codigo}"
+                                    th:text="${gen.descripcion}">
+                                Masculino
+                            </option>
+                        </select>
+                        <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('genero')}" th:errors="*{genero}"></div>
+                    </div>
+
+                    <!-- Fecha de Nacimiento -->
+                    <div class="col-12 col-md-4">
+                        <label for="fechaNacimiento" class="form-label small fw-bold mb-1">
+                            Fecha de Nacimiento <span class="text-danger">*</span>
+                        </label>
+                        <input type="date"
+                               id="fechaNacimiento"
+                               class="form-control"
+                               th:field="*{fechaNacimiento}"
+                               th:classappend="${#fields.hasErrors('fechaNacimiento')} ? 'is-invalid' : ''"
+                               required>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('fechaNacimiento')}" th:errors="*{fechaNacimiento}"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================== -->
+            <!-- SECCIÓN 2: MEDIOS DE CONTACTO (seguridad.usuarios_contacto)     -->
+            <!-- ============================================================== -->
+            <div class="modal-section-card mb-4">
+                <div class="modal-section-title">
+                    <i class="bi bi-telephone-inbound"></i>
+                    <span>2. Medios de Contacto Principales (usuarios_contacto)</span>
+                </div>
+
+                <div class="row g-3 align-items-start">
+                    <!-- Correo Principal (C) -->
+                    <div class="col-12 col-md-6">
+                        <label for="correoPrincipalAdminView" class="form-label small fw-bold mb-1 d-flex justify-content-between align-items-center">
+                            <span>Correo Electrónico Principal</span>
+                            <span class="sku-badge">TIPO: C (CORREO)</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-secondary">
+                                <i class="bi bi-envelope-lock"></i>
+                            </span>
+                            <input type="email"
+                                   id="correoPrincipalAdminView"
+                                   class="form-control bg-light"
+                                   th:value="*{correoPrincipal}"
+                                   readonly
+                                   disabled>
+                        </div>
+                        <div class="form-text small">
+                            Registrado como contacto principal único para tipo Correo (<code>principal = true</code>).
+                        </div>
+                    </div>
+
+                    <!-- Dispositivo Móvil Principal (M) -->
+                    <div class="col-12 col-md-6">
+                        <label for="telefonoMovil" class="form-label small fw-bold mb-1 d-flex justify-content-between align-items-center">
+                            <span>Dispositivo Móvil Principal <span class="text-danger">*</span></span>
+                            <span class="sku-badge">TIPO: M (MÓVIL)</span>
+                        </label>
+                        <div class="input-group has-validation">
+                            <span class="input-group-text bg-light fw-bold text-secondary">+503</span>
+                            <input type="tel"
+                                   id="telefonoMovil"
+                                   class="form-control"
+                                   th:field="*{telefonoMovil}"
+                                   th:classappend="${#fields.hasErrors('telefonoMovil')} ? 'is-invalid' : ''"
+                                   placeholder="7000-0000"
+                                   maxlength="9"
+                                   required>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('telefonoMovil')}" th:errors="*{telefonoMovil}"></div>
+                        </div>
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" id="tieneWhatsapp" th:field="*{tieneWhatsapp}">
+                            <label class="form-check-label small text-secondary" for="tieneWhatsapp">
+                                <i class="bi bi-whatsapp text-success me-1"></i>
+                                Número habilitado con WhatsApp (registrado en <code>metadata</code> JSONB)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================== -->
+            <!-- SECCIÓN 3: DIRECCIÓN REGISTRADA (seguridad.usuarios_direccion)  -->
+            <!-- ============================================================== -->
+            <div class="modal-section-card mb-4">
+                <div class="modal-section-title">
+                    <i class="bi bi-geo-alt"></i>
+                    <span>3. Ubicación y Dirección Principal (usuarios_direccion)</span>
+                </div>
+
+                <div class="row g-3">
+                    <!-- Departamento (Select2) -->
+                    <div class="col-12 col-md-4">
+                        <label for="idDepartamento" class="form-label small fw-bold mb-1">
+                            Departamento <span class="text-danger">*</span>
+                        </label>
+                        <select id="idDepartamento"
+                                class="form-select select2-global"
+                                th:field="*{idDepartamento}"
+                                th:classappend="${#fields.hasErrors('idDepartamento')} ? 'is-invalid' : ''"
+                                data-placeholder="Seleccione un departamento..."
+                                required>
+                            <option value="">Seleccione un departamento...</option>
+                            <option th:each="depto : ${departamentos}"
+                                    th:value="${depto.idDepartamento}"
+                                    th:text="${depto.nombreDepartamento}">
+                                San Salvador
+                            </option>
+                        </select>
+                        <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('idDepartamento')}" th:errors="*{idDepartamento}"></div>
+                    </div>
+
+                    <!-- Municipio Dinámico (Select2) -->
+                    <div class="col-12 col-md-4">
+                        <label for="idMunicipio" class="form-label small fw-bold mb-1">
+                            Municipio <span class="text-danger">*</span>
+                        </label>
+                        <select id="idMunicipio"
+                                class="form-select select2-global"
+                                th:field="*{idMunicipio}"
+                                th:classappend="${#fields.hasErrors('idMunicipio')} ? 'is-invalid' : ''"
+                                data-placeholder="Seleccione un municipio..."
+                                required>
+                            <option value="">Seleccione un municipio...</option>
+                            <option th:each="muni : ${municipios}"
+                                    th:value="${muni.idMunicipio}"
+                                    th:attr="data-departamento-id=${muni.departamento.idDepartamento}"
+                                    th:text="${muni.nombreMunicipio}">
+                                San Salvador
+                            </option>
+                        </select>
+                        <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('idMunicipio')}" th:errors="*{idMunicipio}"></div>
+                    </div>
+
+                    <!-- Tipo de Dirección -->
+                    <div class="col-12 col-md-4">
+                        <label for="tipoDireccion" class="form-label small fw-bold mb-1">
+                            Tipo de Dirección <span class="text-danger">*</span>
+                        </label>
+                        <select id="tipoDireccion"
+                                class="form-select select2-global"
+                                th:field="*{tipoDireccion}"
+                                th:classappend="${#fields.hasErrors('tipoDireccion')} ? 'is-invalid' : ''"
+                                data-placeholder="Seleccione tipo..."
+                                required>
+                            <option value="">Seleccione...</option>
+                            <option th:each="tipoDir : ${tiposDireccion}"
+                                    th:value="${tipoDir.codigo}"
+                                    th:text="${tipoDir.descripcion}">
+                                Casa
+                            </option>
+                        </select>
+                        <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('tipoDireccion')}" th:errors="*{tipoDireccion}"></div>
+                    </div>
+
+                    <!-- Dirección Exacta -->
+                    <div class="col-12 col-md-8">
+                        <label for="direccionLinea1" class="form-label small fw-bold mb-1">
+                            Dirección Exacta (Línea 1) <span class="text-danger">*</span>
+                        </label>
+                        <input type="text"
+                               id="direccionLinea1"
+                               class="form-control"
+                               th:field="*{direccionLinea1}"
+                               th:classappend="${#fields.hasErrors('direccionLinea1')} ? 'is-invalid' : ''"
+                               placeholder="Colonia, calle, pasaje y número de casa o edificio"
+                               required>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('direccionLinea1')}" th:errors="*{direccionLinea1}"></div>
+                    </div>
+
+                    <!-- Código Postal -->
+                    <div class="col-12 col-md-4">
+                        <label for="codigoPostal" class="form-label small fw-bold mb-1">
+                            Código Postal <span class="text-secondary fw-normal">(Opcional)</span>
+                        </label>
+                        <input type="text"
+                               id="codigoPostal"
+                               class="form-control"
+                               th:field="*{codigoPostal}"
+                               th:classappend="${#fields.hasErrors('codigoPostal')} ? 'is-invalid' : ''"
+                               placeholder="Ej. CP 1101"
+                               maxlength="10">
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('codigoPostal')}" th:errors="*{codigoPostal}"></div>
+                    </div>
+
+                    <!-- Punto de Referencia -->
+                    <div class="col-12">
+                        <label for="puntoReferencia" class="form-label small fw-bold mb-1">
+                            Punto de Referencia / Observaciones <span class="text-secondary fw-normal">(Opcional)</span>
+                        </label>
+                        <input type="text"
+                               id="puntoReferencia"
+                               class="form-control"
+                               th:field="*{puntoReferencia}"
+                               th:classappend="${#fields.hasErrors('puntoReferencia')} ? 'is-invalid' : ''"
+                               placeholder="Ej. Edificio corporativo, frente a redondel...">
+                        <div class="form-text small">
+                            Se almacena junto con la trazabilidad de auditoría en la columna <code>metadata</code> (JSONB).
+                        </div>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('puntoReferencia')}" th:errors="*{puntoReferencia}"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Barra inferior de acciones -->
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-stretch align-items-sm-center gap-3 bg-white border rounded-3 p-3 shadow-sm">
+                <div class="small text-secondary">
+                    <i class="bi bi-shield-check text-primary me-1"></i>
+                    <span th:if="${perfilDTO.ultimaActualizacion != null}">
+                        Última actualización auditada: <strong th:text="${perfilDTO.ultimaActualizacion}"></strong>
+                    </span>
+                    <span th:unless="${perfilDTO.ultimaActualizacion != null}">
+                        Los cambios quedarán registrados con auditoría en <code>metadata</code>.
+                    </span>
+                </div>
+                <div class="d-flex gap-2 justify-content-end">
+                    <a th:href="@{/backoffice/dashboard}" class="btn btn-light border px-4">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary px-4 d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-check2-circle"></i>
+                        <span>Guardar cambios</span>
+                    </button>
+                </div>
+            </div>
+
+        </form>
+
+        <!-- Script de auto-cierre de alertas, máscaras de DUI/Teléfono y cascada Departamento -> Municipio con Select2 -->
+        <script th:inline="javascript">
+            document.addEventListener('DOMContentLoaded', function () {
+                // Auto-cierre de alertas flotantes (4.5 segundos)
+                ['alertaFlotanteExito', 'alertaFlotanteError'].forEach(function (idAlerta) {
+                    const alertaEl = document.getElementById(idAlerta);
+                    if (alertaEl && window.bootstrap && bootstrap.Alert) {
+                        setTimeout(function () {
+                            const bsAlert = bootstrap.Alert.getOrCreateInstance(alertaEl);
+                            bsAlert.close();
+                        }, 4500);
+                    }
+                });
+
+                // Auto-formateo para DUI (00000000-0)
+                const inputDui = document.getElementById('dui');
+                if (inputDui) {
+                    inputDui.addEventListener('input', function (e) {
+                        let digits = e.target.value.replace(/\D/g, '').substring(0, 9);
+                        if (digits.length > 8) {
+                            e.target.value = digits.substring(0, 8) + '-' + digits.substring(8);
+                        } else {
+                            e.target.value = digits;
+                        }
+                    });
+                }
+
+                // Auto-formateo para Teléfono Móvil (0000-0000)
+                const inputMovil = document.getElementById('telefonoMovil');
+                if (inputMovil) {
+                    inputMovil.addEventListener('input', function (e) {
+                        let digits = e.target.value.replace(/\D/g, '').substring(0, 8);
+                        if (digits.length > 4) {
+                            e.target.value = digits.substring(0, 4) + '-' + digits.substring(4);
+                        } else {
+                            e.target.value = digits;
+                        }
+                    });
+                }
+
+                // Cascada dinámica Departamento -> Municipio compatible con initGlobalSelect2 de admin.js
+                if (typeof window.jQuery === 'undefined' || typeof jQuery.fn.select2 === 'undefined') {
+                    return;
+                }
+
+                const $ = window.jQuery;
+                const $depto = $('#idDepartamento');
+                const $muni = $('#idMunicipio');
+
+                const todosLosMunicipios = [];
+                $muni.find('option').each(function () {
+                    const val = $(this).attr('value');
+                    if (val) {
+                        todosLosMunicipios.push({
+                            id: String(val),
+                            text: $(this).text().trim(),
+                            idDepartamento: String($(this).attr('data-departamento-id') || '')
+                        });
+                    }
+                });
+
+                function actualizarMunicipiosPorDepartamento(idDepartamentoSeleccionado, idMunicipioPreseleccionado) {
+                    const deptoStr = idDepartamentoSeleccionado ? String(idDepartamentoSeleccionado) : '';
+
+                    if ($muni.hasClass('select2-hidden-accessible')) {
+                        $muni.select2('destroy');
+                    }
+
+                    $muni.empty();
+                    $muni.append(new Option('Seleccione un municipio...', '', false, false));
+
+                    if (!deptoStr) {
+                        $muni.prop('disabled', true);
+                    } else {
+                        $muni.prop('disabled', false);
+                        const filtrados = todosLosMunicipios.filter(function (m) {
+                            return m.idDepartamento === deptoStr;
+                        });
+
+                        filtrados.forEach(function (m) {
+                            const seleccionado = idMunicipioPreseleccionado && String(idMunicipioPreseleccionado) === m.id;
+                            const option = new Option(m.text, m.id, seleccionado, seleccionado);
+                            option.setAttribute('data-departamento-id', m.idDepartamento);
+                            $muni.append(option);
+                        });
+
+                        if (idMunicipioPreseleccionado) {
+                            $muni.val(String(idMunicipioPreseleccionado));
+                        } else {
+                            $muni.val('');
+                        }
+                    }
+
+                    if (typeof initGlobalSelect2 === 'function') {
+                        initGlobalSelect2($muni.parent());
+                    } else {
+                        $muni.select2({
+                            theme: 'bootstrap-5',
+                            width: '100%',
+                            language: 'es',
+                            placeholder: 'Seleccione un municipio...'
+                        });
+                    }
+                }
+
+                const deptoInicial = $depto.val();
+                const muniInicial = $muni.val();
+                actualizarMunicipiosPorDepartamento(deptoInicial, muniInicial);
+
+                $depto.on('change', function () {
+                    const nuevoDepto = $(this).val();
+                    actualizarMunicipiosPorDepartamento(nuevoDepto, null);
+                });
+            });
+        </script>
+
+    </th:block>
+</div>
+</body>
+</html>

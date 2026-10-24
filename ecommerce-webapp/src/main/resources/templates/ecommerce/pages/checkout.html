@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{ecommerce/fragments/ecommerce-head :: head('Pago')}">
+</head>
+
+<body class="store-body">
+
+  <div th:replace="~{ecommerce/layout/ecommerce-layout :: layout(~{::contenido})}">
+    <th:block th:fragment="contenido">
+
+      <section class="container store-section" style="min-height: 55vh; padding-top: 48px; padding-bottom: 48px;">
+
+        <h1 class="section-title mb-4 text-center">Pago</h1>
+        <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
+
+        <div class="row g-4">
+          <div class="col-lg-7">
+            <form class="card shadow-sm card-body" th:action="@{/checkout/pagar}" method="post" autocomplete="off">
+              <h2 class="h5">Datos de la tarjeta</h2>
+              <div class="btn-group mb-3" role="group">
+                <input type="radio" class="btn-check" name="tipo" id="t1" value="Credito" checked>
+                <label class="btn btn-outline-secondary" for="t1">Crédito</label>
+                <input type="radio" class="btn-check" name="tipo" id="t2" value="Debito">
+                <label class="btn btn-outline-secondary" for="t2">Débito</label>
+              </div>
+              <div class="mb-3">
+                <label class="form-label" for="titular">Nombre del titular</label>
+                <input class="form-control" id="titular" name="titular" required minlength="3">
+              </div>
+              <div class="mb-3">
+                <label class="form-label" for="numero">Número de tarjeta</label>
+                <input class="form-control" id="numero" name="numero" inputmode="numeric"
+                       placeholder="0000 0000 0000 0000" required maxlength="23">
+              </div>
+              <div class="row">
+                <div class="col-6 mb-3">
+                  <label class="form-label" for="vencimiento">Vencimiento</label>
+                  <input class="form-control" id="vencimiento" name="vencimiento" placeholder="MM/AA"
+                         pattern="\d{2}/\d{2}" required maxlength="5">
+                </div>
+                <div class="col-6 mb-3">
+                  <label class="form-label" for="cvv">CVV</label>
+                  <input class="form-control" id="cvv" name="cvv" type="password" inputmode="numeric"
+                         pattern="\d{3,4}" required maxlength="4">
+                </div>
+              </div>
+              <button class="btn btn-mustard" type="submit">
+                Pagar <span th:text="'$' + ${#numbers.formatDecimal(resumen.total, 1, 'COMMA', 2, 'POINT')}">$0.00</span>
+              </button>
+              <small class="text-muted mt-3">Simulación: 4242 4242 4242 4242 = aprobada;
+                4000 0000 0000 9995 = fondos insuficientes (vencimiento futuro, CVV cualquiera).</small>
+            </form>
+          </div>
+
+          <div class="col-lg-5">
+            <div class="card shadow-sm card-body">
+              <h2 class="h5">Resumen del pedido</h2>
+              <div class="d-flex justify-content-between small" th:each="i : ${items}">
+                <span th:text="${i.cantidad} + ' × ' + ${i.nombre}">1 × Producto</span>
+                <span th:text="'$' + ${#numbers.formatDecimal(i.subtotal, 1, 'COMMA', 2, 'POINT')}">$0.00</span>
+              </div>
+              <hr>
+              <div class="d-flex justify-content-between"><span>Subtotal</span>
+                <span th:text="'$' + ${#numbers.formatDecimal(resumen.subtotal, 1, 'COMMA', 2, 'POINT')}"></span></div>
+              <div class="d-flex justify-content-between"><span>Envío</span>
+                <span th:text="'$' + ${#numbers.formatDecimal(resumen.envio, 1, 'COMMA', 2, 'POINT')}"></span></div>
+              <div class="d-flex justify-content-between fw-bold fs-5 mt-2"><span>Total</span>
+                <span th:text="'$' + ${#numbers.formatDecimal(resumen.total, 1, 'COMMA', 2, 'POINT')}"></span></div>
+              <a th:href="@{/carrito}" class="btn btn-link mt-2 p-0 text-start">
+                <i class="bi bi-arrow-left me-1"></i> Volver al carrito
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </th:block>
+  </div>
+
+</body>
+</html>

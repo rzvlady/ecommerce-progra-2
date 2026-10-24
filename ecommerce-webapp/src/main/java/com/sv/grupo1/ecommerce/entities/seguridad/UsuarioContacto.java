@@ -29,7 +29,7 @@ public class UsuarioContacto {
     @Column(name = "valor", nullable = false)
     private String valor;
 
-    @Column(name = "principal", nullable = false, insertable = false, updatable = true)
+    @Column(name = "principal", nullable = false)
     private Boolean principal = true;
 
     @Column(name = "verificado")

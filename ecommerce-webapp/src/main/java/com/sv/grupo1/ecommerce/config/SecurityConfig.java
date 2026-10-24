@@ -47,7 +47,7 @@ public class SecurityConfig {
                     "/inicio-sesion",
                     "/css/**", "/js/**", "/ecommerce/**",
                     "/uploads/**",
-                    "/carrito", "/categorias", "/categorias/**",
+                    "/carrito", "/carrito/**", "/categorias", "/categorias/**",
                     "/producto/**", "/productos", "/productos/**"
             ).permitAll()
             // 4. LA REGLA FINAL SIEMPRE DEBE SER anyRequest()
