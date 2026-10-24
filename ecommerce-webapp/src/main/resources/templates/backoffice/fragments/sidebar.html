@@ -37,7 +37,7 @@
 
         <span class="menu-title">GESTIÓN COMERCIAL</span>
 
-        <nav class="nav flex-column mt-2">
+        <nav class="nav flex-column mt-2 mb-4">
 
             <!-- Menú desplegable: Catálogo -->
             <a href="javascript:void(0)"
@@ -99,6 +99,24 @@
                th:classappend="${activePage == 'clientes'} ? ' active' : ''">
                 <i class="bi bi-people"></i>
                 Clientes
+            </a>
+        </nav>
+
+        <span class="menu-title">SEGURIDAD Y ACCESOS</span>
+
+        <nav class="nav flex-column mt-2">
+            <a th:href="@{/backoffice/roles}"
+               class="nav-link"
+               th:classappend="${activePage == 'roles'} ? ' active' : ''">
+                <i class="bi bi-shield-lock"></i>
+                Roles
+            </a>
+
+            <a th:href="@{/backoffice/usuarios-roles}"
+               class="nav-link"
+               th:classappend="${activePage == 'usuarios-roles'} ? ' active' : ''">
+                <i class="bi bi-person-gear"></i>
+                Asignación de Roles
             </a>
         </nav>
 
