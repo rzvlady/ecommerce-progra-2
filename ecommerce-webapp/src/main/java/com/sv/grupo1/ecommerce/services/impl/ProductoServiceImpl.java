@@ -248,7 +248,7 @@ public class ProductoServiceImpl implements ProductoService {
         categorias.add(new CategoriaHomeDTO(9, "Novedades", "Lo más reciente en catálogo", "https://images.unsplash.com/photo-1511556532299-8f662fc26c06?auto=format&fit=crop&w=450&q=80", "/productos"));
         return categorias;
     }
-}
+
 
     private String normalizarTexto(String texto) {
         if (texto == null) {

@@ -2,21 +2,25 @@
      th:fragment="layout(contenido)"
      class="store-shell">
 
+    <!-- Header común heredado por todas las vistas -->
     <div th:replace="~{ecommerce/fragments/ecommerce-navbar :: navbar}">
     </div>
 
+    <!-- Contenido principal dinámico -->
     <main class="store-main">
         <th:block th:replace="${contenido}">
             Contenido de la tienda
         </th:block>
     </main>
 
+    <!-- Footer común heredado por todas las vistas -->
     <footer class="store-footer">
-        <div class="container py-4">
-            <div class="row align-items-center g-3">
+        <div class="container py-5">
+            <div class="row g-4 g-lg-5">
 
-                <div class="col-md-6">
-                    <a th:href="@{/}" class="multistore-logo footer-logo text-decoration-none d-inline-flex align-items-center gap-2" title="MultiStore - Inicio">
+                <!-- Columna 1: Marca y descripción -->
+                <div class="col-12 col-md-4">
+                    <a th:href="@{/}" class="multistore-logo footer-logo text-decoration-none d-inline-flex align-items-center gap-2 mb-3" title="MultiStore - Inicio">
                         <div class="logo-cart-badge footer-cart-badge" aria-hidden="true">
                             <svg class="multistore-cart-icon" width="34" height="34" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <rect x="13" y="8" width="7.5" height="9" rx="1.5" fill="#60a5fa" />
@@ -35,15 +39,68 @@
                             <span class="logo-store">Store</span>
                         </div>
                     </a>
+                    <p class="text-secondary small mb-3" style="max-width: 320px; line-height: 1.6;">
+                        Tu tienda de conveniencia favorita para tecnología, accesorios y novedades con envíos directos a tu puerta.
+                    </p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="store-footer-badge">
+                            <i class="bi bi-shield-check"></i> Compra segura
+                        </span>
+                        <span class="store-footer-badge">
+                            <i class="bi bi-truck"></i> Envío rápido
+                        </span>
+                    </div>
                 </div>
 
-                <div class="col-md-6 text-md-end">
-                    <small>
-                        © <span th:text="${#dates.year(#dates.createNow())}">2026</span>
-                        MultiStore. Todos los derechos reservados.
-                    </small>
+                <!-- Columna 2: Catálogo y Enlaces Rápidos -->
+                <div class="col-6 col-md-2 col-lg-3">
+                    <h5>Explorar</h5>
+                    <ul class="store-footer-links">
+                        <li><a th:href="@{/}">Inicio</a></li>
+                        <li><a th:href="@{/productos}">Catálogo completo</a></li>
+                        <li><a th:href="@{/productos}">Novedades</a></li>
+                        <li><a th:href="@{/carrito}">Mi carrito</a></li>
+                    </ul>
                 </div>
 
+                <!-- Columna 3: Categorías Destacadas -->
+                <div class="col-6 col-md-3">
+                    <h5>Categorías</h5>
+                    <ul class="store-footer-links">
+                        <li><a th:href="@{/productos}">Electrónica & Gadgets</a></li>
+                        <li><a th:href="@{/productos}">Computación y Laptops</a></li>
+                        <li><a th:href="@{/productos}">Audio y Auriculares</a></li>
+                        <li><a th:href="@{/productos}">Accesorios</a></li>
+                    </ul>
+                </div>
+
+                <!-- Columna 4: Atención y Métodos de Pago -->
+                <div class="col-12 col-md-3">
+                    <h5>Atención al Cliente</h5>
+                    <p class="text-secondary small mb-2">¿Tienes alguna pregunta o necesitas asistencia con tu pedido?</p>
+                    <div class="d-flex align-items-center gap-2 mb-3 text-secondary small">
+                        <i class="bi bi-envelope-at text-warning fs-5"></i>
+                        <span>soporte@multistore.com</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 text-secondary fs-5 mt-2">
+                        <i class="bi bi-credit-card-2-front" title="Tarjetas de crédito y débito"></i>
+                        <i class="bi bi-cash-stack" title="Pagos en efectivo / transferencia"></i>
+                        <i class="bi bi-lock-fill" title="Pasarela cifrada SSL"></i>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Fila inferior: Copyright y legales -->
+            <div class="store-footer-bottom d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+                <div>
+                    © <span th:text="${#dates.year(#dates.createNow())}">2026</span> MultiStore. Todos los derechos reservados.
+                </div>
+                <div class="d-flex gap-3 small">
+                    <span class="text-secondary">Términos y condiciones</span>
+                    <span class="text-secondary">•</span>
+                    <span class="text-secondary">Política de privacidad</span>
+                </div>
             </div>
         </div>
     </footer>

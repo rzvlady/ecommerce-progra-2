@@ -47,3 +47,4 @@ mock-gateway-api/logs/
 *.webp
 *.log
 .env
+*.gz

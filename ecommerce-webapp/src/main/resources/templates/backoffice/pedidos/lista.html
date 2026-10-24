@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{backoffice/fragments/head :: head('Gestión de Pedidos')}">
+</head>
+
+<body>
+<div th:replace="~{backoffice/layout/admin :: layout(
+            'Pedidos',
+            'pedidos',
+            ~{::pageContent}
+        )}">
+
+    <th:block th:fragment="pageContent">
+
+        <style>
+            /* Badges de estado modernos, legibles y de alto contraste */
+            .badge-pedido {
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                padding: 0.35rem 0.75rem;
+                border-radius: 9999px;
+                font-size: 0.76rem;
+                font-weight: 600;
+                letter-spacing: 0.02em;
+                white-space: nowrap;
+            }
+            .badge-pedido-pagado {
+                background-color: #dbeafe !important;
+                color: #1e40af !important;
+                border: 1px solid #bfdbfe !important;
+            }
+            .badge-pedido-despachado {
+                background-color: #e0f2fe !important;
+                color: #0369a1 !important;
+                border: 1px solid #bae6fd !important;
+            }
+            .badge-pedido-entregado {
+                background-color: #dcfce7 !important;
+                color: #15803d !important;
+                border: 1px solid #bbf7d0 !important;
+            }
+            .badge-pedido-pendiente {
+                background-color: #fef3c7 !important;
+                color: #92400e !important;
+                border: 1px solid #fde68a !important;
+            }
+            .badge-pedido-anulado {
+                background-color: #fee2e2 !important;
+                color: #991b1b !important;
+                border: 1px solid #fecaca !important;
+            }
+
+            /* Badge de estado de pago */
+            .badge-pago {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                font-size: 0.78rem;
+                font-weight: 600;
+            }
+
+            /* Filtros segmentados */
+            .filter-card {
+                background-color: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 10px;
+            }
+            .filter-label {
+                font-size: 0.72rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                color: #64748b;
+                margin-bottom: 0.35rem;
+            }
+        </style>
+
+        <!-- Alertas flotantes -->
+        <div class="floating-alert-container">
+            <div th:if="${mensajeExito}"
+                 id="alertaFlotanteExito"
+                 class="alert alert-success alert-dismissible fade show border-0 floating-alert d-flex align-items-center mb-2 shadow"
+                 role="alert">
+                <i class="bi bi-check-circle-fill fs-5 me-2 text-success"></i>
+                <div class="small fw-medium" th:text="${mensajeExito}"></div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+
+            <div th:if="${mensajeError}"
+                 id="alertaFlotanteError"
+                 class="alert alert-danger alert-dismissible fade show border-0 floating-alert d-flex align-items-center mb-2 shadow"
+                 role="alert">
+                <i class="bi bi-exclamation-triangle-fill fs-5 me-2 text-danger"></i>
+                <div class="small fw-medium" th:text="${mensajeError}"></div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+        </div>
+
+        <!-- Encabezado de la página -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+            <div>
+                <h2 class="h4 fw-bold mb-1">Gestión de Pedidos y Despachos</h2>
+                <p class="text-secondary mb-0">
+                    Control integral del ciclo de ventas: pagos, preparación, logística y entregas a clientes.
+                </p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <a th:href="@{/backoffice/pedidos}" class="btn btn-outline-secondary bg-white d-inline-flex align-items-center gap-2 shadow-sm">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    <span>Actualizar</span>
+                </a>
+                <button type="button" class="btn btn-outline-secondary bg-white d-inline-flex align-items-center gap-2 shadow-sm" id="btnExportarCSV">
+                    <i class="bi bi-download"></i>
+                    <span>Exportar CSV</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Indicadores / KPIs de Pedidos -->
+        <div class="row g-3 mb-4">
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="text-secondary small">Ventas Totales Facturadas</div>
+                                <div class="fs-3 fw-bold text-dark"
+                                     th:text="${'$' + #numbers.formatDecimal(montoTotalFacturado, 1, 'COMMA', 2, 'POINT')}">
+                                    $0.00
+                                </div>
+                            </div>
+                            <div class="p-2 rounded bg-success bg-opacity-10 text-success">
+                                <i class="bi bi-currency-dollar fs-4"></i>
+                            </div>
+                        </div>
+                        <div class="small text-secondary mt-2">
+                            <span class="fw-bold" th:text="${totalPedidos}">0</span> pedidos registrados
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="text-secondary small">Pendientes de Pago</div>
+                                <div class="fs-3 fw-bold text-warning" th:text="${pendientesPago}">0</div>
+                            </div>
+                            <div class="p-2 rounded bg-warning bg-opacity-10 text-warning">
+                                <i class="bi bi-hourglass-split fs-4"></i>
+                            </div>
+                        </div>
+                        <div class="small text-secondary mt-2">
+                            Requieren validación de transacción
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100 border-start border-4 border-primary">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="text-secondary small">Listos para Despacho</div>
+                                <div class="fs-3 fw-bold text-primary" th:text="${listosDespacho}">0</div>
+                            </div>
+                            <div class="p-2 rounded bg-primary bg-opacity-10 text-primary">
+                                <i class="bi bi-box-seam-fill fs-4"></i>
+                            </div>
+                        </div>
+                        <div class="small text-secondary mt-2">
+                            Pagados, listos para empaque y salida
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="text-secondary small">En Tránsito (Courier)</div>
+                                <div class="fs-3 fw-bold text-info" th:text="${enTransito}">0</div>
+                            </div>
+                            <div class="p-2 rounded bg-info bg-opacity-10 text-info">
+                                <i class="bi bi-truck fs-4"></i>
+                            </div>
+                        </div>
+                        <div class="small text-secondary mt-2">
+                            <span class="fw-bold text-success" th:text="${entregados}">0</span> entregados con éxito
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SECCIÓN DE FILTROS SEGMENTADA Y ESTRUCTURADA                 -->
+        <!-- ============================================================ -->
+        <div class="card filter-card shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom py-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-funnel text-primary fs-5"></i>
+                    <h6 class="fw-bold mb-0 text-dark">Filtros de Búsqueda</h6>
+                    <span class="badge bg-light text-secondary border ms-1" id="badgeTotalFiltrados">
+                        Mostrando <span th:text="${totalPedidos}">5</span> pedidos
+                    </span>
+                </div>
+                <div>
+                    <button type="button" id="btnLimpiarFiltros" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                        <span>Limpiar filtros</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="card-body p-3">
+
+                <!-- Píldoras de acceso rápido por estado -->
+                <div class="mb-3">
+                    <div class="filter-label">Estado rápido</div>
+                    <div class="d-flex flex-wrap gap-2" id="contenedorPillsEstado">
+                        <button type="button" class="btn btn-sm btn-primary active px-3" data-quick-estado="TODOS">
+                            Todos <span class="badge bg-white text-primary ms-1" th:text="${totalPedidos}">5</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary bg-white px-3" data-quick-estado="PENDIENTE">
+                            Pendientes <span class="badge bg-warning text-dark ms-1" th:text="${pendientesPago}">1</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary bg-white px-3" data-quick-estado="PAGADO">
+                            Por Despachar <span class="badge bg-primary ms-1" th:text="${listosDespacho}">1</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary bg-white px-3" data-quick-estado="DESPACHADO">
+                            En Tránsito <span class="badge bg-info text-dark ms-1" th:text="${enTransito}">1</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary bg-white px-3" data-quick-estado="ENTREGADO">
+                            Entregados <span class="badge bg-success ms-1" th:text="${entregados}">1</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary bg-white px-3" data-quick-estado="ANULADO">
+                            Anulados
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Grid segmentado de campos de filtro -->
+                <div class="row g-3">
+
+                    <!-- Segmento 1: Búsqueda general -->
+                    <div class="col-12 col-lg-4">
+                        <div class="filter-label">Búsqueda rápida</div>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0">
+                                <i class="bi bi-search text-secondary"></i>
+                            </span>
+                            <input type="text"
+                                   id="inputBuscarPedidos"
+                                   class="form-control border-start-0"
+                                   placeholder="Código (#ORD), cliente, email o guía...">
+                        </div>
+                    </div>
+
+                    <!-- Segmento 2: Select Estado -->
+                    <div class="col-12 col-sm-6 col-lg-3">
+                        <div class="filter-label">Estado del pedido</div>
+                        <select id="selectFiltroEstado" class="form-select select2-global" data-placeholder="Filtrar por estado...">
+                            <option value="TODOS">Todos los estados</option>
+                            <option value="PENDIENTE">Pendiente de pago</option>
+                            <option value="PAGADO">Pagado (Por despachar)</option>
+                            <option value="DESPACHADO">En Tránsito (Despachado)</option>
+                            <option value="ENTREGADO">Entregado</option>
+                            <option value="ANULADO">Anulado / Cancelado</option>
+                        </select>
+                    </div>
+
+                    <!-- Segmento 3: Select Método de Pago -->
+                    <div class="col-12 col-sm-6 col-lg-3">
+                        <div class="filter-label">Método de pago</div>
+                        <select id="selectFiltroPago" class="form-select select2-global" data-placeholder="Método de pago...">
+                            <option value="TODOS">Todos los métodos</option>
+                            <option value="TARJETA_CREDITO">Tarjeta de Crédito</option>
+                            <option value="TARJETA_DEBITO">Tarjeta de Débito</option>
+                            <option value="TRANSFERENCIA">Transferencia Bancaria</option>
+                            <option value="CONTRA_ENTREGA">Pago Contra Entrega</option>
+                        </select>
+                    </div>
+
+                    <!-- Segmento 4: Select Transportista -->
+                    <div class="col-12 col-sm-6 col-lg-2">
+                        <div class="filter-label">Transportista</div>
+                        <select id="selectFiltroTransporte" class="form-select select2-global" data-placeholder="Transporte...">
+                            <option value="TODOS">Todos</option>
+                            <option value="DHL Express">DHL Express</option>
+                            <option value="Cargo Express">Cargo Express</option>
+                            <option value="FedEx">FedEx</option>
+                            <option value="Correos de El Salvador">Correos de El Salvador</option>
+                            <option value="Mensajería Propia">Mensajería Propia</option>
+                            <option value="SIN_ASIGNAR">Sin asignar</option>
+                        </select>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- TABLA PRINCIPAL DE PEDIDOS                                   -->
+        <!-- ============================================================ -->
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="tablaPedidos">
+                    <thead class="table-light text-secondary small text-uppercase fw-semibold">
+                    <tr>
+                        <th scope="col" class="ps-4">Código / Fecha</th>
+                        <th scope="col">Cliente</th>
+                        <th scope="col">Artículos</th>
+                        <th scope="col">Total</th>
+                        <th scope="col">Estado Pedido</th>
+                        <th scope="col">Pago</th>
+                        <th scope="col">Logística / Guía</th>
+                        <th scope="col" class="text-end pe-4">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y" id="cuerpoTablaPedidos">
+
+                    <tr th:each="pedido : ${pedidos}"
+                        class="fila-pedido"
+                        th:attr="data-estado=${pedido.estadoPedido},
+                                 data-metodopago=${pedido.metodoPago},
+                                 data-transporte=${pedido.empresaTransporte != null ? pedido.empresaTransporte : 'SIN_ASIGNAR'},
+                                 data-codigo=${pedido.codigoPedido},
+                                 data-cliente=${pedido.clienteNombre},
+                                 data-email=${pedido.clienteEmail},
+                                 data-guia=${pedido.numeroSeguimiento != null ? pedido.numeroSeguimiento : ''}">
+
+                        <!-- Código y Fecha -->
+                        <td class="ps-4">
+                            <div class="fw-bold font-monospace text-primary" th:text="${pedido.codigoPedido}">ORD-2026-0001</div>
+                            <div class="small text-secondary" th:text="${pedido.fechaCreacion}">2026-10-23 00:00</div>
+                        </td>
+
+                        <!-- Cliente -->
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar-sm rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center fw-bold"
+                                     style="width: 34px; height: 34px; font-size: 0.85rem;"
+                                     th:text="${#strings.substring(pedido.clienteNombre, 0, 1)}">C</div>
+                                <div>
+                                    <div class="fw-semibold text-dark" th:text="${pedido.clienteNombre}">Cliente Demo</div>
+                                    <div class="small text-secondary" th:text="${pedido.clienteEmail}">email@demo.com</div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Artículos -->
+                        <td>
+                            <span class="badge bg-light text-dark border">
+                                <i class="bi bi-box me-1"></i>
+                                <span th:text="${pedido.cantidadTotalArticulos + ' uds (' + #lists.size(pedido.items) + ' ítems)'}">1 producto</span>
+                            </span>
+                        </td>
+
+                        <!-- Total -->
+                        <td>
+                            <div class="fw-bold text-dark fs-6"
+                                 th:text="${'$' + #numbers.formatDecimal(pedido.total, 1, 'COMMA', 2, 'POINT')}">
+                                $0.00
+                            </div>
+                            <div th:if="${pedido.descuento != null and pedido.descuento.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+                                 class="small text-success">
+                                <i class="bi bi-tag-fill me-1"></i>Desc. -$<span th:text="${pedido.descuento}">0</span>
+                            </div>
+                        </td>
+
+                        <!-- Estado Pedido: Badges de alto contraste y aspecto profesional -->
+                        <td>
+                            <!-- PENDIENTE -->
+                            <span th:if="${pedido.estadoPedido == 'PENDIENTE'}" class="badge-pedido badge-pedido-pendiente">
+                                <i class="bi bi-hourglass-split"></i> Pendiente de pago
+                            </span>
+                            <!-- PAGADO / POR DESPACHAR -->
+                            <span th:if="${pedido.estadoPedido == 'PAGADO'}" class="badge-pedido badge-pedido-pagado">
+                                <i class="bi bi-box-seam-fill"></i> Pagado (Por despachar)
+                            </span>
+                            <!-- DESPACHADO -->
+                            <span th:if="${pedido.estadoPedido == 'DESPACHADO'}" class="badge-pedido badge-pedido-despachado">
+                                <i class="bi bi-truck"></i> En Tránsito (Despachado)
+                            </span>
+                            <!-- ENTREGADO -->
+                            <span th:if="${pedido.estadoPedido == 'ENTREGADO'}" class="badge-pedido badge-pedido-entregado">
+                                <i class="bi bi-check-circle-fill"></i> Entregado al cliente
+                            </span>
+                            <!-- ANULADO -->
+                            <span th:if="${pedido.estadoPedido == 'ANULADO'}" class="badge-pedido badge-pedido-anulado">
+                                <i class="bi bi-x-circle-fill"></i> Anulado
+                            </span>
+                        </td>
+
+                        <!-- Estado Pago -->
+                        <td>
+                            <div class="badge-pago">
+                                <span th:if="${pedido.estadoPago == 'APROBADO'}" class="text-success">
+                                    <i class="bi bi-check-circle-fill me-1"></i>Aprobado
+                                </span>
+                                <span th:if="${pedido.estadoPago == 'PENDIENTE'}" class="text-warning">
+                                    <i class="bi bi-clock-history me-1"></i>Pendiente
+                                </span>
+                                <span th:if="${pedido.estadoPago == 'RECHAZADO'}" class="text-danger">
+                                    <i class="bi bi-x-octagon-fill me-1"></i>Rechazado
+                                </span>
+                            </div>
+                            <div class="small text-secondary font-monospace" style="font-size: 0.72rem;" th:text="${pedido.metodoPago}">TARJETA</div>
+                        </td>
+
+                        <!-- Logística / Guía -->
+                        <td>
+                            <div th:if="${pedido.numeroSeguimiento != null and !pedido.numeroSeguimiento.isEmpty()}">
+                                <div class="fw-medium small text-dark">
+                                    <i class="bi bi-truck me-1 text-secondary"></i>
+                                    <span th:text="${pedido.empresaTransporte}">DHL</span>
+                                </div>
+                                <span class="badge bg-light text-secondary font-monospace border" th:text="${pedido.numeroSeguimiento}">TRK-000000</span>
+                            </div>
+                            <div th:unless="${pedido.numeroSeguimiento != null and !pedido.numeroSeguimiento.isEmpty()}">
+                                <span class="text-secondary small fst-italic">Sin asignar</span>
+                            </div>
+                        </td>
+
+                        <!-- Acciones -->
+                        <td class="text-end pe-4">
+                            <div class="d-flex justify-content-end gap-1">
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-primary btn-ver-detalle"
+                                        th:attr="data-id=${pedido.idPedido}"
+                                        title="Ver detalle completo del pedido">
+                                    <i class="bi bi-eye"></i>
+                                    <span class="d-none d-xl-inline ms-1">Detalle</span>
+                                </button>
+
+                                <button th:if="${pedido.estadoPedido == 'PAGADO'}"
+                                        type="button"
+                                        class="btn btn-sm btn-success btn-abrir-despacho"
+                                        th:attr="data-id=${pedido.idPedido}, data-codigo=${pedido.codigoPedido}"
+                                        title="Registrar despacho a paquetería">
+                                    <i class="bi bi-truck"></i>
+                                    <span class="d-none d-xl-inline ms-1">Despachar</span>
+                                </button>
+
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-light border" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                        <li>
+                                            <a class="dropdown-item btn-ver-detalle" href="javascript:void(0)" th:attr="data-id=${pedido.idPedido}">
+                                                <i class="bi bi-receipt me-2 text-secondary"></i>Ver Comprobante
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li th:if="${pedido.estadoPedido == 'PENDIENTE'}">
+                                            <form th:action="@{/backoffice/pedidos/cambiar-estado}" method="post">
+                                                <input type="hidden" name="idPedido" th:value="${pedido.idPedido}">
+                                                <input type="hidden" name="nuevoEstado" value="PAGADO">
+                                                <button type="submit" class="dropdown-item text-primary">
+                                                    <i class="bi bi-check2-circle me-2"></i>Marcar como Pagado
+                                                </button>
+                                            </form>
+                                        </li>
+                                        <li th:if="${pedido.estadoPedido == 'DESPACHADO'}">
+                                            <form th:action="@{/backoffice/pedidos/cambiar-estado}" method="post">
+                                                <input type="hidden" name="idPedido" th:value="${pedido.idPedido}">
+                                                <input type="hidden" name="nuevoEstado" value="ENTREGADO">
+                                                <button type="submit" class="dropdown-item text-success">
+                                                    <i class="bi bi-house-check me-2"></i>Marcar como Entregado
+                                                </button>
+                                            </form>
+                                        </li>
+                                        <li th:if="${pedido.estadoPedido != 'ANULADO' and pedido.estadoPedido != 'ENTREGADO'}">
+                                            <form th:action="@{/backoffice/pedidos/cambiar-estado}" method="post">
+                                                <input type="hidden" name="idPedido" th:value="${pedido.idPedido}">
+                                                <input type="hidden" name="nuevoEstado" value="ANULADO">
+                                                <button type="submit" class="dropdown-item text-danger" onclick="return confirm('¿Está seguro de anular este pedido?')">
+                                                    <i class="bi bi-x-circle me-2"></i>Anular Pedido
+                                                </button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+
+                    </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Footer de la tabla con paginación / conteo -->
+            <div class="card-footer bg-white border-top py-3 d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2">
+                <span class="small text-secondary" id="contadorResultados">
+                    Mostrando <span class="fw-bold" th:text="${#lists.size(pedidos)}">5</span> pedidos registrados
+                </span>
+                <nav aria-label="Navegación de pedidos">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item disabled"><a class="page-link" href="#">Anterior</a></li>
+                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item disabled"><a class="page-link" href="#">Siguiente</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- MODAL: DETALLE DEL PEDIDO (VISTA 360 DEL PEDIDO)            -->
+        <!-- ============================================================ -->
+        <div class="modal fade" id="modalDetallePedido" tabindex="-1" aria-labelledby="modalDetallePedidoLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content border-0 shadow">
+                    
+                    <div class="modal-header bg-light">
+                        <div>
+                            <div class="d-flex align-items-center gap-2">
+                                <h5 class="modal-title fw-bold" id="detalleCodigoPedido">ORD-2026-1081</h5>
+                                <span id="detalleBadgeEstado" class="badge-pedido badge-pedido-pagado">PAGADO</span>
+                            </div>
+                            <div class="text-secondary small mt-1">
+                                Realizado el <span id="detalleFechaCreacion" class="fw-medium">2026-10-23 15:42</span>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+                                <i class="bi bi-printer me-1"></i> Imprimir
+                            </button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                        </div>
+                    </div>
+
+                    <div class="modal-body p-4">
+
+                        <!-- Stepper visual de ciclo de vida del pedido -->
+                        <div class="card border-0 bg-light mb-4 p-3">
+                            <div class="d-flex justify-content-between position-relative px-2">
+                                <div class="text-center" style="z-index: 2;">
+                                    <div class="badge rounded-circle bg-success p-2 mb-1" id="step1"><i class="bi bi-check-lg fs-6"></i></div>
+                                    <div class="small fw-semibold">1. Creado</div>
+                                </div>
+                                <div class="text-center" style="z-index: 2;">
+                                    <div class="badge rounded-circle bg-success p-2 mb-1" id="step2"><i class="bi bi-check-lg fs-6"></i></div>
+                                    <div class="small fw-semibold">2. Pago Confirmado</div>
+                                </div>
+                                <div class="text-center" style="z-index: 2;">
+                                    <div class="badge rounded-circle bg-primary p-2 mb-1" id="step3"><i class="bi bi-box-seam fs-6"></i></div>
+                                    <div class="small fw-semibold">3. En Preparación</div>
+                                </div>
+                                <div class="text-center" style="z-index: 2;">
+                                    <div class="badge rounded-circle bg-secondary p-2 mb-1" id="step4"><i class="bi bi-truck fs-6"></i></div>
+                                    <div class="small fw-semibold">4. En Tránsito</div>
+                                </div>
+                                <div class="text-center" style="z-index: 2;">
+                                    <div class="badge rounded-circle bg-secondary p-2 mb-1" id="step5"><i class="bi bi-house-check fs-6"></i></div>
+                                    <div class="small fw-semibold">5. Entregado</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-4">
+
+                            <!-- Columna Izquierda: Artículos del Pedido y Resumen Financiero -->
+                            <div class="col-12 col-lg-7">
+                                <div class="card border-0 shadow-sm h-100">
+                                    <div class="card-header bg-white py-3">
+                                        <h6 class="mb-0 fw-bold">
+                                            <i class="bi bi-cart-check me-2 text-primary"></i>
+                                            Artículos Comprados
+                                        </h6>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive">
+                                            <table class="table align-middle mb-0" id="tablaDetalleItems">
+                                                <thead class="table-light small text-secondary">
+                                                <tr>
+                                                    <th>Producto</th>
+                                                    <th class="text-center">Cant.</th>
+                                                    <th class="text-end">Precio</th>
+                                                    <th class="text-end pe-3">Subtotal</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody id="cuerpoDetalleItems">
+                                                <!-- Se llena dinámicamente -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <!-- Totales -->
+                                    <div class="card-footer bg-light p-3">
+                                        <div class="d-flex justify-content-between text-secondary small mb-1">
+                                            <span>Subtotal productos:</span>
+                                            <span class="fw-semibold text-dark" id="detalleSubtotal">$0.00</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between text-secondary small mb-1">
+                                            <span>Descuentos aplicados:</span>
+                                            <span class="fw-semibold text-success" id="detalleDescuento">-$0.00</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between text-secondary small mb-2">
+                                            <span>Tarifa de Envío:</span>
+                                            <span class="fw-semibold text-dark" id="detalleEnvio">$0.00</span>
+                                        </div>
+                                        <hr class="my-2">
+                                        <div class="d-flex justify-content-between fs-5 fw-bold text-dark">
+                                            <span>Total a Cobrar:</span>
+                                            <span class="text-primary" id="detalleTotal">$0.00</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Columna Derecha: Cliente, Dirección, Pago y Envío -->
+                            <div class="col-12 col-lg-5">
+                                <div class="d-flex flex-column gap-3">
+
+                                    <!-- Datos de Cliente -->
+                                    <div class="card border-0 shadow-sm">
+                                        <div class="card-body">
+                                            <h6 class="fw-bold mb-2">
+                                                <i class="bi bi-person me-2 text-primary"></i>Datos del Cliente
+                                            </h6>
+                                            <div class="fw-semibold text-dark" id="detalleClienteNombre">Cliente</div>
+                                            <div class="small text-secondary" id="detalleClienteEmail">email@demo.com</div>
+                                            <div class="small text-secondary" id="detalleClienteTelefono">+503 0000-0000</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Dirección de Entrega -->
+                                    <div class="card border-0 shadow-sm">
+                                        <div class="card-body">
+                                            <h6 class="fw-bold mb-2">
+                                                <i class="bi bi-geo-alt me-2 text-danger"></i>Dirección de Entrega
+                                            </h6>
+                                            <div class="text-dark small" id="detalleDireccion">Dirección</div>
+                                            <div class="text-secondary small mt-1">
+                                                <span id="detalleMunicipio">Municipio</span>, <span id="detalleDepartamento">Departamento</span>
+                                            </div>
+                                            <div class="small text-muted fst-italic mt-2" id="detalleNotas">
+                                                Notas: Ninguna
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Información de Pago y Despacho -->
+                                    <div class="card border-0 shadow-sm">
+                                        <div class="card-body">
+                                            <h6 class="fw-bold mb-2">
+                                                <i class="bi bi-credit-card me-2 text-success"></i>Pago y Logística
+                                            </h6>
+                                            <div class="d-flex justify-content-between small mb-1">
+                                                <span class="text-secondary">Método:</span>
+                                                <span class="fw-semibold font-monospace" id="detalleMetodoPago">TARJETA</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between small mb-1">
+                                                <span class="text-secondary">Referencia:</span>
+                                                <span class="font-monospace text-secondary" id="detalleReferenciaPago">TXN-000</span>
+                                            </div>
+                                            <hr class="my-2">
+                                            <div class="d-flex justify-content-between small mb-1">
+                                                <span class="text-secondary">Transporte:</span>
+                                                <span class="fw-semibold" id="detalleTransporte">DHL Express</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between small mb-1">
+                                                <span class="text-secondary">N° Guía:</span>
+                                                <span class="font-monospace fw-bold text-primary" id="detalleGuia">TRK-0000</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- MODAL: REGISTRAR DESPACHO / ENVÍO                           -->
+        <!-- ============================================================ -->
+        <div class="modal fade" id="modalRegistrarDespacho" tabindex="-1" aria-labelledby="modalRegistrarDespachoLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+                    
+                    <form th:action="@{/backoffice/pedidos/despachar}" method="post" th:object="${despachoDTO}">
+                        <div class="modal-header bg-light">
+                            <h5 class="modal-title fw-bold" id="modalRegistrarDespachoLabel">
+                                <i class="bi bi-box-seam text-primary me-2"></i>
+                                Registrar Despacho de Pedido
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                        </div>
+
+                        <div class="modal-body p-4">
+
+                            <div class="alert alert-info d-flex align-items-center mb-3 py-2 border-0 bg-info bg-opacity-10">
+                                <i class="bi bi-info-circle-fill text-info fs-5 me-2"></i>
+                                <div class="small">
+                                    Al despachar, el estado pasará a <strong>DESPACHADO</strong> y se registrará la salida física en el Kardex.
+                                </div>
+                            </div>
+
+                            <input type="hidden" id="formDespachoIdPedido" th:field="*{idPedido}">
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Código del Pedido</label>
+                                <input type="text" id="formDespachoCodigoVisible" class="form-control font-monospace bg-light" readonly>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="empresaTransporte" class="form-label small fw-semibold">Empresa de Transporte / Courier *</label>
+                                <select id="empresaTransporte" class="form-select select2-global" th:field="*{empresaTransporte}" data-placeholder="Seleccione transportista..." required>
+                                    <option value="DHL Express">DHL Express</option>
+                                    <option value="Cargo Express">Cargo Express</option>
+                                    <option value="FedEx">FedEx</option>
+                                    <option value="Correos de El Salvador">Correos de El Salvador</option>
+                                    <option value="Mensajería Propia">Mensajería Propia / Local</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="numeroSeguimiento" class="form-label small fw-semibold">Número de Guía / Tracking *</label>
+                                <input type="text"
+                                       id="numeroSeguimiento"
+                                       class="form-control font-monospace"
+                                       placeholder="Ej. TRK-992381"
+                                       th:field="*{numeroSeguimiento}"
+                                       required>
+                                <div class="form-text small">Número emitido por la empresa transportista para el cliente.</div>
+                            </div>
+
+                            <div class="mb-0">
+                                <label for="notasEnvio" class="form-label small fw-semibold">Notas de despacho (Opcional)</label>
+                                <textarea id="notasEnvio"
+                                          class="form-control"
+                                          rows="2"
+                                          placeholder="Observaciones de empaque, peso o dimensiones..."
+                                          th:field="*{notasEnvio}"></textarea>
+                            </div>
+
+                        </div>
+
+                        <div class="modal-footer bg-light">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-2">
+                                <i class="bi bi-check2-circle"></i>
+                                <span>Confirmar Despacho</span>
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Almacén seguro de datos JSON (evita errores de Thymeleaf 3.1+ en event handlers) -->
+        <script id="pedidosDataJson" type="application/json" th:text="${pedidosJson}"></script>
+
+        <!-- Script interactivo robusto de filtros y modales -->
+        <script>
+            let listaPedidos = [];
+            try {
+                const rawJson = document.getElementById('pedidosDataJson').textContent;
+                listaPedidos = JSON.parse(rawJson || '[]');
+            } catch (err) {
+                console.error('Error al parsear datos de pedidos:', err);
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                const inputBuscar = document.getElementById('inputBuscarPedidos');
+                const selectEstado = document.getElementById('selectFiltroEstado');
+                const selectPago = document.getElementById('selectFiltroPago');
+                const selectTransporte = document.getElementById('selectFiltroTransporte');
+                const btnLimpiar = document.getElementById('btnLimpiarFiltros');
+                const pillsEstado = document.querySelectorAll('#contenedorPillsEstado button');
+
+                // Función central de filtrado
+                function ejecutarFiltros() {
+                    const texto = (inputBuscar.value || '').toLowerCase().trim();
+                    const estado = (selectEstado ? selectEstado.value : 'TODOS') || 'TODOS';
+                    const metodoPago = (selectPago ? selectPago.value : 'TODOS') || 'TODOS';
+                    const transporte = (selectTransporte ? selectTransporte.value : 'TODOS') || 'TODOS';
+
+                    const filas = document.querySelectorAll('#cuerpoTablaPedidos tr.fila-pedido');
+                    let visibles = 0;
+
+                    filas.forEach(fila => {
+                        const rowEstado = fila.getAttribute('data-estado') || '';
+                        const rowMetodo = fila.getAttribute('data-metodopago') || '';
+                        const rowTransp = fila.getAttribute('data-transporte') || '';
+                        const rowCodigo = (fila.getAttribute('data-codigo') || '').toLowerCase();
+                        const rowCliente = (fila.getAttribute('data-cliente') || '').toLowerCase();
+                        const rowEmail = (fila.getAttribute('data-email') || '').toLowerCase();
+                        const rowGuia = (fila.getAttribute('data-guia') || '').toLowerCase();
+
+                        // Condición Estado
+                        const coincideEstado = (estado === 'TODOS' || rowEstado === estado);
+
+                        // Condición Método de Pago
+                        const coincidePago = (metodoPago === 'TODOS' || rowMetodo === metodoPago);
+
+                        // Condición Transporte
+                        let coincideTransp = true;
+                        if (transporte !== 'TODOS') {
+                            if (transporte === 'SIN_ASIGNAR') {
+                                coincideTransp = (!rowTransp || rowTransp === 'SIN_ASIGNAR');
+                            } else {
+                                coincideTransp = (rowTransp === transporte);
+                            }
+                        }
+
+                        // Condición Texto
+                        let coincideTexto = true;
+                        if (texto.length > 0) {
+                            coincideTexto = rowCodigo.includes(texto) ||
+                                            rowCliente.includes(texto) ||
+                                            rowEmail.includes(texto) ||
+                                            rowGuia.includes(texto);
+                        }
+
+                        if (coincideEstado && coincidePago && coincideTransp && coincideTexto) {
+                            fila.style.display = '';
+                            visibles++;
+                        } else {
+                            fila.style.display = 'none';
+                        }
+                    });
+
+                    // Actualizar contadores
+                    const badgeContador = document.getElementById('badgeTotalFiltrados');
+                    if (badgeContador) {
+                        badgeContador.innerHTML = `Mostrando <strong>${visibles}</strong> de ${listaPedidos.length} pedidos`;
+                    }
+                    const contadorResultados = document.getElementById('contadorResultados');
+                    if (contadorResultados) {
+                        contadorResultados.innerHTML = `Mostrando <span class="fw-bold">${visibles}</span> pedidos filtrados`;
+                    }
+                }
+
+                // Eventos de inputs
+                if (inputBuscar) {
+                    inputBuscar.addEventListener('input', ejecutarFiltros);
+                }
+
+                // Sincronización con Select2
+                if (window.jQuery) {
+                    jQuery('#selectFiltroEstado, #selectFiltroPago, #selectFiltroTransporte').on('change', function () {
+                        const valEstado = jQuery('#selectFiltroEstado').val() || 'TODOS';
+                        sincronizarPillsEstado(valEstado);
+                        ejecutarFiltros();
+                    });
+                } else {
+                    if (selectEstado) selectEstado.addEventListener('change', ejecutarFiltros);
+                    if (selectPago) selectPago.addEventListener('change', ejecutarFiltros);
+                    if (selectTransporte) selectTransporte.addEventListener('change', ejecutarFiltros);
+                }
+
+                // Click en píldoras de acceso rápido
+                pillsEstado.forEach(pill => {
+                    pill.addEventListener('click', function () {
+                        const estado = this.getAttribute('data-quick-estado');
+                        sincronizarPillsEstado(estado);
+
+                        // Actualizar el select2 de estado
+                        if (window.jQuery && jQuery('#selectFiltroEstado').length) {
+                            jQuery('#selectFiltroEstado').val(estado).trigger('change');
+                        } else if (selectEstado) {
+                            selectEstado.value = estado;
+                            ejecutarFiltros();
+                        }
+                    });
+                });
+
+                function sincronizarPillsEstado(estado) {
+                    pillsEstado.forEach(btn => {
+                        const est = btn.getAttribute('data-quick-estado');
+                        if (est === estado) {
+                            btn.className = 'btn btn-sm btn-primary active px-3';
+                        } else {
+                            btn.className = 'btn btn-sm btn-outline-secondary bg-white px-3';
+                        }
+                    });
+                }
+
+                // Botón Limpiar filtros
+                if (btnLimpiar) {
+                    btnLimpiar.addEventListener('click', function () {
+                        if (inputBuscar) inputBuscar.value = '';
+                        if (window.jQuery) {
+                            jQuery('#selectFiltroEstado').val('TODOS').trigger('change');
+                            jQuery('#selectFiltroPago').val('TODOS').trigger('change');
+                            jQuery('#selectFiltroTransporte').val('TODOS').trigger('change');
+                        } else {
+                            if (selectEstado) selectEstado.value = 'TODOS';
+                            if (selectPago) selectPago.value = 'TODOS';
+                            if (selectTransporte) selectTransporte.value = 'TODOS';
+                            sincronizarPillsEstado('TODOS');
+                            ejecutarFiltros();
+                        }
+                    });
+                }
+
+                // Event delegation para botones de acción (Ver Detalle y Despachar)
+                document.addEventListener('click', function (e) {
+                    const btnDetalle = e.target.closest('.btn-ver-detalle');
+                    if (btnDetalle) {
+                        e.preventDefault();
+                        const id = parseInt(btnDetalle.getAttribute('data-id'), 10);
+                        abrirModalDetallePorId(id);
+                        return;
+                    }
+
+                    const btnDespacho = e.target.closest('.btn-abrir-despacho');
+                    if (btnDespacho) {
+                        e.preventDefault();
+                        const id = parseInt(btnDespacho.getAttribute('data-id'), 10);
+                        const codigo = btnDespacho.getAttribute('data-codigo');
+                        abrirModalDespachoPorId(id, codigo);
+                        return;
+                    }
+                });
+
+                // Botón exportar CSV
+                const btnExportar = document.getElementById('btnExportarCSV');
+                if (btnExportar) {
+                    btnExportar.addEventListener('click', function () {
+                        let csv = 'Codigo,Fecha,Cliente,Email,Articulos,Total,Estado,MetodoPago,Guia\n';
+                        listaPedidos.forEach(p => {
+                            csv += `"${p.codigoPedido}","${p.fechaCreacion}","${p.clienteNombre}","${p.clienteEmail}",${p.cantidadTotalArticulos},${p.total},"${p.estadoPedido}","${p.metodoPago}","${p.numeroSeguimiento || ''}"\n`;
+                        });
+                        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `reporte_pedidos_${new Date().toISOString().slice(0, 10)}.csv`;
+                        a.click();
+                    });
+                }
+            });
+
+            // Función para abrir modal de detalle
+            function abrirModalDetallePorId(idPedido) {
+                const pedido = listaPedidos.find(p => p.idPedido === idPedido);
+                if (!pedido) {
+                    console.warn('Pedido no encontrado:', idPedido);
+                    return;
+                }
+
+                document.getElementById('detalleCodigoPedido').textContent = pedido.codigoPedido;
+                document.getElementById('detalleFechaCreacion').textContent = pedido.fechaCreacion;
+                
+                const badge = document.getElementById('detalleBadgeEstado');
+                badge.textContent = pedido.estadoPedido;
+                badge.className = 'badge-pedido';
+                if (pedido.estadoPedido === 'PAGADO') badge.classList.add('badge-pedido-pagado');
+                else if (pedido.estadoPedido === 'DESPACHADO') badge.classList.add('badge-pedido-despachado');
+                else if (pedido.estadoPedido === 'ENTREGADO') badge.classList.add('badge-pedido-entregado');
+                else if (pedido.estadoPedido === 'PENDIENTE') badge.classList.add('badge-pedido-pendiente');
+                else if (pedido.estadoPedido === 'ANULADO') badge.classList.add('badge-pedido-anulado');
+
+                // Stepper visual
+                actualizarStepper(pedido.estadoPedido);
+
+                // Datos cliente
+                document.getElementById('detalleClienteNombre').textContent = pedido.clienteNombre;
+                document.getElementById('detalleClienteEmail').textContent = pedido.clienteEmail;
+                document.getElementById('detalleClienteTelefono').textContent = pedido.clienteTelefono || 'No especificado';
+                document.getElementById('detalleDireccion').textContent = pedido.direccionEntrega;
+                document.getElementById('detalleMunicipio').textContent = pedido.municipio;
+                document.getElementById('detalleDepartamento').textContent = pedido.departamento;
+                document.getElementById('detalleNotas').textContent = pedido.notas ? `Notas: ${pedido.notas}` : 'Sin notas adicionales';
+
+                // Datos pago & transporte
+                document.getElementById('detalleMetodoPago').textContent = pedido.metodoPago;
+                document.getElementById('detalleReferenciaPago').textContent = pedido.referenciaPago || 'N/A';
+                document.getElementById('detalleTransporte').textContent = pedido.empresaTransporte || 'Pendiente de asignación';
+                document.getElementById('detalleGuia').textContent = pedido.numeroSeguimiento || 'Sin asignar';
+
+                // Totales
+                document.getElementById('detalleSubtotal').textContent = `$${parseFloat(pedido.subtotal || 0).toFixed(2)}`;
+                document.getElementById('detalleDescuento').textContent = `-$${parseFloat(pedido.descuento || 0).toFixed(2)}`;
+                document.getElementById('detalleEnvio').textContent = `$${parseFloat(pedido.costoEnvio || 0).toFixed(2)}`;
+                document.getElementById('detalleTotal').textContent = `$${parseFloat(pedido.total || 0).toFixed(2)}`;
+
+                // Artículos
+                const cuerpoItems = document.getElementById('cuerpoDetalleItems');
+                cuerpoItems.innerHTML = '';
+                if (pedido.items && pedido.items.length > 0) {
+                    pedido.items.forEach(item => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>
+                                <div class="fw-semibold text-dark">${item.nombreProducto}</div>
+                                <div class="small text-secondary font-monospace">${item.sku}</div>
+                            </td>
+                            <td class="text-center fw-bold">${item.cantidad}</td>
+                            <td class="text-end font-monospace">$${parseFloat(item.precioUnitario).toFixed(2)}</td>
+                            <td class="text-end pe-3 fw-bold font-monospace text-dark">$${parseFloat(item.subtotal).toFixed(2)}</td>
+                        `;
+                        cuerpoItems.appendChild(tr);
+                    });
+                } else {
+                    cuerpoItems.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-secondary">Sin artículos registrados</td></tr>';
+                }
+
+                if (window.bootstrap && bootstrap.Modal) {
+                    const modalEl = document.getElementById('modalDetallePedido');
+                    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    modal.show();
+                }
+            }
+
+            function actualizarStepper(estado) {
+                const s1 = document.getElementById('step1');
+                const s2 = document.getElementById('step2');
+                const s3 = document.getElementById('step3');
+                const s4 = document.getElementById('step4');
+                const s5 = document.getElementById('step5');
+
+                [s1, s2, s3, s4, s5].forEach(s => {
+                    s.className = 'badge rounded-circle bg-secondary p-2 mb-1';
+                });
+
+                if (estado === 'PENDIENTE') {
+                    s1.className = 'badge rounded-circle bg-success p-2 mb-1';
+                    s2.className = 'badge rounded-circle bg-warning text-dark p-2 mb-1';
+                } else if (estado === 'PAGADO') {
+                    s1.className = 'badge rounded-circle bg-success p-2 mb-1';
+                    s2.className = 'badge rounded-circle bg-success p-2 mb-1';
+                    s3.className = 'badge rounded-circle bg-primary p-2 mb-1';
+                } else if (estado === 'DESPACHADO') {
+                    s1.className = 'badge rounded-circle bg-success p-2 mb-1';
+                    s2.className = 'badge rounded-circle bg-success p-2 mb-1';
+                    s3.className = 'badge rounded-circle bg-success p-2 mb-1';
+                    s4.className = 'badge rounded-circle bg-info p-2 mb-1';
+                } else if (estado === 'ENTREGADO') {
+                    s1.className = 'badge rounded-circle bg-success p-2 mb-1';
+                    s2.className = 'badge rounded-circle bg-success p-2 mb-1';
+                    s3.className = 'badge rounded-circle bg-success p-2 mb-1';
+                    s4.className = 'badge rounded-circle bg-success p-2 mb-1';
+                    s5.className = 'badge rounded-circle bg-success p-2 mb-1';
+                }
+            }
+
+            // Función para abrir modal de despacho
+            function abrirModalDespachoPorId(idPedido, codigoPedido) {
+                document.getElementById('formDespachoIdPedido').value = idPedido;
+                document.getElementById('formDespachoCodigoVisible').value = codigoPedido;
+                document.getElementById('numeroSeguimiento').value = '';
+                document.getElementById('notasEnvio').value = '';
+
+                if (window.bootstrap && bootstrap.Modal) {
+                    const modalEl = document.getElementById('modalRegistrarDespacho');
+                    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    modal.show();
+                }
+            }
+        </script>
+
+    </th:block>
+</div>
+</body>
+</html>

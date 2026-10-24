@@ -43,6 +43,6 @@ public class ProductoController {
         var producto = productoService.obtenerPorId(id)
                 .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado: " + id));
         model.addAttribute("producto", producto);
-        return "index";
+        return "ecommerce/pages/producto-detalle";
     }
 }

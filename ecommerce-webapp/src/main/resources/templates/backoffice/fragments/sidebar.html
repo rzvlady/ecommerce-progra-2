@@ -40,7 +40,7 @@
         <nav class="nav flex-column mt-2">
 
             <!-- Menú desplegable: Catálogo -->
-            <a href="#menuCatalogo"
+            <a href="javascript:void(0)"
                class="nav-link submenu-trigger"
                data-bs-toggle="collapse"
                data-bs-target="#menuCatalogo"
@@ -80,7 +80,7 @@
                 Inventario
             </a>
 
-            <a th:href="@{/admin/pedidos}"
+            <a th:href="@{/backoffice/pedidos}"
                class="nav-link"
                th:classappend="${activePage == 'pedidos'} ? ' active' : ''">
                 <i class="bi bi-cart3"></i>

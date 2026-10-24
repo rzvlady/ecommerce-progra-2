@@ -1,26 +1,24 @@
 <header th:fragment="navbar"
         xmlns:th="http://www.thymeleaf.org"
         xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-        class="store-header bg-white border-bottom sticky-top shadow-xs">
+        class="store-header sticky-top">
 
-    <div class="container py-3">
-        <div class="row align-items-center g-3">
+    <!-- Fila superior: Logo, Buscador, Carrito & Perfil -->
+    <div class="container py-2 py-lg-3">
+        <div class="row align-items-center g-2 g-md-3">
 
-            <div class="col-6 col-sm-4 col-lg-3">
-                <a th:href="@{/}" class="multistore-logo text-decoration-none d-inline-flex align-items-center gap-2" title="MultiStore - Inicio">
+            <!-- Logo de MultiStore -->
+            <div class="col-6 col-md-3 col-lg-3">
+                <a th:href="@{/}" class="multistore-logo" title="MultiStore - Ir al Inicio">
                     <div class="logo-cart-badge" aria-hidden="true">
-
                         <svg class="multistore-cart-icon" width="34" height="34" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-
                             <rect x="13" y="8" width="7.5" height="9" rx="1.5" fill="#3b82f6" />
                             <path d="M16.7 8V17" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" />
                             <rect x="19.5" y="5" width="8.5" height="12" rx="1.5" fill="#f59e0b" />
                             <path d="M23.7 5V17" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" />
                             <path d="M10 11C10 9.8 11 9 12.2 9H13.5V17H10V11Z" fill="#10b981" />
-
                             <path d="M4 6H7.5L10.5 21H27L30 9H9.5" stroke="#1e293b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
                             <path d="M11 15H28.5" stroke="#1e293b" stroke-width="1.4" stroke-linecap="round"/>
-
                             <circle cx="13" cy="26" r="2.5" fill="#2563eb" stroke="#1e293b" stroke-width="1.8"/>
                             <circle cx="25" cy="26" r="2.5" fill="#2563eb" stroke="#1e293b" stroke-width="1.8"/>
                         </svg>
@@ -32,18 +30,20 @@
                 </a>
             </div>
 
-            <div class="col-12 col-lg-6 order-last order-lg-2">
-                <form th:action="@{/productos}" method="get" role="search" class="m-0 mx-auto" style="max-width: 540px;">
+            <!-- Buscador Central -->
+            <div class="col-12 col-md-5 col-lg-6 order-last order-md-2 mt-2 mt-md-0">
+                <form th:action="@{/productos}" method="get" role="search" class="m-0 mx-auto" style="max-width: 580px;">
                     <div class="input-group search-panel-group">
-                        <span class="input-group-text border-0">
+                        <span class="input-group-text">
                             <i class="bi bi-search"></i>
                         </span>
                         <input type="search"
                                name="busqueda"
-                               class="form-control border-0 ps-0"
-                               placeholder="¿Qué estás buscando hoy?"
+                               class="form-control"
+                               placeholder="¿Qué estás buscando hoy? Ej. Laptops, auriculares..."
+                               th:value="${param.busqueda != null ? param.busqueda : (busqueda != null ? busqueda : '')}"
                                aria-label="Buscar productos">
-                        <button type="submit" class="btn btn-search-submit px-3 px-sm-4 fw-semibold" aria-label="Buscar">
+                        <button type="submit" class="btn btn-search-submit d-flex align-items-center gap-1" aria-label="Buscar">
                             <i class="bi bi-search d-sm-none"></i>
                             <span class="d-none d-sm-inline">Buscar</span>
                         </button>
@@ -51,56 +51,76 @@
                 </form>
             </div>
 
-            <!-- Carrito y Único Icono de Perfil para Iniciar Sesión / Registrarse -->
-            <div class="col-6 col-sm-8 col-lg-3 order-2 order-lg-3">
-                <div class="d-flex justify-content-end align-items-center gap-3">
+            <!-- Acciones de Usuario: Carrito y Perfil -->
+            <div class="col-6 col-md-4 col-lg-3 order-2 order-md-3">
+                <div class="header-actions-group">
 
                     <!-- Carrito de Compras -->
-                    <a th:href="@{/carrito}" class="header-action" title="Ver carrito de compras">
-                        <i class="bi bi-cart3 fs-5"></i>
-                        <span class="d-none d-sm-inline small fw-semibold">Carrito</span>
+                    <a th:href="@{/carrito}" class="header-cart-btn" title="Ver carrito de compras">
+                        <div class="cart-icon-wrapper">
+                            <i class="bi bi-cart3 fs-5"></i>
+                            <span class="header-cart-badge">0</span>
+                        </div>
+                        <span class="d-none d-md-inline">Carrito</span>
                     </a>
 
-                    <!-- Único Icono de Perfil con Dropdown -->
+                    <!-- Separador visual -->
+                    <div class="header-action-divider d-none d-sm-block"></div>
+
+                    <!-- Menú de Usuario / Perfil -->
                     <div class="dropdown">
-                        <button class="btn btn-link text-dark p-0 header-action dropdown-toggle border-0"
+                        <button class="header-profile-btn profile-dropdown-btn dropdown-toggle border-0"
                                 type="button"
                                 id="perfilDropdown"
                                 data-bs-toggle="dropdown"
                                 aria-expanded="false"
-                                title="Mi Cuenta / Acceso">
-                            <i class="bi bi-person-circle fs-4 text-secondary"></i>
+                                title="Mi Cuenta y Acceso">
+                            <i class="bi bi-person-circle fs-5 text-secondary"></i>
+                            <span class="d-none d-md-inline" sec:authorize="isAnonymous()">Mi Cuenta</span>
+                            <span class="d-none d-md-inline text-truncate" style="max-width: 100px;" sec:authorize="isAuthenticated()" sec:authentication="name">Usuario</span>
+                            <i class="bi bi-chevron-down small text-muted"></i>
                         </button>
 
-                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border mt-2 py-2" aria-labelledby="perfilDropdown" style="min-width: 210px;">
-                            <!-- Si NO ha iniciado sesión -->
+                        <ul class="dropdown-menu dropdown-menu-end profile-dropdown-menu mt-2" aria-labelledby="perfilDropdown">
+                            <!-- Estado: NO autenticado -->
                             <li sec:authorize="isAnonymous()">
-                                <a class="dropdown-item py-2 d-flex align-items-center gap-2 fw-semibold" th:href="@{/inicio-sesion}">
+                                <h6 class="dropdown-header">Acceso a tu cuenta</h6>
+                            </li>
+                            <li sec:authorize="isAnonymous()">
+                                <a class="dropdown-item d-flex align-items-center gap-2 fw-semibold" th:href="@{/inicio-sesion}">
                                     <i class="bi bi-box-arrow-in-right text-primary fs-5"></i>
                                     <span>Iniciar sesión</span>
                                 </a>
                             </li>
                             <li sec:authorize="isAnonymous()">
-                                <a class="dropdown-item py-2 d-flex align-items-center gap-2" th:href="@{/registro}">
+                                <a class="dropdown-item d-flex align-items-center gap-2" th:href="@{/registro}">
                                     <i class="bi bi-person-plus text-success fs-5"></i>
                                     <span>Registrarse</span>
                                 </a>
                             </li>
 
-                            <!-- Si SÍ ha iniciado sesión -->
+                            <!-- Estado: AUTENTICADO -->
                             <li sec:authorize="isAuthenticated()">
-                                <h6 class="dropdown-header text-truncate" sec:authentication="name">Mi Cuenta</h6>
+                                <h6 class="dropdown-header">Conectado como</h6>
+                                <div class="px-3 py-1 mb-1 fw-bold text-dark text-truncate" style="max-width: 200px;" sec:authentication="name">Usuario</div>
+                            </li>
+                            <li sec:authorize="isAuthenticated()"><hr class="dropdown-divider my-1"></li>
+                            <li sec:authorize="isAuthenticated()">
+                                <a class="dropdown-item d-flex align-items-center gap-2" th:href="@{/}">
+                                    <i class="bi bi-person text-primary fs-5"></i>
+                                    <span>Mi perfil</span>
+                                </a>
                             </li>
                             <li sec:authorize="isAuthenticated()">
-                                <a class="dropdown-item py-2 d-flex align-items-center gap-2" th:href="@{/}">
-                                    <i class="bi bi-person-check text-primary fs-5"></i>
-                                    <span>Mi perfil</span>
+                                <a class="dropdown-item d-flex align-items-center gap-2" th:href="@{/carrito}">
+                                    <i class="bi bi-bag-check text-warning fs-5"></i>
+                                    <span>Mis pedidos</span>
                                 </a>
                             </li>
                             <li sec:authorize="isAuthenticated()"><hr class="dropdown-divider my-1"></li>
                             <li sec:authorize="isAuthenticated()">
                                 <form th:action="@{/cerrar-sesion}" method="post" class="m-0">
-                                    <button type="submit" class="dropdown-item py-2 text-danger d-flex align-items-center gap-2 w-100 border-0 bg-transparent text-start">
+                                    <button type="submit" class="dropdown-item text-danger d-flex align-items-center gap-2 w-100 border-0 bg-transparent text-start">
                                         <i class="bi bi-box-arrow-right fs-5"></i>
                                         <span>Cerrar sesión</span>
                                     </button>
@@ -115,18 +135,24 @@
         </div>
     </div>
 
-    <nav class="navbar navbar-expand navbar-dark py-2" style="background-color: #e2a016;">
-        <div class="container overflow-x-auto text-nowrap">
-            <ul class="navbar-nav me-auto mb-0 gap-2 gap-lg-3 flex-row">
-                <li class="nav-item">
-                    <a class="nav-link text-white fw-bold px-3 py-1" th:href="@{/productos}">TODO</a>
-                </li>
-                <li class="nav-item" th:each="cat : ${categoriasNavbar != null ? categoriasNavbar : categorias}">
-                    <a class="nav-link text-white fw-bold px-3 py-1"
-                       th:href="@{/productos(idCategoria=${cat.idCategoria})}"
-                       th:text="${#strings.toUpperCase(cat.nombreCategoria)}">CATEGORÍA</a>
-                </li>
-            </ul>
+    <!-- Barra de Categorías (Menu Amarillo - sin barra de scroll fea) -->
+    <nav class="store-category-bar">
+        <div class="container">
+            <div class="category-scroll-container d-flex align-items-center gap-1 gap-md-2">
+                <a th:href="@{/productos}"
+                   class="category-nav-link"
+                   th:classappend="${idCategoriaSeleccionada == null and param.idCategoria == null and param.busqueda == null} ? 'active' : ''">
+                    <i class="bi bi-grid me-1"></i> Todo
+                </a>
+
+                <a th:each="cat : ${categoriasNavbar != null ? categoriasNavbar : categorias}"
+                   th:href="@{/productos(idCategoria=${cat.idCategoria})}"
+                   class="category-nav-link"
+                   th:classappend="${idCategoriaSeleccionada != null and idCategoriaSeleccionada == cat.idCategoria} ? 'active' : ''"
+                   th:text="${#strings.toUpperCase(cat.nombreCategoria)}">
+                    CATEGORÍA
+                </a>
+            </div>
         </div>
     </nav>
 </header>
