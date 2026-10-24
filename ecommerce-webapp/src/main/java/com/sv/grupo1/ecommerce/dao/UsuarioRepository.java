@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -22,6 +23,11 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
 
     @EntityGraph(attributePaths = {"roles", "roles.rol", "perfil"})
     Optional<Usuario> findByCorreoInicioSesionIgnoreCase(String correoInicioSesion);
+
+    @EntityGraph(attributePaths = {"roles", "roles.rol", "perfil"})
+    List<Usuario> findAllByOrderByIdUsuarioDesc();
+
+    long countByEstado(Character estado);
 
     @Modifying
     @Query("UPDATE Usuario u SET u.ultimoInicioSesion = :fecha WHERE LOWER(u.correoInicioSesion) = LOWER(:correo)")
