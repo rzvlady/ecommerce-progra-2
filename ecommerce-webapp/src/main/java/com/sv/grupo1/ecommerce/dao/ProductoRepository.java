@@ -18,6 +18,10 @@ public interface ProductoRepository extends JpaRepository<Producto, Integer> {
 
     long countByCategoria_IdCategoria(Integer idCategoria);
 
+    boolean existsByMarca_IdMarca(Integer idMarca);
+
+    long countByMarca_IdMarca(Integer idMarca);
+
     @Query("SELECT p FROM Producto p " +
             "JOIN FETCH p.categoria c " +
             "LEFT JOIN FETCH c.categoriaPadre cp " +

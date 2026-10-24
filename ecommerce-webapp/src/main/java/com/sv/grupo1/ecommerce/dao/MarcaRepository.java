@@ -7,4 +7,8 @@ import java.util.List;
 
 public interface MarcaRepository extends JpaRepository<Marca, Integer> {
     List<Marca> findAllByOrderByNombreMarcaAsc();
+
+    boolean existsByNombreMarcaIgnoreCase(String nombreMarca);
+
+    boolean existsByNombreMarcaIgnoreCaseAndIdMarcaNot(String nombreMarca, Integer idMarca);
 }
