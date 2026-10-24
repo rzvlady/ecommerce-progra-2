@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{ecommerce/fragments/ecommerce-head :: head('Finalizar compra')}">
+</head>
+
+<body class="store-body">
+
+<div th:replace="~{ecommerce/layout/ecommerce-layout :: layout(~{::contenido})}">
+    <th:block th:fragment="contenido">
+
+        <section class="container store-section"
+                 style="padding-top: 40px; padding-bottom: 55px; min-height: 60vh;">
+
+            <div class="mb-4">
+                <span class="section-eyebrow">COMPRA SEGURA</span>
+                <h1 class="section-title mt-1">Finalizar compra</h1>
+                <p class="section-description">
+                    Elige la dirección de entrega e ingresa los datos de tu tarjeta.
+                </p>
+            </div>
+
+            <div th:if="${mensajeError}" class="alert alert-danger" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <span th:text="${mensajeError}"></span>
+            </div>
+
+            <form th:action="@{/checkout/pagar}" th:object="${checkoutDTO}" method="post" class="row g-4" novalidate>
+
+                <div class="col-12 col-lg-7">
+
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h2 class="h5 mb-3">
+                                <i class="bi bi-geo-alt me-2"></i>
+                                Dirección de entrega
+                            </h2>
+
+                            <div class="form-check mb-2" th:each="direccion, iter : ${direcciones}">
+                                <input class="form-check-input"
+                                       type="radio"
+                                       name="idDireccion"
+                                       th:id="${'direccion' + direccion.idDireccion}"
+                                       th:value="${direccion.idDireccion}"
+                                       th:checked="${checkoutDTO.idDireccion != null
+                                           ? checkoutDTO.idDireccion == direccion.idDireccion
+                                           : (iter.first and checkoutDTO.direccionLinea1 == null)}">
+                                <label class="form-check-label"
+                                       th:for="${'direccion' + direccion.idDireccion}">
+                                    <span th:text="${direccion.direccionLinea1}">Dirección</span>
+                                    <small class="text-secondary d-block"
+                                           th:text="${direccion.municipio.nombreMunicipio
+                                               + (direccion.codigoPostal != null ? ' - CP ' + direccion.codigoPostal : '')}">
+                                        Municipio
+                                    </small>
+                                </label>
+                            </div>
+
+                            <div class="form-check mb-3">
+                                <input class="form-check-input"
+                                       type="radio"
+                                       name="idDireccion"
+                                       id="direccionNueva"
+                                       value=""
+                                       th:checked="${checkoutDTO.idDireccion == null
+                                           and (#lists.isEmpty(direcciones) or checkoutDTO.direccionLinea1 != null)}">
+                                <label class="form-check-label" for="direccionNueva">
+                                    Usar una dirección nueva
+                                </label>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label" for="direccionLinea1">Dirección</label>
+                                    <input type="text"
+                                           id="direccionLinea1"
+                                           class="form-control"
+                                           th:field="*{direccionLinea1}"
+                                           placeholder="Colonia, calle y número">
+                                </div>
+                                <div class="col-12 col-md-8">
+                                    <label class="form-label" for="idMunicipio">Municipio</label>
+                                    <select id="idMunicipio" class="form-select" th:field="*{idMunicipio}">
+                                        <option value="">Selecciona un municipio</option>
+                                        <option th:each="municipio : ${municipios}"
+                                                th:value="${municipio.idMunicipio}"
+                                                th:text="${municipio.nombreMunicipio}">
+                                            Municipio
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label" for="codigoPostal">Código postal</label>
+                                    <input type="text"
+                                           id="codigoPostal"
+                                           class="form-control"
+                                           th:field="*{codigoPostal}"
+                                           maxlength="10">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <h2 class="h5 mb-3">
+                                <i class="bi bi-credit-card me-2"></i>
+                                Datos de la tarjeta
+                            </h2>
+
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label" for="nombreTitular">Nombre del titular</label>
+                                    <input type="text"
+                                           id="nombreTitular"
+                                           class="form-control"
+                                           th:field="*{nombreTitular}"
+                                           th:classappend="${#fields.hasErrors('nombreTitular')} ? 'is-invalid'"
+                                           autocomplete="off">
+                                    <div class="invalid-feedback" th:errors="*{nombreTitular}"></div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label" for="numeroTarjeta">Número de tarjeta</label>
+                                    <input type="text"
+                                           id="numeroTarjeta"
+                                           class="form-control"
+                                           th:field="*{numeroTarjeta}"
+                                           th:classappend="${#fields.hasErrors('numeroTarjeta')} ? 'is-invalid'"
+                                           inputmode="numeric"
+                                           maxlength="16"
+                                           placeholder="16 dígitos"
+                                           autocomplete="off">
+                                    <div class="invalid-feedback" th:errors="*{numeroTarjeta}"></div>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label" for="fechaExpiracion">Expira (MM/AA)</label>
+                                    <input type="text"
+                                           id="fechaExpiracion"
+                                           class="form-control"
+                                           th:field="*{fechaExpiracion}"
+                                           th:classappend="${#fields.hasErrors('fechaExpiracion')} ? 'is-invalid'"
+                                           maxlength="5"
+                                           placeholder="MM/AA"
+                                           autocomplete="off">
+                                    <div class="invalid-feedback" th:errors="*{fechaExpiracion}"></div>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label" for="cvv">CVV</label>
+                                    <input type="password"
+                                           id="cvv"
+                                           class="form-control"
+                                           th:field="*{cvv}"
+                                           th:classappend="${#fields.hasErrors('cvv')} ? 'is-invalid'"
+                                           inputmode="numeric"
+                                           maxlength="4"
+                                           autocomplete="off">
+                                    <div class="invalid-feedback" th:errors="*{cvv}"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="col-12 col-lg-5">
+                    <div class="card">
+                        <div class="card-body">
+                            <h2 class="h5 mb-3">
+                                <i class="bi bi-bag-check me-2"></i>
+                                Resumen del pedido
+                            </h2>
+
+                            <ul class="list-group list-group-flush mb-3">
+                                <li class="list-group-item px-0 d-flex justify-content-between"
+                                    th:each="item : ${resumen.items}">
+                                    <div>
+                                        <span th:text="${item.nombreProducto}">Producto</span>
+                                        <small class="text-secondary d-block"
+                                               th:text="${item.cantidad + ' x $' + #numbers.formatDecimal(item.precioUnitario, 1, 'COMMA', 2, 'POINT')}">
+                                            1 x $0.00
+                                        </small>
+                                    </div>
+                                    <span th:text="${'$' + #numbers.formatDecimal(item.subtotal, 1, 'COMMA', 2, 'POINT')}">$0.00</span>
+                                </li>
+                            </ul>
+
+                            <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
+                                <span>Total</span>
+                                <span th:text="${'$' + #numbers.formatDecimal(resumen.total, 1, 'COMMA', 2, 'POINT')}">$0.00</span>
+                            </div>
+
+                            <button type="submit" class="btn btn-mustard w-100">
+                                <i class="bi bi-lock me-2"></i>
+                                Pagar ahora
+                            </button>
+                            <a th:href="@{/carrito}" class="btn btn-link w-100 mt-2">Volver al carrito</a>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+
+        </section>
+
+    </th:block>
+</div>
+
+</body>
+</html>
