@@ -6,6 +6,8 @@ public class Constantes {
     public static final Character TIPO_CONTACTO_TELEFONO    = 'T';
     public static final Character TIPO_CONTACTO_MOVIL       = 'M';
 
+    public static final Character TIPO_DIRECCION_CASA       = 'C';
+
     private Constantes() {
         /* Constructor Privado */
     }
