@@ -149,7 +149,44 @@
         </div>
 
       </div>
+      <!-- SECCIÓN: Tabla de Especificaciones / Metadatos -->
+      <div class="mt-5 pt-4 border-top">
+        <ul class="nav nav-tabs mb-0 border-bottom-0" id="detallesTab" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-bold text-dark px-4 py-2" id="especificaciones-tab" data-bs-toggle="tab" type="button" role="tab"
+                    style="border-top: 3px solid var(--store-primary, #d99b00); background: #ffffff; border-radius: 8px 8px 0 0;">
+              <i class="bi bi-sliders me-2 text-warning"></i> Especificaciones técnicas
+            </button>
+          </li>
+        </ul>
 
+        <div class="card border shadow-sm" style="border-radius: 0 12px 12px 12px; border-color: #e2e8f0 !important; overflow: hidden; max-width: 900px; background: #ffffff;">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0 align-middle">
+              <tbody>
+              <tr>
+                <th scope="row" class="text-secondary ps-4 py-3" style="width: 35%; font-weight: 600; font-size: 0.9rem;">SKU</th>
+                <td class="ps-4 py-3 text-dark fw-medium" style="width: 65%; font-size: 0.95rem;" th:text="${producto.codigoSku}">SKU-0000</td>
+              </tr>
+              <tr>
+                <th scope="row" class="text-secondary ps-4 py-3" style="font-weight: 600; font-size: 0.9rem;">Marca</th>
+                <td class="ps-4 py-3 text-dark fw-medium" style="font-size: 0.95rem;" th:text="${producto.marca != null ? producto.marca.nombreMarca : 'No especificada'}">Marca</td>
+              </tr>
+              <tr>
+                <th scope="row" class="text-secondary ps-4 py-3" style="font-weight: 600; font-size: 0.9rem;">Categoría</th>
+                <td class="ps-4 py-3 text-dark fw-medium" style="font-size: 0.95rem;" th:text="${producto.categoria != null ? producto.categoria.nombreCategoria : 'General'}">Categoría</td>
+              </tr>
+              <!-- Filas dinámicas extraídas del JSON metadata -->
+              <tr th:each="entry : ${especificaciones}">
+                <th scope="row" class="text-secondary ps-4 py-3 text-capitalize" style="font-weight: 600; font-size: 0.9rem;"
+                    th:text="${#strings.replace(entry.key, '_', ' ')}">Atributo</th>
+                <td class="ps-4 py-3 text-dark fw-medium" style="font-size: 0.95rem;" th:text="${entry.value}">Valor</td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </section>
 
     <script>
