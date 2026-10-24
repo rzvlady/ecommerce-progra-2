@@ -33,13 +33,13 @@
             </div>
 
             <div class="col-12 col-lg-6 order-last order-lg-2">
-                <form th:action="@{/}" method="get" role="search" class="m-0 mx-auto" style="max-width: 540px;">
+                <form th:action="@{/productos}" method="get" role="search" class="m-0 mx-auto" style="max-width: 540px;">
                     <div class="input-group search-panel-group">
                         <span class="input-group-text border-0">
                             <i class="bi bi-search"></i>
                         </span>
                         <input type="search"
-                               name="q"
+                               name="busqueda"
                                class="form-control border-0 ps-0"
                                placeholder="¿Qué estás buscando hoy?"
                                aria-label="Buscar productos">
@@ -114,4 +114,19 @@
 
         </div>
     </div>
+
+    <nav class="navbar navbar-expand navbar-dark py-2" style="background-color: #e2a016;">
+        <div class="container overflow-x-auto text-nowrap">
+            <ul class="navbar-nav me-auto mb-0 gap-2 gap-lg-3 flex-row">
+                <li class="nav-item">
+                    <a class="nav-link text-white fw-bold px-3 py-1" th:href="@{/productos}">TODO</a>
+                </li>
+                <li class="nav-item" th:each="cat : ${categoriasNavbar != null ? categoriasNavbar : categorias}">
+                    <a class="nav-link text-white fw-bold px-3 py-1"
+                       th:href="@{/productos(idCategoria=${cat.idCategoria})}"
+                       th:text="${#strings.toUpperCase(cat.nombreCategoria)}">CATEGORÍA</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
 </header>

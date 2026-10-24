@@ -541,3 +541,58 @@ body.store-body {
         transition: none;
     }
 }
+
+.producto-catalogo-card {
+    border-radius: 14px;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    background: #ffffff;
+}
+
+.producto-catalogo-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12) !important;
+}
+
+.producto-catalogo-card .card-body {
+    padding: 18px;
+}
+
+.producto-catalogo-card h3 {
+    color: #10233f;
+    min-height: 38px;
+}
+
+.producto-catalogo-card .fs-5 {
+    color: #d99500;
+}
+
+.producto-catalogo-card .btn-outline-dark {
+    border-color: #10233f;
+    color: #10233f;
+}
+
+.producto-catalogo-card .btn-outline-dark:hover {
+    background: #10233f;
+    color: white;
+}
+
+.producto-catalogo-card img {
+    transition: transform 0.25s ease;
+}
+
+.producto-catalogo-card:hover img {
+    transform: scale(1.04);
+}
+
+.producto-catalogo-card .badge {
+    font-size: 0.75rem;
+    padding: 7px 10px;
+    border-radius: 20px;
+}
+
+@media (max-width: 768px) {
+    .producto-catalogo-card {
+        margin-bottom: 10px;
+    }
+}

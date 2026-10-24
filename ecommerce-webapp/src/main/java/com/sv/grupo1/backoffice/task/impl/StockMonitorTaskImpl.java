@@ -1,5 +1,6 @@
-package com.sv.grupo1.backoffice.task;
+package com.sv.grupo1.backoffice.task.impl;
 
+import com.sv.grupo1.backoffice.task.StockMonitorTask;
 import com.sv.grupo1.ecommerce.dao.ProductoRepository;
 import com.sv.grupo1.ecommerce.entities.core.Producto;
 import org.slf4j.Logger;
@@ -16,7 +17,7 @@ import java.util.List;
  * Justificación Punto 5 (Uso de programación concurrente / Hilos).
  */
 @Component
-public class StockMonitorTaskImpl {
+public class StockMonitorTaskImpl implements StockMonitorTask {
 
     private static final DateTimeFormatter FORMATO_HORA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
     private static final Logger log = LoggerFactory.getLogger(StockMonitorTaskImpl.class);

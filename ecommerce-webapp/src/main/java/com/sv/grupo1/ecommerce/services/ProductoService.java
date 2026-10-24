@@ -1,5 +1,7 @@
 package com.sv.grupo1.ecommerce.services;
 
+import com.sv.grupo1.ecommerce.dto.CategoriaHomeDTO;
+import com.sv.grupo1.ecommerce.dto.ProductoHomeDTO;
 import com.sv.grupo1.ecommerce.entities.catalogo.Marca;
 import com.sv.grupo1.ecommerce.entities.catalogo.Categoria;
 import com.sv.grupo1.ecommerce.entities.core.Producto;
@@ -18,4 +20,8 @@ public interface ProductoService {
     List<Categoria> listarCategorias();
 
     List<Marca> listarMarcas();
+
+    List<ProductoHomeDTO> obtenerProductosDestacadosHome();
+
+    List<CategoriaHomeDTO> obtenerCategoriasHome();
 }

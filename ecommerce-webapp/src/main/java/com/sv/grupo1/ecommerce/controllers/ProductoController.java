@@ -27,10 +27,15 @@ public class ProductoController {
             @RequestParam(required = false) Integer idCategoria,
             @RequestParam(required = false) Integer idMarca,
             Model model) {
+
         model.addAttribute("productos", productoService.filtrarProductos(busqueda, idCategoria, idMarca));
         model.addAttribute("categorias", productoService.listarCategorias());
         model.addAttribute("marcas", productoService.listarMarcas());
-        return "index";
+        model.addAttribute("busqueda", busqueda);
+        model.addAttribute("idCategoriaSeleccionada", idCategoria);
+        model.addAttribute("idMarcaSeleccionada", idMarca);
+
+        return "ecommerce/pages/productos";
     }
 
     @GetMapping("/{id}")

@@ -3,7 +3,7 @@ package com.sv.grupo1.backoffice.service.impl;
 import com.sv.grupo1.backoffice.dto.MovimientoInventarioDTO;
 import com.sv.grupo1.backoffice.service.BackofficeInventarioService;
 import com.sv.grupo1.backoffice.service.ProductoImagenStorageService;
-import com.sv.grupo1.backoffice.task.StockMonitorTaskImpl;
+import com.sv.grupo1.backoffice.task.StockMonitorTask;
 import com.sv.grupo1.ecommerce.dao.CategoriaRepository;
 import com.sv.grupo1.ecommerce.dao.MarcaRepository;
 import com.sv.grupo1.ecommerce.dao.MovimientoInventarioRepository;
@@ -26,7 +26,7 @@ public class BackofficeInventarioServiceImpl implements BackofficeInventarioServ
     private final MovimientoInventarioRepository movimientoRepository;
     private final CategoriaRepository categoriaRepository;
     private final MarcaRepository marcaRepository;
-    private final StockMonitorTaskImpl stockMonitorTaskImpl;
+    private final StockMonitorTask stockMonitorTask;
     private final ProductoImagenStorageService imagenStorageService;
 
     public BackofficeInventarioServiceImpl(
@@ -34,13 +34,13 @@ public class BackofficeInventarioServiceImpl implements BackofficeInventarioServ
             MovimientoInventarioRepository movimientoRepository,
             CategoriaRepository categoriaRepository,
             MarcaRepository marcaRepository,
-            StockMonitorTaskImpl stockMonitorTaskImpl,
+            StockMonitorTask stockMonitorTask,
             ProductoImagenStorageService imagenStorageService) {
         this.productoRepository = productoRepository;
         this.movimientoRepository = movimientoRepository;
         this.categoriaRepository = categoriaRepository;
         this.marcaRepository = marcaRepository;
-        this.stockMonitorTaskImpl = stockMonitorTaskImpl;
+        this.stockMonitorTask = stockMonitorTask;
         this.imagenStorageService = imagenStorageService;
     }
 
@@ -66,10 +66,10 @@ public class BackofficeInventarioServiceImpl implements BackofficeInventarioServ
 
     @Override
     public List<Producto> obtenerAlertasMonitor() {
-        List<Producto> alertados = stockMonitorTaskImpl.getProductosBajoStockAlertados();
+        List<Producto> alertados = stockMonitorTask.getProductosBajoStockAlertados();
         if (alertados == null || alertados.isEmpty()) {
-            stockMonitorTaskImpl.escanearInventario();
-            alertados = stockMonitorTaskImpl.getProductosBajoStockAlertados();
+            stockMonitorTask.escanearInventario();
+            alertados = stockMonitorTask.getProductosBajoStockAlertados();
         }
         if (alertados != null) {
             alertados.forEach(imagenStorageService::cargarImagenesEnProducto);
@@ -79,7 +79,7 @@ public class BackofficeInventarioServiceImpl implements BackofficeInventarioServ
 
     @Override
     public void ejecutarEscaneoMonitor() {
-        stockMonitorTaskImpl.escanearInventario();
+        stockMonitorTask.escanearInventario();
     }
 
     @Override
@@ -134,7 +134,7 @@ public class BackofficeInventarioServiceImpl implements BackofficeInventarioServ
         movimientoRepository.save(movimiento);
 
         // Actualizar de inmediato el monitor concurrente de alertas de stock
-        stockMonitorTaskImpl.escanearInventario();
+        stockMonitorTask.escanearInventario();
         imagenStorageService.cargarImagenesEnProducto(producto);
 
         return producto;
@@ -154,7 +154,7 @@ public class BackofficeInventarioServiceImpl implements BackofficeInventarioServ
         productoRepository.save(producto);
 
         // Actualizar de inmediato el monitor concurrente de alertas de stock
-        stockMonitorTaskImpl.escanearInventario();
+        stockMonitorTask.escanearInventario();
         imagenStorageService.cargarImagenesEnProducto(producto);
 
         return producto;

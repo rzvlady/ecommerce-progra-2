@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{ecommerce/fragments/ecommerce-head :: head('Productos')}">
+</head>
+
+<body class="store-body">
+
+<div th:replace="~{ecommerce/layout/ecommerce-layout :: layout(~{::contenido})}">
+    <th:block th:fragment="contenido">
+
+        <section class="container store-section"
+                 style="padding-top: 40px; padding-bottom: 55px; min-height: 60vh;">
+
+            <!-- Encabezado -->
+            <div class="mb-4">
+                <span class="section-eyebrow">TIENDA</span>
+                <h1 class="section-title mt-1">Catálogo de productos</h1>
+                <p class="section-description">
+                    Encuentra productos por nombre, categoría o marca.
+                </p>
+            </div>
+
+            <!-- Filtros -->
+            <form th:action="@{/productos}" method="get" class="row g-3 mb-4">
+
+                <div class="col-12 col-lg-5">
+                    <label class="form-label">Buscar producto</label>
+                    <input type="text"
+                           name="busqueda"
+                           class="form-control"
+                           placeholder="Ej. Laptop, Samsung, audífonos..."
+                           th:value="${busqueda}">
+                </div>
+
+                <div class="col-6 col-lg-3">
+                    <label class="form-label">Categoría</label>
+                    <select name="idCategoria" class="form-select">
+                        <option value="">Todas</option>
+
+                        <option th:each="categoria : ${categorias}"
+                                th:value="${categoria.idCategoria}"
+                                th:text="${categoria.rutaJerarquica}"
+                                th:selected="${idCategoriaSeleccionada != null
+                                    and idCategoriaSeleccionada == categoria.idCategoria}">
+                            Categoría
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-6 col-lg-2">
+                    <label class="form-label">Marca</label>
+                    <select name="idMarca" class="form-select">
+                        <option value="">Todas</option>
+
+                        <option th:each="marca : ${marcas}"
+                                th:value="${marca.idMarca}"
+                                th:text="${marca.nombreMarca}"
+                                th:selected="${idMarcaSeleccionada != null
+                                    and idMarcaSeleccionada == marca.idMarca}">
+                            Marca
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-lg-2 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-mustard flex-grow-1">
+                        <i class="bi bi-search me-1"></i>
+                        Buscar
+                    </button>
+                </div>
+
+            </form>
+
+            <!-- Resultado -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+
+                <p class="mb-0 text-secondary">
+                    <strong th:text="${#lists.size(productos)}">0</strong>
+                    productos encontrados
+                </p>
+
+                <a th:href="@{/productos}"
+                   class="text-decoration-none"
+                   style="font-size: 0.9rem;">
+                    Limpiar filtros
+                </a>
+
+            </div>
+
+            <!-- Productos -->
+            <div class="row g-4" th:if="${!#lists.isEmpty(productos)}">
+
+                <div class="col-12 col-sm-6 col-lg-4 col-xl-3"
+                     th:each="producto : ${productos}">
+
+                    <div class="card h-100 shadow-sm border-0 producto-catalogo-card">
+
+                        <!-- Imagen real -->
+                        <div style="height: 220px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    background: #f8f9fa;
+                                    overflow: hidden;">
+
+                            <img th:if="${producto.imagenPrincipalUrl != null
+                                    and !#strings.isEmpty(producto.imagenPrincipalUrl)}"
+                                 th:src="${producto.imagenPrincipalUrl}"
+                                 th:alt="${producto.nombreProducto}"
+                                 style="width: 100%;
+                                        height: 100%;
+                                        object-fit: contain;
+                                        padding: 14px;">
+
+                            <!-- Si el producto no tiene fotografía -->
+                            <div th:unless="${producto.imagenPrincipalUrl != null
+                                    and !#strings.isEmpty(producto.imagenPrincipalUrl)}"
+                                 class="text-center text-secondary">
+
+
+                                <i class="bi bi-image"
+                                   style="font-size: 3rem;"></i>
+
+                                <p class="mb-0 mt-2"
+                                   style="font-size: 0.8rem;">
+                                    Sin imagen
+                                </p>
+                            </div>
+
+                        </div>
+
+                        <div class="card-body d-flex flex-column">
+
+                            <!-- Marca -->
+                            <small class="text-secondary text-uppercase mb-1"
+                                   th:text="${producto.marca != null
+                                   ? producto.marca.nombreMarca
+                                   : 'Sin marca'}">
+                                Marca
+                            </small>
+
+                            <!-- Nombre -->
+                            <h3 class="h6 fw-bold mb-2"
+                                th:text="${producto.nombreProducto}">
+                                Nombre del producto
+                            </h3>
+
+                            <!-- Categoría -->
+                            <small class="text-secondary mb-3"
+                                   th:text="${producto.categoria != null
+                                   ? producto.categoria.rutaJerarquica
+                                   : 'Sin categoría'}">
+                                Categoría
+                            </small>
+
+                            <!-- Precio -->
+                            <div class="mb-3">
+                                <span class="fs-5 fw-bold"
+                                      th:text="${producto.precioVenta != null
+                                              ? '$' + #numbers.formatDecimal(producto.precioVenta, 1, 'COMMA', 2, 'POINT')
+                                              : '$0.00'}">
+                                    $0.00
+                                </span>
+                            </div>
+
+                            <!-- Disponibilidad -->
+                            <div class="mb-3">
+
+                                <span th:if="${producto.stockDisponible != null
+                                        and producto.stockDisponible > 0
+                                        and (producto.stockMinimo == null
+                                        or producto.stockDisponible > producto.stockMinimo)}"
+                                      class="badge text-bg-success">
+                                    Disponible
+                                </span>
+
+                                <span th:if="${producto.stockDisponible != null
+                                        and producto.stockDisponible > 0
+                                        and producto.stockMinimo != null
+                                        and producto.stockDisponible <= producto.stockMinimo}"
+                                      class="badge text-bg-warning">
+                                    Pocas unidades
+                                </span>
+
+                                <span th:if="${producto.stockDisponible == null
+                                        or producto.stockDisponible <= 0}"
+                                      class="badge text-bg-danger">
+                                    Agotado
+                                </span>
+
+                            </div>
+
+                            <!-- Botones -->
+                            <div class="mt-auto d-grid gap-2">
+
+                                <a th:href="@{/producto/{nombre}(nombre=${producto.nombreProducto})}"
+                                   class="btn btn-outline-dark btn-sm">
+                                    Ver producto
+                                </a>
+
+                                <button type="button"
+                                        class="btn btn-mustard btn-sm btn-agregar-carrito"
+                                        th:attr="data-producto-id=${producto.idProducto}"
+                                        th:disabled="${producto.stockDisponible == null
+                                            or producto.stockDisponible <= 0}">
+                                    <i class="bi bi-cart-plus me-1"></i>
+                                    Agregar al carrito
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Sin resultados -->
+            <div th:if="${#lists.isEmpty(productos)}"
+                 class="text-center py-5">
+
+                <i class="bi bi-search"
+                   style="font-size: 3rem; color: #aaa;"></i>
+
+                <h3 class="h5 mt-3">
+                    No encontramos productos
+                </h3>
+
+                <p class="text-secondary">
+                    Intenta cambiar la búsqueda o los filtros.
+                </p>
+
+                <a th:href="@{/productos}" class="btn btn-mustard">
+                    Ver todos los productos
+                </a>
+
+            </div>
+
+        </section>
+
+    </th:block>
+</div>
+
+</body>
+</html>

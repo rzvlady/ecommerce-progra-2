@@ -1,9 +1,12 @@
 package com.sv.grupo1.ecommerce.services.impl;
 
+import com.sv.grupo1.backoffice.repository.RolRepository;
 import com.sv.grupo1.ecommerce.dao.UsuarioRepository;
 import com.sv.grupo1.ecommerce.dto.RegistroUsuarioDTO;
+import com.sv.grupo1.ecommerce.entities.seguridad.Rol;
 import com.sv.grupo1.ecommerce.entities.seguridad.Usuario;
 import com.sv.grupo1.ecommerce.entities.seguridad.UsuarioContacto;
+import com.sv.grupo1.ecommerce.entities.seguridad.UsuarioRol;
 import com.sv.grupo1.ecommerce.enums.EstadoEstandarGlobal;
 import com.sv.grupo1.ecommerce.services.UsuarioService;
 import com.sv.grupo1.ecommerce.utils.Constantes;
@@ -22,12 +25,18 @@ import java.util.ArrayList;
 public class UsuarioServiceImpl implements UsuarioService {
 
     private static final Logger LOG = LoggerFactory.getLogger(UsuarioServiceImpl.class);
+
+    private final RolRepository rolRepository;
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder encoder;
 
-    public UsuarioServiceImpl(UsuarioRepository usuarioRepository, PasswordEncoder encoder) {
+    public UsuarioServiceImpl(
+            UsuarioRepository usuarioRepository,
+            RolRepository rolRepository,
+            PasswordEncoder encoder) {
         this.usuarioRepository = usuarioRepository;
         this.encoder = encoder;
+        this.rolRepository = rolRepository;
     }
 
     @Transactional
@@ -40,6 +49,20 @@ public class UsuarioServiceImpl implements UsuarioService {
         dto.setCorreoInicioSesion(correoNormalizado);
         LOG.info("registrarUsuario() => Mapeando...");
         Usuario usuario = mapperToUsuario(dto);
+
+        Rol rolCliente = this.rolRepository.findByNombre("ROLE_CLIENTE")
+                .orElseThrow(() -> new IllegalStateException("Error Crítico: El rol ROLE_CLIENTE no existe en el sistema."));
+
+        UsuarioRol usuarioRol = new UsuarioRol();
+        usuarioRol.setUsuario(usuario);
+        usuarioRol.setRol(rolCliente);
+
+        if (usuario.getRoles() == null) {
+            usuario.setRoles(new ArrayList<>());
+        }
+
+        usuario.getRoles().add(usuarioRol);
+
         LOG.info("registrarUsuario() => Completado");
         return usuarioRepository.save(usuario);
     }

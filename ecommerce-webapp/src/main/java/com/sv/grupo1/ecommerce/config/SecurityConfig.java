@@ -15,6 +15,12 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
+
+    public SecurityConfig(CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler) {
+        this.customAuthenticationSuccessHandler = customAuthenticationSuccessHandler;
+    }
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -24,37 +30,41 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
+        .csrf(csrf -> csrf.disable())
+        .authorizeHttpRequests(auth -> auth
+            // 1. Rutas de la API (lo de tu colega)
+            .requestMatchers("/api/auth/**").permitAll()
 
-            .csrf(csrf -> csrf.disable())
+            // 2. PROTEGER EL BACKOFFICE (Nueva regla añadida aquí)
+            // Exige que el usuario tenga el rol de ADMIN.
+            // Si aún no usas roles, cámbialo por .authenticated() temporalmente.
+            .requestMatchers("/backoffice/**").hasRole("ADMIN")
 
-            .authorizeHttpRequests(auth -> auth
-
-                .requestMatchers("/api/auth/**","/productos/**", "/api/carrito/**").permitAll()
-
-
-                .requestMatchers(
-                    "/", "/registro", "/inicio-sesion",
+            // 3. Rutas web públicas (las nuestras sin el backoffice)
+            .requestMatchers(
+                    "/",
+                    "/registro",
+                    "/inicio-sesion",
                     "/css/**", "/js/**", "/ecommerce/**",
-                    "/backoffice/**", "/uploads/**",
-                    // Nuevas rutas del frontend cliente
-                    "/carrito", "/categorias", "/categorias/**", "/producto/**"
-                ).permitAll()
-      
-
-                .anyRequest().authenticated()
-            )
-            .formLogin(form -> form
-                .loginPage("/inicio-sesion")
-                .loginProcessingUrl("/inicio-sesion")
-                .defaultSuccessUrl("/", true)
-                .failureUrl("/inicio-sesion?error=true")
-                .permitAll()
-            )
-            .logout(logout -> logout
-                .logoutUrl("/cerrar-sesion")
-                .logoutSuccessUrl("/")
-                .permitAll()
-            );
+                    "/uploads/**",
+                    "/carrito", "/categorias", "/categorias/**",
+                    "/producto/**", "/productos", "/productos/**"
+            ).permitAll()
+            // 4. LA REGLA FINAL SIEMPRE DEBE SER anyRequest()
+            .anyRequest().authenticated()
+        )
+        .formLogin(form -> form
+            .loginPage("/inicio-sesion")
+            .loginProcessingUrl("/inicio-sesion")
+            .successHandler(customAuthenticationSuccessHandler)
+            .failureUrl("/inicio-sesion?error=true")
+            .permitAll()
+        )
+        .logout(logout -> logout
+            .logoutUrl("/cerrar-sesion")
+            .logoutSuccessUrl("/")
+            .permitAll()
+        );
 
         return http.build();
     }
