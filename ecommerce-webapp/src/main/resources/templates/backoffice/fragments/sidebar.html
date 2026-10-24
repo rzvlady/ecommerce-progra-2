@@ -46,8 +46,8 @@
                data-bs-target="#menuCatalogo"
                role="button"
                aria-controls="menuCatalogo"
-               th:attr="aria-expanded=${activePage == 'productos' or activePage == 'categorias'}"
-               th:classappend="${(activePage == 'productos' or activePage == 'categorias') ? ' active' : ' collapsed'}">
+               th:attr="aria-expanded=${activePage == 'productos' or activePage == 'categorias' or activePage == 'marcas'}"
+               th:classappend="${(activePage == 'productos' or activePage == 'categorias' or activePage == 'marcas') ? ' active' : ' collapsed'}">
                 <i class="bi bi-collection"></i>
                 <span>Catálogo</span>
                 <i class="bi bi-chevron-down ms-auto submenu-arrow"></i>
@@ -55,7 +55,7 @@
 
             <div class="collapse"
                  id="menuCatalogo"
-                 th:classappend="${activePage == 'productos' or activePage == 'categorias'} ? ' show' : ''">
+                 th:classappend="${activePage == 'productos' or activePage == 'categorias' or activePage == 'marcas'} ? ' show' : ''">
                 <nav class="nav flex-column submenu-nav ps-4">
                     <a th:href="@{/backoffice/productos}"
                        class="nav-link submenu-link"
@@ -69,6 +69,13 @@
                        th:classappend="${activePage == 'categorias'} ? ' active' : ''">
                         <i class="bi bi-tags"></i>
                         Categorías
+                    </a>
+
+                    <a th:href="@{/backoffice/marcas}"
+                       class="nav-link submenu-link"
+                       th:classappend="${activePage == 'marcas'} ? ' active' : ''">
+                        <i class="bi bi-award"></i>
+                        Marcas
                     </a>
                 </nav>
             </div>
