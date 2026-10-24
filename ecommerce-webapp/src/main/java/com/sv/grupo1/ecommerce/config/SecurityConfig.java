@@ -34,7 +34,15 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
 
                 // 2. Rutas web públicas (las nuestras)
-                .requestMatchers("/", "/registro", "/inicio-sesion", "/css/**", "/js/**", "/ecommerce/**", "/backoffice/**", "/uploads/**").permitAll()
+
+                .requestMatchers(
+                    "/", "/registro", "/inicio-sesion",
+                    "/css/**", "/js/**", "/ecommerce/**",
+                    "/backoffice/**", "/uploads/**",
+                    // Nuevas rutas del frontend cliente
+                    "/carrito", "/categorias", "/categorias/**", "/producto/**"
+                ).permitAll()
+      
 
                 // 3. LA REGLA FINAL SIEMPRE DEBE SER anyRequest()
                 // Aquí decidimos: o todo es público por ahora, o lo protegemos.

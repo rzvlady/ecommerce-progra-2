@@ -1,122 +1,117 @@
 <header th:fragment="navbar"
         xmlns:th="http://www.thymeleaf.org"
         xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-        class="store-header">
+        class="store-header bg-white border-bottom sticky-top shadow-xs">
 
     <div class="container py-3">
         <div class="row align-items-center g-3">
 
-            <!-- Marca -->
-            <div class="col-7 col-lg-3">
-                <a th:href="@{/}" class="store-brand">
-                    <i class="bi bi-bag-check-fill"></i>
-                    E-COMMERCE
+            <div class="col-6 col-sm-4 col-lg-3">
+                <a th:href="@{/}" class="multistore-logo text-decoration-none d-inline-flex align-items-center gap-2" title="MultiStore - Inicio">
+                    <div class="logo-cart-badge" aria-hidden="true">
+
+                        <svg class="multistore-cart-icon" width="34" height="34" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+                            <rect x="13" y="8" width="7.5" height="9" rx="1.5" fill="#3b82f6" />
+                            <path d="M16.7 8V17" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" />
+                            <rect x="19.5" y="5" width="8.5" height="12" rx="1.5" fill="#f59e0b" />
+                            <path d="M23.7 5V17" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" />
+                            <path d="M10 11C10 9.8 11 9 12.2 9H13.5V17H10V11Z" fill="#10b981" />
+
+                            <path d="M4 6H7.5L10.5 21H27L30 9H9.5" stroke="#1e293b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M11 15H28.5" stroke="#1e293b" stroke-width="1.4" stroke-linecap="round"/>
+
+                            <circle cx="13" cy="26" r="2.5" fill="#2563eb" stroke="#1e293b" stroke-width="1.8"/>
+                            <circle cx="25" cy="26" r="2.5" fill="#2563eb" stroke="#1e293b" stroke-width="1.8"/>
+                        </svg>
+                    </div>
+                    <div class="d-flex flex-column justify-content-center">
+                        <span class="logo-multi">Multi</span>
+                        <span class="logo-store">Store</span>
+                    </div>
                 </a>
             </div>
 
-            <!-- Buscador: solo visual por ahora -->
-            <div class="col-lg-6 d-none d-lg-block">
-                <form th:action="@{/}" method="get" role="search">
-                    <div class="input-group">
-                        <input type="search"
-                               class="form-control"
-                               placeholder="¿Qué estás buscando?"
-                               aria-label="Buscar productos">
-
-                        <button type="button"
-                                class="btn btn-primary"
-                                aria-label="Buscar">
+            <div class="col-12 col-lg-6 order-last order-lg-2">
+                <form th:action="@{/}" method="get" role="search" class="m-0 mx-auto" style="max-width: 540px;">
+                    <div class="input-group search-panel-group">
+                        <span class="input-group-text border-0">
                             <i class="bi bi-search"></i>
+                        </span>
+                        <input type="search"
+                               name="q"
+                               class="form-control border-0 ps-0"
+                               placeholder="¿Qué estás buscando hoy?"
+                               aria-label="Buscar productos">
+                        <button type="submit" class="btn btn-search-submit px-3 px-sm-4 fw-semibold" aria-label="Buscar">
+                            <i class="bi bi-search d-sm-none"></i>
+                            <span class="d-none d-sm-inline">Buscar</span>
                         </button>
                     </div>
                 </form>
             </div>
 
-            <!-- Acciones del usuario -->
-            <div class="col-5 col-lg-3">
+            <!-- Carrito y Único Icono de Perfil para Iniciar Sesión / Registrarse -->
+            <div class="col-6 col-sm-8 col-lg-3 order-2 order-lg-3">
                 <div class="d-flex justify-content-end align-items-center gap-3">
 
-                    <a sec:authorize="isAnonymous()"
-                       th:href="@{/inicio-sesion}"
-                       class="header-action">
-                        <i class="bi bi-person-circle"></i>
-                        <span class="d-none d-xl-inline">Iniciar sesión</span>
+                    <!-- Carrito de Compras -->
+                    <a th:href="@{/carrito}" class="header-action" title="Ver carrito de compras">
+                        <i class="bi bi-cart3 fs-5"></i>
+                        <span class="d-none d-sm-inline small fw-semibold">Carrito</span>
                     </a>
 
-                    <a sec:authorize="isAuthenticated()"
-                       th:href="@{/}"
-                       class="header-action">
-                        <i class="bi bi-person-check"></i>
-                        <span class="d-none d-xl-inline">Mi cuenta</span>
-                    </a>
-
-                    <form sec:authorize="isAuthenticated()"
-                          th:action="@{/cerrar-sesion}"
-                          method="post"
-                          class="m-0">
-
-                        <button type="submit"
-                                class="btn btn-outline-secondary btn-sm">
-                            Cerrar sesión
+                    <!-- Único Icono de Perfil con Dropdown -->
+                    <div class="dropdown">
+                        <button class="btn btn-link text-dark p-0 header-action dropdown-toggle border-0"
+                                type="button"
+                                id="perfilDropdown"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
+                                title="Mi Cuenta / Acceso">
+                            <i class="bi bi-person-circle fs-4 text-secondary"></i>
                         </button>
-                    </form>
+
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border mt-2 py-2" aria-labelledby="perfilDropdown" style="min-width: 210px;">
+                            <!-- Si NO ha iniciado sesión -->
+                            <li sec:authorize="isAnonymous()">
+                                <a class="dropdown-item py-2 d-flex align-items-center gap-2 fw-semibold" th:href="@{/inicio-sesion}">
+                                    <i class="bi bi-box-arrow-in-right text-primary fs-5"></i>
+                                    <span>Iniciar sesión</span>
+                                </a>
+                            </li>
+                            <li sec:authorize="isAnonymous()">
+                                <a class="dropdown-item py-2 d-flex align-items-center gap-2" th:href="@{/registro}">
+                                    <i class="bi bi-person-plus text-success fs-5"></i>
+                                    <span>Registrarse</span>
+                                </a>
+                            </li>
+
+                            <!-- Si SÍ ha iniciado sesión -->
+                            <li sec:authorize="isAuthenticated()">
+                                <h6 class="dropdown-header text-truncate" sec:authentication="name">Mi Cuenta</h6>
+                            </li>
+                            <li sec:authorize="isAuthenticated()">
+                                <a class="dropdown-item py-2 d-flex align-items-center gap-2" th:href="@{/}">
+                                    <i class="bi bi-person-check text-primary fs-5"></i>
+                                    <span>Mi perfil</span>
+                                </a>
+                            </li>
+                            <li sec:authorize="isAuthenticated()"><hr class="dropdown-divider my-1"></li>
+                            <li sec:authorize="isAuthenticated()">
+                                <form th:action="@{/cerrar-sesion}" method="post" class="m-0">
+                                    <button type="submit" class="dropdown-item py-2 text-danger d-flex align-items-center gap-2 w-100 border-0 bg-transparent text-start">
+                                        <i class="bi bi-box-arrow-right fs-5"></i>
+                                        <span>Cerrar sesión</span>
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
 
                 </div>
             </div>
 
         </div>
-
-        <!-- Buscador para móvil -->
-        <div class="row mt-3 d-lg-none">
-            <div class="col-12">
-                <form th:action="@{/}" method="get" role="search">
-                    <div class="input-group">
-                        <input type="search"
-                               class="form-control"
-                               placeholder="Buscar productos..."
-                               aria-label="Buscar productos">
-
-                        <button type="button"
-                                class="btn btn-primary"
-                                aria-label="Buscar">
-                            <i class="bi bi-search"></i>
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
     </div>
-
-    <!-- Navegación -->
-    <nav class="store-navbar border-top border-bottom"
-         aria-label="Navegación principal">
-
-        <div class="container">
-            <div class="d-flex align-items-center gap-4 py-3">
-
-                <a th:href="@{/}" class="store-nav-link">
-                    Inicio
-                </a>
-
-                <a href="#" class="store-nav-link">
-                    Catálogo
-                </a>
-
-                <a href="#" class="store-nav-link">
-                    Categorías
-                </a>
-
-                <a href="#" class="store-nav-link">
-                    Ofertas
-                </a>
-
-                <a sec:authorize="isAnonymous()"
-                   th:href="@{/registro}"
-                   class="store-nav-link ms-auto">
-                    Crear cuenta
-                </a>
-
-            </div>
-        </div>
-    </nav>
 </header>

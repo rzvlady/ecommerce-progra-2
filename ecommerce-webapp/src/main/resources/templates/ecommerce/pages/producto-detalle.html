@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{ecommerce/fragments/ecommerce-head :: head('Producto')}">
+</head>
+
+<body class="store-body">
+
+  <div th:replace="~{ecommerce/layout/ecommerce-layout :: layout(~{::contenido})}">
+    <th:block th:fragment="contenido">
+
+      <section class="container store-section" style="padding-top: 40px; padding-bottom: 48px; min-height: 55vh;">
+
+        <nav aria-label="breadcrumb" class="mb-4">
+          <ol class="breadcrumb" style="font-size: 0.85rem;">
+            <li class="breadcrumb-item"><a th:href="@{/}" class="text-decoration-none">Inicio</a></li>
+            <li class="breadcrumb-item active" aria-current="page"
+                th:text="${nombreProducto != null ? nombreProducto : 'Producto'}">Producto</li>
+          </ol>
+        </nav>
+
+        <div class="row g-4">
+
+          <div class="col-md-5">
+            <div style="width: 100%; height: 320px; background: #f1f5f9; border-radius: 14px;
+                        border: 1px solid var(--store-border, #eadcc0);
+                        display: flex; align-items: center; justify-content: center;">
+              <i class="bi bi-image" style="font-size: 4rem; color: #94a3b8;"></i>
+            </div>
+          </div>
+
+          <div class="col-md-7">
+            <span class="section-eyebrow">DETALLE DE PRODUCTO</span>
+            <h1 class="section-title mt-1 text-capitalize"
+                th:text="${nombreProducto != null ? nombreProducto : 'Nombre del producto'}">
+            </h1>
+
+            <p class="section-description mt-2 mb-4">
+
+            </p>
+
+            <div class="benefit-card mb-4" style="padding: 20px 18px;">
+              <i class="bi bi-info-circle" style="font-size: 1.6rem; color: var(--store-primary, #d99b00);"></i>
+              <div>
+                <h3 style="font-size: 0.95rem;"></h3>
+                <p>
+                </p>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap">
+              <a th:href="@{/carrito}" class="btn btn-mustard">
+                <i class="bi bi-cart3 me-2"></i>
+                Ver mi carrito
+              </a>
+              <a th:href="@{/}" class="btn btn-outline-secondary btn-sm align-self-center">
+                <i class="bi bi-arrow-left me-1"></i>
+                Inicio
+              </a>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+    </th:block>
+  </div>
+
+</body>
+</html>

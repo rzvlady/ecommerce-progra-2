@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{ecommerce/fragments/ecommerce-head :: head('Categoría')}">
+</head>
+
+<body class="store-body">
+
+  <div th:replace="~{ecommerce/layout/ecommerce-layout :: layout(~{::contenido})}">
+    <th:block th:fragment="contenido">
+
+      <section class="container store-section" style="padding-top: 40px; padding-bottom: 48px; min-height: 55vh;">
+
+        <nav aria-label="breadcrumb" class="mb-4">
+          <ol class="breadcrumb" style="font-size: 0.85rem;">
+            <li class="breadcrumb-item"><a th:href="@{/}" class="text-decoration-none">Inicio</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/categorias}" class="text-decoration-none">Categorías</a></li>
+            <li class="breadcrumb-item active" aria-current="page"
+                th:text="${nombreCategoria != null ? nombreCategoria : 'Categoría'}">Categoría</li>
+          </ol>
+        </nav>
+
+        <div class="mb-4">
+          <span class="section-eyebrow">CATEGORÍA</span>
+          <h1 class="section-title mt-1 text-capitalize"
+              th:text="${nombreCategoria != null ? nombreCategoria : 'Productos'}">Productos</h1>
+          <p class="section-description">
+
+          </p>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-12">
+            <div class="benefit-card" style="padding: 28px 24px;">
+              <i class="bi bi-box-seam" style="font-size: 2rem; color: var(--store-primary, #d99b00);"></i>
+              <div>
+                <h3 style="font-size: 1rem;"></h3>
+                <p>
+
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+          <a th:href="@{/categorias}" class="btn btn-mustard">
+            <i class="bi bi-grid me-2"></i>
+            Ver todas las categorías
+          </a>
+          <a th:href="@{/}" class="btn btn-outline-secondary btn-sm align-self-center">
+            <i class="bi bi-arrow-left me-1"></i>
+            Inicio
+          </a>
+        </div>
+
+      </section>
+
+    </th:block>
+  </div>
+
+</body>
+</html>

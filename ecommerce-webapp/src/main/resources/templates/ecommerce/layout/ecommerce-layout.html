@@ -2,33 +2,45 @@
      th:fragment="layout(contenido)"
      class="store-shell">
 
-    <!-- Menú comercial -->
     <div th:replace="~{ecommerce/fragments/ecommerce-navbar :: navbar}">
     </div>
 
-    <!-- Contenido de cada página -->
     <main class="store-main">
         <th:block th:replace="${contenido}">
             Contenido de la tienda
         </th:block>
     </main>
 
-    <!-- Footer -->
     <footer class="store-footer">
         <div class="container py-4">
             <div class="row align-items-center g-3">
 
                 <div class="col-md-6">
-                    <span class="footer-brand">
-                        <i class="bi bi-bag-check-fill"></i>
-                        E-COMMERCE
-                    </span>
+                    <a th:href="@{/}" class="multistore-logo footer-logo text-decoration-none d-inline-flex align-items-center gap-2" title="MultiStore - Inicio">
+                        <div class="logo-cart-badge footer-cart-badge" aria-hidden="true">
+                            <svg class="multistore-cart-icon" width="34" height="34" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="13" y="8" width="7.5" height="9" rx="1.5" fill="#60a5fa" />
+                                <path d="M16.7 8V17" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" />
+                                <rect x="19.5" y="5" width="8.5" height="12" rx="1.5" fill="#fbbf24" />
+                                <path d="M23.7 5V17" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" />
+                                <path d="M10 11C10 9.8 11 9 12.2 9H13.5V17H10V11Z" fill="#34d399" />
+                                <path d="M4 6H7.5L10.5 21H27L30 9H9.5" stroke="#f1f5f9" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M11 15H28.5" stroke="#f1f5f9" stroke-width="1.4" stroke-linecap="round"/>
+                                <circle cx="13" cy="26" r="2.5" fill="#60a5fa" stroke="#f1f5f9" stroke-width="1.8"/>
+                                <circle cx="25" cy="26" r="2.5" fill="#60a5fa" stroke="#f1f5f9" stroke-width="1.8"/>
+                            </svg>
+                        </div>
+                        <div class="d-flex flex-column justify-content-center">
+                            <span class="logo-multi text-white">Multi</span>
+                            <span class="logo-store">Store</span>
+                        </div>
+                    </a>
                 </div>
 
                 <div class="col-md-6 text-md-end">
                     <small>
                         © <span th:text="${#dates.year(#dates.createNow())}">2026</span>
-                        E-COMMERCE. Todos los derechos reservados.
+                        MultiStore. Todos los derechos reservados.
                     </small>
                 </div>
 

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{ecommerce/fragments/ecommerce-head :: head('Carrito')}">
+</head>
+
+<body class="store-body">
+
+  <div th:replace="~{ecommerce/layout/ecommerce-layout :: layout(~{::contenido})}">
+    <th:block th:fragment="contenido">
+
+      <section class="container store-section" style="min-height: 55vh; padding-top: 48px; padding-bottom: 48px;">
+        <div class="row justify-content-center">
+          <div class="col-lg-8 text-center">
+
+            <i class="bi bi-cart3" style="font-size: 4rem; color: var(--store-primary, #d99b00);"></i>
+
+            <h1 class="section-title mt-4 mb-3">Mi Carrito</h1>
+
+            <p class="section-description mb-4" style="font-size: 1rem;">
+              Aún no has añadido productos a tu carrito.<br>
+              Explora nuestra tienda y encuentra lo que buscas.
+            </p>
+
+            <a th:href="@{/}" class="btn btn-mustard">
+              <i class="bi bi-arrow-left me-2"></i>
+              Volver al inicio
+            </a>
+
+          </div>
+        </div>
+      </section>
+
+    </th:block>
+  </div>
+
+</body>
+</html>
