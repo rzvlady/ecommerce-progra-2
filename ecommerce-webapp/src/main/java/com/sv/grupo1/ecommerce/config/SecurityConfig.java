@@ -2,6 +2,7 @@ package com.sv.grupo1.ecommerce.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -13,6 +14,7 @@ import org.springframework.security.web.SecurityFilterChain;
  * */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true, securedEnabled = true, jsr250Enabled = true)
 public class SecurityConfig {
 
     private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
@@ -32,15 +34,11 @@ public class SecurityConfig {
         http
         .csrf(csrf -> csrf.disable())
         .authorizeHttpRequests(auth -> auth
-            // 1. Rutas de la API (lo de tu colega)
             .requestMatchers("/api/auth/**").permitAll()
 
-            // 2. PROTEGER EL BACKOFFICE (Nueva regla añadida aquí)
-            // Exige que el usuario tenga el rol de ADMIN.
-            // Si aún no usas roles, cámbialo por .authenticated() temporalmente.
-            .requestMatchers("/backoffice/**").hasRole("ADMIN")
+            .requestMatchers("/backoffice/**", "/admin/**").hasRole("ADMIN")
 
-            // 3. Rutas web públicas (las nuestras sin el backoffice)
+            // 3. Rutas web públicas
             .requestMatchers(
                     "/",
                     "/registro",
@@ -50,7 +48,6 @@ public class SecurityConfig {
                     "/carrito", "/categorias", "/categorias/**",
                     "/producto/**", "/productos", "/productos/**"
             ).permitAll()
-            // 4. LA REGLA FINAL SIEMPRE DEBE SER anyRequest()
             .anyRequest().authenticated()
         )
         .formLogin(form -> form
@@ -64,6 +61,9 @@ public class SecurityConfig {
             .logoutUrl("/cerrar-sesion")
             .logoutSuccessUrl("/")
             .permitAll()
+        )
+        .exceptionHandling(ex -> ex
+            .accessDeniedPage("/?error=acceso_denegado")
         );
 
         return http.build();

@@ -105,6 +105,14 @@
                                 <div class="px-3 py-1 mb-1 fw-bold text-dark text-truncate" style="max-width: 200px;" sec:authentication="name">Usuario</div>
                             </li>
                             <li sec:authorize="isAuthenticated()"><hr class="dropdown-divider my-1"></li>
+                            <!-- Enlace al Backoffice exclusivo para ROLE_ADMIN -->
+                            <li sec:authorize="hasRole('ADMIN')">
+                                <a class="dropdown-item d-flex align-items-center gap-2 text-primary fw-semibold" th:href="@{/backoffice/dashboard}">
+                                    <i class="bi bi-speedometer2 text-primary fs-5"></i>
+                                    <span>Panel Backoffice</span>
+                                </a>
+                            </li>
+                            <li sec:authorize="hasRole('ADMIN')"><hr class="dropdown-divider my-1"></li>
                             <li sec:authorize="isAuthenticated()">
                                 <a class="dropdown-item d-flex align-items-center gap-2" th:href="@{/}">
                                     <i class="bi bi-person text-primary fs-5"></i>
