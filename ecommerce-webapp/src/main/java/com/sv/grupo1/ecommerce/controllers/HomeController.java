@@ -49,10 +49,8 @@ public class HomeController {
         return "ecommerce/pages/categoria-detalle";
     }
 
-    /** Vista provisional: detalle de un producto */
     @GetMapping("/producto/{nombre}")
-    public String productoDetalle(@PathVariable("nombre") String nombre, Model model) {
-        model.addAttribute("nombreProducto", nombre);
-        return "ecommerce/pages/producto-detalle";
+    public String productoDetalle(@PathVariable("nombre") String nombre) {
+        return "redirect:/productos?busqueda=" + nombre;
     }
 }

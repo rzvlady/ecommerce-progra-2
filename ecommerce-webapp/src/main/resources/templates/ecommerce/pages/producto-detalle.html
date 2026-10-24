@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 
-<head th:replace="~{ecommerce/fragments/ecommerce-head :: head('Producto - ' + ${producto.nombreProducto})}">
+<head th:replace="~{ecommerce/fragments/ecommerce-head :: head('Producto - ' + (${producto != null ? producto.nombreProducto : 'Detalle'}))}">
 </head>
 
 <body class="store-body">
@@ -11,12 +11,12 @@
 
     <section class="container store-section" style="padding-top: 40px; padding-bottom: 48px; min-height: 55vh;">
 
-      <!-- Migas de pan (Breadcrumbs) -->
+
       <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb" style="font-size: 0.85rem;">
           <li class="breadcrumb-item"><a th:href="@{/}" class="text-decoration-none">Inicio</a></li>
           <li class="breadcrumb-item"><a th:href="@{/productos}" class="text-decoration-none">Productos</a></li>
-          <li class="breadcrumb-item active" aria-current="page" th:text="${producto.nombreProducto}">Producto</li>
+          <li class="breadcrumb-item active" aria-current="page" th:text="${producto?.nombreProducto}">Producto</li>
         </ol>
       </nav>
 
@@ -29,8 +29,8 @@
                         display: flex; align-items: center; justify-content: center; overflow: hidden;">
             <!-- Imagen dinámica basada en el nombre del producto -->
             <img id="imagen-principal"
-                 th:src="@{'https://placehold.co/600x450/f8fafc/0f172a.png?text=' + ${#strings.replace(producto.nombreProducto, ' ', '+')}}"
-                 th:alt="${producto.nombreProducto}"
+                 th:src="@{'https://placehold.co/600x450/f8fafc/0f172a.png?text=' + ${#strings.replace(producto?.nombreProducto != null ? producto.nombreProducto : 'Producto', ' ', '+')}}"
+                 th:alt="${producto?.nombreProducto}"
                  style="width: 100%; height: 100%; object-fit: contain; padding: 15px;">
           </div>
 
@@ -59,8 +59,8 @@
 
             <!-- Precio -->
             <div class="my-3">
-                <span class="h2 fw-bold" style="color: var(--store-primary, #d99b00);"
-                      th:text="'$' + ${#numbers.formatDecimal(producto.precioVenta, 1, 2)}">$0.00</span>
+              <span class="h2 fw-bold" style="color: var(--store-primary, #d99b00);"
+                th:text="${producto?.precioVenta != null ? '$' + #numbers.formatDecimal(producto.precioVenta, 1, 2) : '$0.00'}">$0.00</span>
               <small class="text-muted"> (IVA incluido)</small>
             </div>
 

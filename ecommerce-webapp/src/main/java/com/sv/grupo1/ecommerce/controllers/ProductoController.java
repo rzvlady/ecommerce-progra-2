@@ -40,9 +40,13 @@ public class ProductoController {
 
     @GetMapping("/{id}")
     public String detalleProducto(@PathVariable("id") Integer id, Model model) {
-        var producto = productoService.obtenerPorId(id)
-                .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado: " + id));
-        model.addAttribute("producto", producto);
+        var productoOpt = productoService.obtenerPorId(id);
+
+        if (productoOpt.isEmpty()) {
+            return "redirect:/productos";
+        }
+
+        model.addAttribute("producto", productoOpt.get());
         return "ecommerce/pages/producto-detalle";
     }
 }

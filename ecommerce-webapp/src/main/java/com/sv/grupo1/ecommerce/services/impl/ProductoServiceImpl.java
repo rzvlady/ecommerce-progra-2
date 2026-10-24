@@ -13,7 +13,6 @@ import com.sv.grupo1.ecommerce.services.ProductoService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.text.Normalizer;
@@ -65,40 +64,31 @@ public class ProductoServiceImpl implements ProductoService {
 
         List<Producto> todos = productoRepository.findAllConRelaciones();
         todos.forEach(imagenStorageService::cargarImagenesEnProducto);
-        String termino = (busqueda != null && !busqueda.isBlank()) 
+        String termino = (busqueda != null && !busqueda.isBlank())
                 ? normalizarTexto(busqueda)
                 : null;
 
         List<Producto> filtrados = todos.stream()
-
                 .filter(p -> Character.valueOf('A').equals(p.getEstado()))
-
                 .filter(p -> {
-
                     if (termino == null) {
                         return true;
                     }
 
                     boolean coincideSku = normalizarTexto(p.getCodigoSku()).contains(termino);
-
                     boolean coincideNombre = normalizarTexto(p.getNombreProducto()).contains(termino);
-
                     boolean coincideDescripcion = normalizarTexto(p.getDescripcionProducto()).contains(termino);
-
                     boolean coincideMarca = p.getMarca() != null
                             && normalizarTexto(p.getMarca().getNombreMarca()).contains(termino);
 
                     boolean coincideCategoria = false;
-
                     Categoria categoriaActual = p.getCategoria();
 
                     while (categoriaActual != null) {
-
                         if (normalizarTexto(categoriaActual.getNombreCategoria()).contains(termino)) {
                             coincideCategoria = true;
                             break;
                         }
-
                         categoriaActual = categoriaActual.getCategoriaPadre();
                     }
 
@@ -108,15 +98,12 @@ public class ProductoServiceImpl implements ProductoService {
                             || coincideMarca
                             || coincideCategoria;
                 })
-
                 .filter(p -> idCategoria == null
                         || (p.getCategoria() != null
                         && p.getCategoria().perteneceAJerarquia(idCategoria)))
-
                 .filter(p -> idMarca == null
                         || (p.getMarca() != null
                         && idMarca.equals(p.getMarca().getIdMarca())))
-
                 .toList();
 
         filtrados.forEach(imagenStorageService::cargarImagenesEnProducto);
@@ -236,7 +223,6 @@ public class ProductoServiceImpl implements ProductoService {
     @Override
     @Transactional(readOnly = true)
     public List<CategoriaHomeDTO> obtenerCategoriasHome() {
-
         List<CategoriaHomeDTO> categorias = new ArrayList<>();
         categorias.add(new CategoriaHomeDTO(1, "Tecnología", "Audio, computación y gadgets", "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=450&q=80", "/productos?busqueda=tecnologia"));
         categorias.add(new CategoriaHomeDTO(7, "Hogar", "Muebles, confort y decoración", "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=450&q=80", "/productos?idCategoria=7"));
@@ -248,18 +234,14 @@ public class ProductoServiceImpl implements ProductoService {
         categorias.add(new CategoriaHomeDTO(9, "Novedades", "Lo más reciente en catálogo", "https://images.unsplash.com/photo-1511556532299-8f662fc26c06?auto=format&fit=crop&w=450&q=80", "/productos"));
         return categorias;
     }
-}
 
     private String normalizarTexto(String texto) {
         if (texto == null) {
             return "";
         }
-
         return Normalizer.normalize(texto, Normalizer.Form.NFD)
                 .replaceAll("\\p{M}", "")
                 .toLowerCase(Locale.ROOT)
                 .trim();
     }
-
 }
-
