@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{ecommerce/fragments/ecommerce-head :: head('Mi Perfil')}">
+</head>
+
+<body class="store-body">
+
+<div th:replace="~{ecommerce/layout/ecommerce-layout :: layout(~{::contenido})}">
+    <th:block th:fragment="contenido">
+
+        <section class="container store-section py-4 py-lg-5">
+            <div class="row justify-content-center">
+                <div class="col-12 col-xl-10">
+
+                    <!-- Encabezado de la sección -->
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+                        <div>
+                            <span class="section-eyebrow">MI CUENTA</span>
+                            <h1 class="section-title mb-1">Información de Perfil y Envío</h1>
+                            <p class="section-description mb-0">
+                                Mantén tus datos personales, contacto móvil y dirección actualizados para agilizar tus compras y entregas.
+                            </p>
+                        </div>
+                        <div>
+                            <a th:href="@{/}" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+                                <i class="bi bi-arrow-left"></i>
+                                <span>Seguir comprando</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Banner de estado del perfil -->
+                    <div th:if="${perfilDTO.perfilCompletado}" class="profile-status-banner completed d-flex align-items-center gap-3 mb-4">
+                        <i class="bi bi-patch-check-fill fs-3"></i>
+                        <div>
+                            <div class="fw-bold">Perfil completo</div>
+                            <div class="small">
+                                Tus datos personales, teléfono de contacto y dirección principal están registrados.
+                                <span th:if="${perfilDTO.ultimaActualizacion != null}" class="ms-1 opacity-75">
+                                    (Última edición registrada en auditoría)
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div th:unless="${perfilDTO.perfilCompletado}" class="profile-status-banner pending d-flex align-items-center gap-3 mb-4">
+                        <i class="bi bi-info-circle-fill fs-3"></i>
+                        <div>
+                            <div class="fw-bold">Completa los datos de tu cuenta</div>
+                            <div class="small">
+                                Por favor completa tu información personal, teléfono móvil y dirección de entrega para poder procesar tus futuros pedidos sin contratiempos.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alertas de Éxito o Error -->
+                    <div th:if="${mensajeExito}" class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 shadow-sm mb-4" role="alert">
+                        <i class="bi bi-check-circle-fill fs-5"></i>
+                        <div th:text="${mensajeExito}">Datos guardados correctamente.</div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                    </div>
+
+                    <div th:if="${mensajeError}" class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 shadow-sm mb-4" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                        <div th:text="${mensajeError}">Error al guardar los datos.</div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                    </div>
+
+                    <!-- Formulario Unificado: Perfil + Contacto + Dirección -->
+                    <form th:action="@{/mi-perfil}" th:object="${perfilDTO}" method="post" novalidate id="formMiPerfil">
+
+                        <input type="hidden" th:field="*{idUsuario}">
+                        <input type="hidden" th:field="*{idPerfil}">
+                        <input type="hidden" th:field="*{idContactoCorreo}">
+                        <input type="hidden" th:field="*{idContactoMovil}">
+                        <input type="hidden" th:field="*{idDireccion}">
+
+                        <!-- ===================================================================
+                             BLOQUE 1: DATOS PERSONALES (usuarios_perfil)
+                             =================================================================== -->
+                        <div class="profile-card p-4 p-md-5 mb-4">
+                            <div class="profile-section-header">
+                                <div class="profile-section-icon">
+                                    <i class="bi bi-person-vcard"></i>
+                                </div>
+                                <div>
+                                    <h2 class="h5 fw-bold mb-0">1. Datos Personales</h2>
+                                    <p class="text-secondary small mb-0">Información de identidad del titular de la cuenta</p>
+                                </div>
+                            </div>
+
+                            <div class="row g-3">
+                                <!-- Nombres -->
+                                <div class="col-12 col-md-6">
+                                    <label for="nombres" class="form-label fw-semibold">
+                                        Nombres <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text"
+                                           id="nombres"
+                                           class="form-control"
+                                           th:field="*{nombres}"
+                                           th:classappend="${#fields.hasErrors('nombres')} ? 'is-invalid' : ''"
+                                           placeholder="Ej. Juan Carlos"
+                                           required>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('nombres')}" th:errors="*{nombres}"></div>
+                                </div>
+
+                                <!-- Apellidos -->
+                                <div class="col-12 col-md-6">
+                                    <label for="apellidos" class="form-label fw-semibold">
+                                        Apellidos <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text"
+                                           id="apellidos"
+                                           class="form-control"
+                                           th:field="*{apellidos}"
+                                           th:classappend="${#fields.hasErrors('apellidos')} ? 'is-invalid' : ''"
+                                           placeholder="Ej. Pérez Gómez"
+                                           required>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('apellidos')}" th:errors="*{apellidos}"></div>
+                                </div>
+
+                                <!-- DUI -->
+                                <div class="col-12 col-md-4">
+                                    <label for="dui" class="form-label fw-semibold">
+                                        Número de DUI <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text"
+                                           id="dui"
+                                           class="form-control"
+                                           th:field="*{dui}"
+                                           th:classappend="${#fields.hasErrors('dui')} ? 'is-invalid' : ''"
+                                           placeholder="00000000-0"
+                                           maxlength="10"
+                                           required>
+                                    <div class="form-text small">Formato con guion: 00000000-0</div>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('dui')}" th:errors="*{dui}"></div>
+                                </div>
+
+                                <!-- Género (GeneroEnum: M=Masculino, F=Femenino) -->
+                                <div class="col-12 col-md-4">
+                                    <label for="genero" class="form-label fw-semibold">
+                                        Género <span class="text-danger">*</span>
+                                    </label>
+                                    <select id="genero"
+                                            class="form-select select2-perfil"
+                                            th:field="*{genero}"
+                                            th:classappend="${#fields.hasErrors('genero')} ? 'is-invalid' : ''"
+                                            data-placeholder="Seleccione su género..."
+                                            required>
+                                        <option value="">Seleccione...</option>
+                                        <option th:each="gen : ${generos}"
+                                                th:value="${gen.codigo}"
+                                                th:text="${gen.descripcion}">
+                                            Masculino
+                                        </option>
+                                    </select>
+                                    <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('genero')}" th:errors="*{genero}"></div>
+                                </div>
+
+                                <!-- Fecha de Nacimiento -->
+                                <div class="col-12 col-md-4">
+                                    <label for="fechaNacimiento" class="form-label fw-semibold">
+                                        Fecha de Nacimiento <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="date"
+                                           id="fechaNacimiento"
+                                           class="form-control"
+                                           th:field="*{fechaNacimiento}"
+                                           th:classappend="${#fields.hasErrors('fechaNacimiento')} ? 'is-invalid' : ''"
+                                           required>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('fechaNacimiento')}" th:errors="*{fechaNacimiento}"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ===================================================================
+                             BLOQUE 2: MEDIOS DE CONTACTO (usuarios_contacto)
+                             =================================================================== -->
+                        <div class="profile-card p-4 p-md-5 mb-4">
+                            <div class="profile-section-header">
+                                <div class="profile-section-icon">
+                                    <i class="bi bi-telephone-inbound"></i>
+                                </div>
+                                <div>
+                                    <h2 class="h5 fw-bold mb-0">2. Medios de Contacto</h2>
+                                    <p class="text-secondary small mb-0">Correo principal de registro y teléfono móvil para notificaciones de entrega</p>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 align-items-start">
+                                <!-- Correo Electrónico Principal (registrado inicialmente con tipo_contacto = 'C') -->
+                                <div class="col-12 col-md-6">
+                                    <label for="correoPrincipalView" class="form-label fw-semibold d-flex align-items-center justify-content-between">
+                                        <span>Correo Electrónico (Principal)</span>
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill fw-semibold">
+                                            Tipo: Correo (C)
+                                        </span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light text-secondary">
+                                            <i class="bi bi-envelope-check"></i>
+                                        </span>
+                                        <input type="email"
+                                               id="correoPrincipalView"
+                                               class="form-control bg-light"
+                                               th:value="*{correoPrincipal}"
+                                               readonly
+                                               disabled>
+                                    </div>
+                                    <div class="form-text small">
+                                        Asociado al inicio de sesión de tu cuenta como contacto de correo principal.
+                                    </div>
+                                </div>
+
+                                <!-- Dispositivo Móvil Principal (tipo_contacto = 'M') -->
+                                <div class="col-12 col-md-6">
+                                    <label for="telefonoMovil" class="form-label fw-semibold d-flex align-items-center justify-content-between">
+                                        <span>Dispositivo Móvil (Principal) <span class="text-danger">*</span></span>
+                                        <span class="badge bg-warning-subtle text-dark border border-warning-subtle rounded-pill fw-semibold">
+                                            Tipo: Dispositivo Móvil (M)
+                                        </span>
+                                    </label>
+                                    <div class="input-group has-validation">
+                                        <span class="input-group-text bg-light fw-semibold text-secondary">+503</span>
+                                        <input type="tel"
+                                               id="telefonoMovil"
+                                               class="form-control"
+                                               th:field="*{telefonoMovil}"
+                                               th:classappend="${#fields.hasErrors('telefonoMovil')} ? 'is-invalid' : ''"
+                                               placeholder="7000-0000"
+                                               maxlength="9"
+                                               required>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('telefonoMovil')}" th:errors="*{telefonoMovil}"></div>
+                                    </div>
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" id="tieneWhatsapp" th:field="*{tieneWhatsapp}">
+                                        <label class="form-check-label small text-secondary" for="tieneWhatsapp">
+                                            <i class="bi bi-whatsapp text-success me-1"></i>
+                                            Este número cuenta con WhatsApp disponible para coordinar entregas
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ===================================================================
+                             BLOQUE 3: DIRECCIÓN PRINCIPAL DE ENTREGA (usuarios_direccion)
+                             =================================================================== -->
+                        <div class="profile-card p-4 p-md-5 mb-4">
+                            <div class="profile-section-header">
+                                <div class="profile-section-icon">
+                                    <i class="bi bi-geo-alt"></i>
+                                </div>
+                                <div>
+                                    <h2 class="h5 fw-bold mb-0">3. Dirección de Entrega</h2>
+                                    <p class="text-secondary small mb-0">Ubicación predeterminada para el envío de tus pedidos</p>
+                                </div>
+                            </div>
+
+                            <div class="row g-3">
+                                <!-- Selector de Departamento (Select2) -->
+                                <div class="col-12 col-md-4">
+                                    <label for="idDepartamento" class="form-label fw-semibold">
+                                        Departamento <span class="text-danger">*</span>
+                                    </label>
+                                    <select id="idDepartamento"
+                                            class="form-select select2-perfil"
+                                            th:field="*{idDepartamento}"
+                                            th:classappend="${#fields.hasErrors('idDepartamento')} ? 'is-invalid' : ''"
+                                            data-placeholder="Seleccione un departamento..."
+                                            required>
+                                        <option value="">Seleccione un departamento...</option>
+                                        <option th:each="depto : ${departamentos}"
+                                                th:value="${depto.idDepartamento}"
+                                                th:text="${depto.nombreDepartamento}">
+                                            San Salvador
+                                        </option>
+                                    </select>
+                                    <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('idDepartamento')}" th:errors="*{idDepartamento}"></div>
+                                </div>
+
+                                <!-- Selector de Municipio Dinámico (Select2) -->
+                                <div class="col-12 col-md-4">
+                                    <label for="idMunicipio" class="form-label fw-semibold">
+                                        Municipio <span class="text-danger">*</span>
+                                    </label>
+                                    <select id="idMunicipio"
+                                            class="form-select select2-perfil"
+                                            th:field="*{idMunicipio}"
+                                            th:classappend="${#fields.hasErrors('idMunicipio')} ? 'is-invalid' : ''"
+                                            data-placeholder="Seleccione un municipio..."
+                                            required>
+                                        <option value="">Seleccione un municipio...</option>
+                                        <option th:each="muni : ${municipios}"
+                                                th:value="${muni.idMunicipio}"
+                                                th:attr="data-departamento-id=${muni.departamento.idDepartamento}"
+                                                th:text="${muni.nombreMunicipio}">
+                                            San Salvador
+                                        </option>
+                                    </select>
+                                    <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('idMunicipio')}" th:errors="*{idMunicipio}"></div>
+                                </div>
+
+                                <!-- Tipo de Dirección (TipoDireccionEnum: C=Casa, T=Trabajo) -->
+                                <div class="col-12 col-md-4">
+                                    <label for="tipoDireccion" class="form-label fw-semibold">
+                                        Tipo de Dirección <span class="text-danger">*</span>
+                                    </label>
+                                    <select id="tipoDireccion"
+                                            class="form-select select2-perfil"
+                                            th:field="*{tipoDireccion}"
+                                            th:classappend="${#fields.hasErrors('tipoDireccion')} ? 'is-invalid' : ''"
+                                            data-placeholder="Seleccione tipo..."
+                                            required>
+                                        <option value="">Seleccione...</option>
+                                        <option th:each="tipoDir : ${tiposDireccion}"
+                                                th:value="${tipoDir.codigo}"
+                                                th:text="${tipoDir.descripcion}">
+                                            Casa
+                                        </option>
+                                    </select>
+                                    <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('tipoDireccion')}" th:errors="*{tipoDireccion}"></div>
+                                </div>
+
+                                <!-- Dirección Línea 1 -->
+                                <div class="col-12 col-md-8">
+                                    <label for="direccionLinea1" class="form-label fw-semibold">
+                                        Dirección Exacta (Línea 1) <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text"
+                                           id="direccionLinea1"
+                                           class="form-control"
+                                           th:field="*{direccionLinea1}"
+                                           th:classappend="${#fields.hasErrors('direccionLinea1')} ? 'is-invalid' : ''"
+                                           placeholder="Colonia, calle, pasaje y número de casa o edificio"
+                                           required>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('direccionLinea1')}" th:errors="*{direccionLinea1}"></div>
+                                </div>
+
+                                <!-- Código Postal -->
+                                <div class="col-12 col-md-4">
+                                    <label for="codigoPostal" class="form-label fw-semibold">
+                                        Código Postal <span class="text-secondary fw-normal small">(Opcional)</span>
+                                    </label>
+                                    <input type="text"
+                                           id="codigoPostal"
+                                           class="form-control"
+                                           th:field="*{codigoPostal}"
+                                           th:classappend="${#fields.hasErrors('codigoPostal')} ? 'is-invalid' : ''"
+                                           placeholder="Ej. CP 1101"
+                                           maxlength="10">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('codigoPostal')}" th:errors="*{codigoPostal}"></div>
+                                </div>
+
+                                <!-- Punto de Referencia (guardado en metadata JSONB de usuarios_direccion) -->
+                                <div class="col-12">
+                                    <label for="puntoReferencia" class="form-label fw-semibold">
+                                        Punto de Referencia para Entrega <span class="text-secondary fw-normal small">(Opcional)</span>
+                                    </label>
+                                    <input type="text"
+                                           id="puntoReferencia"
+                                           class="form-control"
+                                           th:field="*{puntoReferencia}"
+                                           th:classappend="${#fields.hasErrors('puntoReferencia')} ? 'is-invalid' : ''"
+                                           placeholder="Ej. Frente a parque central, portón color negro, segunda planta">
+                                    <div class="form-text small">
+                                        Esta indicación adicional se almacena junto a tu dirección para facilitar la ubicación al repartidor.
+                                    </div>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('puntoReferencia')}" th:errors="*{puntoReferencia}"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botones de Acción -->
+                        <div class="d-flex flex-column flex-sm-row justify-content-end align-items-stretch align-items-sm-center gap-3">
+                            <a th:href="@{/}" class="btn btn-outline-secondary px-4 py-2">
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-mustard px-5 py-2 d-inline-flex align-items-center justify-content-center gap-2">
+                                <i class="bi bi-floppy2-fill"></i>
+                                <span>Guardar mis datos</span>
+                            </button>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Script de inicialización de Select2, cascada Departamento -> Municipio y máscaras de DUI/Teléfono -->
+        <script th:inline="javascript">
+            document.addEventListener('DOMContentLoaded', function () {
+                // Auto-formateo amigable para DUI (00000000-0)
+                const inputDui = document.getElementById('dui');
+                if (inputDui) {
+                    inputDui.addEventListener('input', function (e) {
+                        let digits = e.target.value.replace(/\D/g, '').substring(0, 9);
+                        if (digits.length > 8) {
+                            e.target.value = digits.substring(0, 8) + '-' + digits.substring(8);
+                        } else {
+                            e.target.value = digits;
+                        }
+                    });
+                }
+
+                // Auto-formateo amigable para Teléfono Móvil (0000-0000)
+                const inputMovil = document.getElementById('telefonoMovil');
+                if (inputMovil) {
+                    inputMovil.addEventListener('input', function (e) {
+                        let digits = e.target.value.replace(/\D/g, '').substring(0, 8);
+                        if (digits.length > 4) {
+                            e.target.value = digits.substring(0, 4) + '-' + digits.substring(4);
+                        } else {
+                            e.target.value = digits;
+                        }
+                    });
+                }
+
+                // Esperar a que jQuery y Select2 estén disponibles (cargados con defer en ecommerce-head)
+                if (typeof window.jQuery === 'undefined' || typeof jQuery.fn.select2 === 'undefined') {
+                    return;
+                }
+
+                const $ = window.jQuery;
+                const $depto = $('#idDepartamento');
+                const $muni = $('#idMunicipio');
+
+                // Guardar catálogo completo de municipios en memoria para filtrado instantáneo con respaldo AJAX
+                const todosLosMunicipios = [];
+                $muni.find('option').each(function () {
+                    const val = $(this).attr('value');
+                    if (val) {
+                        todosLosMunicipios.push({
+                            id: String(val),
+                            text: $(this).text().trim(),
+                            idDepartamento: String($(this).attr('data-departamento-id') || '')
+                        });
+                    }
+                });
+
+                function inicializarSelect2($elemento) {
+                    const placeholder = $elemento.attr('data-placeholder') || 'Seleccione una opción...';
+                    if ($elemento.hasClass('select2-hidden-accessible')) {
+                        $elemento.select2('destroy');
+                    }
+                    $elemento.select2({
+                        theme: 'bootstrap-5',
+                        width: '100%',
+                        language: 'es',
+                        placeholder: placeholder,
+                        allowClear: false
+                    });
+                }
+
+                // Inicializar todos los selectores con clase .select2-perfil
+                $('.select2-perfil').each(function () {
+                    inicializarSelect2($(this));
+                });
+
+                function actualizarMunicipiosPorDepartamento(idDepartamentoSeleccionado, idMunicipioPreseleccionado) {
+                    const deptoStr = idDepartamentoSeleccionado ? String(idDepartamentoSeleccionado) : '';
+
+                    $muni.empty();
+                    $muni.append(new Option('Seleccione un municipio...', '', false, false));
+
+                    if (!deptoStr) {
+                        $muni.prop('disabled', true);
+                        inicializarSelect2($muni);
+                        return;
+                    }
+
+                    $muni.prop('disabled', false);
+                    const filtrados = todosLosMunicipios.filter(function (m) {
+                        return m.idDepartamento === deptoStr;
+                    });
+
+                    filtrados.forEach(function (m) {
+                        const seleccionado = idMunicipioPreseleccionado && String(idMunicipioPreseleccionado) === m.id;
+                        const option = new Option(m.text, m.id, seleccionado, seleccionado);
+                        option.setAttribute('data-departamento-id', m.idDepartamento);
+                        $muni.append(option);
+                    });
+
+                    if (idMunicipioPreseleccionado) {
+                        $muni.val(String(idMunicipioPreseleccionado));
+                    } else {
+                        $muni.val('');
+                    }
+
+                    inicializarSelect2($muni);
+                }
+
+                // Estado inicial al cargar la vista (por si ya tiene dirección guardada o hubo error de validación)
+                const deptoInicial = $depto.val();
+                const muniInicial = $muni.val();
+                actualizarMunicipiosPorDepartamento(deptoInicial, muniInicial);
+
+                // Evento de cambio en Departamento con Select2
+                $depto.on('change', function () {
+                    const nuevoDepto = $(this).val();
+                    actualizarMunicipiosPorDepartamento(nuevoDepto, null);
+                });
+            });
+        </script>
+
+    </th:block>
+</div>
+
+</body>
+</html>

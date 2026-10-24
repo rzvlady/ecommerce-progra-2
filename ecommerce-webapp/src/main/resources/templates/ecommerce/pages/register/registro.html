@@ -17,8 +17,13 @@
                 <div class="card-body p-4 p-md-5">
                     <h2 class="text-center mb-4">Crear una cuenta</h2>
 
-                    <!-- Alerta dinámica: Se muestra solo si la URL trae "?error=..." -->
-                    <div th:if="${param.error}" class="alert alert-danger text-center">
+                    <!-- Alerta dinámica de error de validación (ej. correo ya registrado o contraseñas no coinciden) -->
+                    <div th:if="${mensajeError != null}" class="alert alert-danger d-flex align-items-center gap-2" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                        <div th:text="${mensajeError}">Ha ocurrido un error al registrar la cuenta.</div>
+                    </div>
+
+                    <div th:if="${mensajeError == null and param.error != null}" class="alert alert-danger text-center" role="alert">
                         Las contraseñas no coinciden. Por favor, inténtalo de nuevo.
                     </div>
 

@@ -8,6 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Service
@@ -27,7 +28,8 @@ public class AuthService {
             throw new CredencialesInvalidasException("Correo o contraseña incorrectos");
         }
 
-        return usuario;
+        usuario.setUltimoInicioSesion(OffsetDateTime.now());
+        return usuarioRepository.save(usuario);
     }
 
     public String solicitarRecuperacion(String correo) {
