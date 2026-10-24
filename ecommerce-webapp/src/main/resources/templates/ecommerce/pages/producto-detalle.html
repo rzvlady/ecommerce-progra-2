@@ -1,71 +1,215 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 
-<head th:replace="~{ecommerce/fragments/ecommerce-head :: head('Producto')}">
+<head th:replace="~{ecommerce/fragments/ecommerce-head :: head('Producto - ' + ${producto.nombreProducto})}">
 </head>
 
 <body class="store-body">
 
-  <div th:replace="~{ecommerce/layout/ecommerce-layout :: layout(~{::contenido})}">
-    <th:block th:fragment="contenido">
+<div th:replace="~{ecommerce/layout/ecommerce-layout :: layout(~{::contenido})}">
+  <th:block th:fragment="contenido">
 
-      <section class="container store-section" style="padding-top: 40px; padding-bottom: 48px; min-height: 55vh;">
+    <section class="container store-section" style="padding-top: 40px; padding-bottom: 48px; min-height: 55vh;">
 
-        <nav aria-label="breadcrumb" class="mb-4">
-          <ol class="breadcrumb" style="font-size: 0.85rem;">
-            <li class="breadcrumb-item"><a th:href="@{/}" class="text-decoration-none">Inicio</a></li>
-            <li class="breadcrumb-item active" aria-current="page"
-                th:text="${nombreProducto != null ? nombreProducto : 'Producto'}">Producto</li>
-          </ol>
-        </nav>
+      <!-- Migas de pan (Breadcrumbs) -->
+      <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb" style="font-size: 0.85rem;">
+          <li class="breadcrumb-item"><a th:href="@{/}" class="text-decoration-none">Inicio</a></li>
+          <li class="breadcrumb-item"><a th:href="@{/productos}" class="text-decoration-none">Productos</a></li>
+          <li class="breadcrumb-item active" aria-current="page" th:text="${producto.nombreProducto}">Producto</li>
+        </ol>
+      </nav>
 
-        <div class="row g-4">
+      <div class="row g-5">
 
-          <div class="col-md-5">
-            <div style="width: 100%; height: 320px; background: #f1f5f9; border-radius: 14px;
+        <!-- COLUMNA 1: Galería / Imagen -->
+        <div class="col-md-5">
+          <div style="width: 100%; height: 380px; background: #f8fafc; border-radius: 14px;
                         border: 1px solid var(--store-border, #eadcc0);
-                        display: flex; align-items: center; justify-content: center;">
-              <i class="bi bi-image" style="font-size: 4rem; color: #94a3b8;"></i>
+                        display: flex; align-items: center; justify-content: center; overflow: hidden;">
+            <!-- Imagen dinámica basada en el nombre del producto -->
+            <img id="imagen-principal"
+                 th:src="@{'https://placehold.co/600x450/f8fafc/0f172a.png?text=' + ${#strings.replace(producto.nombreProducto, ' ', '+')}}"
+                 th:alt="${producto.nombreProducto}"
+                 style="width: 100%; height: 100%; object-fit: contain; padding: 15px;">
+          </div>
+
+          <div class="d-flex gap-2 mt-3 justify-content-center">
+            <div style="width: 70px; height: 70px; border: 2px solid var(--store-primary, #d99b00); border-radius: 8px; overflow: hidden; cursor: pointer;">
+              <img th:src="@{'https://placehold.co/100x100/f8fafc/0f172a.png?text=1'}" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            <div style="width: 70px; height: 70px; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; opacity: 0.6; cursor: pointer;">
+              <img th:src="@{'https://placehold.co/100x100/f8fafc/0f172a.png?text=2'}" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-7 d-flex flex-column justify-content-between">
+          <div>
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <span class="badge bg-secondary" th:text="${producto.marca != null ? producto.marca.nombreMarca : 'Sin Marca'}">Marca</span>
+              <span class="badge bg-light text-dark border" th:text="${producto.categoria != null ? producto.categoria.nombreCategoria : 'General'}">Categoría</span>
+              <small class="text-muted ms-auto">SKU: <strong th:text="${producto.codigoSku}">SKU-0000</strong></small>
+            </div>
+
+            <!-- Nombre del Producto -->
+            <h1 class="section-title text-capitalize" th:text="${producto.nombreProducto}">
+              Nombre del producto
+            </h1>
+
+            <!-- Precio -->
+            <div class="my-3">
+                <span class="h2 fw-bold" style="color: var(--store-primary, #d99b00);"
+                      th:text="'$' + ${#numbers.formatDecimal(producto.precioVenta, 1, 2)}">$0.00</span>
+              <small class="text-muted"> (IVA incluido)</small>
+            </div>
+
+            <!-- Estado de Existencias / Stock -->
+            <div class="mb-3">
+              <!-- Agotado -->
+              <span th:if="${producto.stockDisponible == null or producto.stockDisponible <= 0}"
+                    class="badge bg-danger p-2" style="font-size: 0.9rem;">
+                  <i class="bi bi-x-circle me-1"></i> Agotado temporalmente
+                </span>
+
+              <!-- Pocas unidades -->
+              <span th:if="${producto.stockDisponible != null and producto.stockDisponible > 0 and producto.stockMinimo != null and producto.stockDisponible <= producto.stockMinimo}"
+                    class="badge bg-warning text-dark p-2" style="font-size: 0.9rem;">
+                  <i class="bi bi-exclamation-triangle me-1"></i> ¡Pocas unidades! (<span th:text="${producto.stockDisponible}">0</span> disponibles)
+                </span>
+
+              <!-- Stock Normal -->
+              <span th:if="${producto.stockDisponible != null and (producto.stockMinimo == null or producto.stockDisponible > producto.stockMinimo)}"
+                    class="badge bg-success p-2" style="font-size: 0.9rem;">
+                  <i class="bi bi-check-circle me-1"></i> En Stock (<span th:text="${producto.stockDisponible}">0</span> unidades disponibles)
+                </span>
+            </div>
+
+            <div class="mb-4">
+              <h6 class="fw-bold mb-2">Descripción:</h6>
+              <p class="text-secondary" style="line-height: 1.6;" th:text="${producto.descripcionProducto}">
+                Descripción detallada del producto cargada desde la base de datos.
+              </p>
             </div>
           </div>
 
-          <div class="col-md-7">
-            <span class="section-eyebrow">DETALLE DE PRODUCTO</span>
-            <h1 class="section-title mt-1 text-capitalize"
-                th:text="${nombreProducto != null ? nombreProducto : 'Nombre del producto'}">
-            </h1>
 
-            <p class="section-description mt-2 mb-4">
+          <div class="pt-3 border-top mt-auto">
+            <form id="form-carrito" onsubmit="event.preventDefault(); agregarAlCarrito();">
+              <input type="hidden" id="producto-id" name="idProducto" th:value="${producto.idProducto}">
 
-            </p>
+              <div class="row g-3 align-items-center">
 
-            <div class="benefit-card mb-4" style="padding: 20px 18px;">
-              <i class="bi bi-info-circle" style="font-size: 1.6rem; color: var(--store-primary, #d99b00);"></i>
-              <div>
-                <h3 style="font-size: 0.95rem;"></h3>
-                <p>
-                </p>
+
+                <div class="col-auto">
+                  <label for="cantidad-input" class="col-form-label fw-bold">Cantidad:</label>
+                </div>
+                <div class="col-auto">
+                  <div class="input-group" style="width: 140px;">
+                    <button type="button" class="btn btn-outline-secondary" onclick="ajustarCantidad(-1)">-</button>
+                    <input type="number"
+                           id="cantidad-input"
+                           name="cantidad"
+                           class="form-control text-center"
+                           value="1"
+                           min="1"
+                           th:max="${producto.stockDisponible}"
+                           th:disabled="${producto.stockDisponible == null or producto.stockDisponible <= 0}">
+                    <button type="button" class="btn btn-outline-secondary" onclick="ajustarCantidad(1)">+</button>
+                  </div>
+                </div>
+
+
+                <div class="col-12 col-sm-auto flex-grow-1">
+                  <button type="submit"
+                          id="btn-agregar-carrito"
+                          class="btn btn-mustard w-100 py-2"
+                          th:disabled="${producto.stockDisponible == null or producto.stockDisponible <= 0}">
+                    <i class="bi bi-cart-plus me-2"></i>
+                    Agregar al carrito
+                  </button>
+                </div>
+
               </div>
-            </div>
+            </form>
 
-            <div class="d-flex gap-2 flex-wrap">
-              <a th:href="@{/carrito}" class="btn btn-mustard">
-                <i class="bi bi-cart3 me-2"></i>
-                Ver mi carrito
+            <div id="mensaje-carrito" class="alert d-none mt-3" role="alert"></div>
+
+
+            <div class="d-flex gap-2 mt-4">
+              <a th:href="@{/carrito}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-cart3 me-1"></i> Ir a mi carrito
               </a>
-              <a th:href="@{/}" class="btn btn-outline-secondary btn-sm align-self-center">
-                <i class="bi bi-arrow-left me-1"></i>
-                Inicio
+              <a th:href="@{/productos}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Volver al catálogo
               </a>
             </div>
           </div>
 
         </div>
 
-      </section>
+      </div>
 
-    </th:block>
-  </div>
+    </section>
+
+    <script>
+      function ajustarCantidad(cambio) {
+        const input = document.getElementById('cantidad-input');
+        if (!input || input.disabled) return;
+
+        const max = parseInt(input.getAttribute('max')) || 999;
+        const min = parseInt(input.getAttribute('min')) || 1;
+        let actual = parseInt(input.value) || 1;
+
+        let nuevaCantidad = actual + cambio;
+        if (nuevaCantidad >= min && nuevaCantidad <= max) {
+          input.value = nuevaCantidad;
+        }
+      }
+
+      async function agregarAlCarrito() {
+        const idProducto = document.getElementById('producto-id').value;
+        const cantidad = document.getElementById('cantidad-input').value;
+        const alerta = document.getElementById('mensaje-carrito');
+        const btn = document.getElementById('btn-agregar-carrito');
+
+        btn.disabled = true;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Agregando...';
+
+        try {
+
+          const response = await fetch(`/api/carrito/agregar?idProducto=${idProducto}&cantidad=${cantidad}`, {
+            method: 'POST',
+            headers: {
+              'X-Cliente-Id': '1'
+            }
+          });
+
+          if (response.ok) {
+            alerta.className = 'alert alert-success mt-3';
+            alerta.innerHTML = `<i class="bi bi-check-circle me-1"></i> ¡Se agregaron <strong>${cantidad}</strong> unidad(es) al carrito!`;
+            alerta.classList.remove('d-none');
+          } else {
+            const errorText = await response.text();
+            alerta.className = 'alert alert-danger mt-3';
+            alerta.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i> No se pudo agregar: ${errorText}`;
+            alerta.classList.remove('d-none');
+          }
+        } catch (error) {
+          alerta.className = 'alert alert-danger mt-3';
+          alerta.innerHTML = '<i class="bi bi-wifi-off me-1"></i> Error de conexión con el servidor.';
+          alerta.classList.remove('d-none');
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+          setTimeout(() => alerta.classList.add('d-none'), 5000);
+        }
+      }
+    </script>
+
+  </th:block>
+</div>
 
 </body>
 </html>
