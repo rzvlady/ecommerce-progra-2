@@ -32,15 +32,26 @@ public class RegistroController {
     }
 
     @PostMapping("/registro")
-    public String registrarUsuario(@ModelAttribute("registroDTO")RegistroUsuarioDTO dto){
+    public String registrarUsuario(
+            @ModelAttribute("registroDTO") RegistroUsuarioDTO dto,
+            Model model) {
         LOG.info("registrarUsuario() => Iniciando");
 
         if (!dto.getContrasenia().equals(dto.getConfirmarContrasenia())) {
-            return "redirect:/registro?error=contrasenas_no_coinciden";
+            model.addAttribute("mensajeError", "Las contraseñas no coinciden. Por favor, inténtalo de nuevo.");
+            return "ecommerce/pages/register/registro";
         }
-        this.usuarioService.registrarUsuario(dto);
-        LOG.info("registrarUsuario() => Completado");
-        return "redirect:/inicio-sesion?exito=true";
+
+        try {
+            this.usuarioService.registrarUsuario(dto);
+            LOG.info("registrarUsuario() => Completado");
+            return "redirect:/inicio-sesion?exito=true";
+        } catch (IllegalArgumentException ex) {
+            LOG.warn("registrarUsuario() => Error de validación al registrar correo '{}': {}",
+                    dto.getCorreoInicioSesion(), ex.getMessage());
+            model.addAttribute("mensajeError", ex.getMessage());
+            return "ecommerce/pages/register/registro";
+        }
     }
 
 }

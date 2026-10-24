@@ -806,6 +806,62 @@ body.store-body {
 }
 
 /* ==========================================================================
+   Sección Mi Perfil (E-Commerce)
+   ========================================================================== */
+.profile-card {
+    background: #ffffff;
+    border: 1px solid var(--store-border);
+    border-radius: 16px;
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+    overflow: hidden;
+}
+
+.profile-section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 14px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.profile-section-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: var(--store-primary-light);
+    color: var(--store-primary-hover);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.profile-status-banner {
+    border-radius: 14px;
+    padding: 16px 20px;
+    border: 1px solid transparent;
+}
+
+.profile-status-banner.completed {
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+    color: #065f46;
+}
+
+.profile-status-banner.pending {
+    background: #fffbeb;
+    border-color: #fde68a;
+    color: #92400e;
+}
+
+.select2-container--bootstrap-5 .select2-selection {
+    min-height: 38px;
+    border-radius: 0.375rem;
+}
+
+/* ==========================================================================
    Responsive Queries
    ========================================================================== */
 @media (max-width: 767.98px) {

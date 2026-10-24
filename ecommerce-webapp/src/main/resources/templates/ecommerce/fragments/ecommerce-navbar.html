@@ -77,7 +77,10 @@
                                 title="Mi Cuenta y Acceso">
                             <i class="bi bi-person-circle fs-5 text-secondary"></i>
                             <span class="d-none d-md-inline" sec:authorize="isAnonymous()">Mi Cuenta</span>
-                            <span class="d-none d-md-inline text-truncate" style="max-width: 100px;" sec:authorize="isAuthenticated()" sec:authentication="name">Usuario</span>
+                            <span class="d-none d-md-inline text-truncate"
+                                  style="max-width: 150px;"
+                                  sec:authorize="isAuthenticated()"
+                                  th:text="${nombreMostradoUsuario != null ? nombreMostradoUsuario : #authentication.name}">Usuario</span>
                             <i class="bi bi-chevron-down small text-muted"></i>
                         </button>
 
@@ -106,7 +109,7 @@
                             </li>
                             <li sec:authorize="isAuthenticated()"><hr class="dropdown-divider my-1"></li>
                             <li sec:authorize="isAuthenticated()">
-                                <a class="dropdown-item d-flex align-items-center gap-2" th:href="@{/}">
+                                <a class="dropdown-item d-flex align-items-center gap-2" th:href="@{/mi-perfil}">
                                     <i class="bi bi-person text-primary fs-5"></i>
                                     <span>Mi perfil</span>
                                 </a>
