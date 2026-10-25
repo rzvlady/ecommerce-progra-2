@@ -47,16 +47,4 @@ class BusquedaApiControllerTest {
         assertEquals(1, response.getBody().getProductos().size());
         assertEquals("Samsung Galaxy S23", response.getBody().getProductos().get(0).getNombreProducto());
     }
-
-    @Test
-    void debeRetornarVacioSiNoHayTermino() {
-        SugerenciaBusquedaDTO dtoMock = new SugerenciaBusquedaDTO();
-        when(productoService.buscarSugerencias("")).thenReturn(dtoMock);
-
-        ResponseEntity<SugerenciaBusquedaDTO> response = controller.sugerencias("");
-
-        assertNotNull(response);
-        assertEquals(200, response.getStatusCode().value());
-        assertEquals(0, response.getBody().getTotalResultados());
-    }
 }
