@@ -4,84 +4,118 @@
 <head th:replace="~{ecommerce/fragments/ecommerce-head :: head('Iniciar Sesión')}">
 </head>
 
-<body class="bg-light">
+<body>
 
 <div th:replace="~{ecommerce/layout/ecommerce-layout :: layout(~{::contenido})}">
 
     <th:block th:fragment="contenido">
 
-        <main class="container mt-5 mb-5">
+        <main class="container py-5 my-md-4">
 
             <div class="row justify-content-center">
-                <div class="col-md-6 col-lg-5">
+                <div class="col-12 col-md-7 col-lg-5 col-xl-4">
 
-                    <div class="card shadow-sm border-0">
-                        <div class="card-body p-4 p-md-5">
+                    <div class="auth-standalone-card p-4 p-md-5">
 
-                            <h2 class="text-center mb-4">
-                                Iniciar Sesión
-                            </h2>
-
-                            <div th:if="${param.exito}"
-                                 class="alert alert-success text-center">
-                                ¡Cuenta creada con éxito! Ahora puedes iniciar sesión.
+                        <!-- Brand Logo Header -->
+                        <div class="text-center mb-4">
+                            <div class="logo-cart-badge mx-auto mb-2" style="width: 44px; height: 44px;" aria-hidden="true">
+                                <svg class="multistore-cart-icon" width="30" height="30" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="13" y="8" width="7.5" height="9" rx="1.5" fill="#60a5fa" />
+                                    <path d="M16.7 8V17" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" />
+                                    <rect x="19.5" y="5" width="8.5" height="12" rx="1.5" fill="#fbbf24" />
+                                    <path d="M23.7 5V17" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" />
+                                    <path d="M10 11C10 9.8 11 9 12.2 9H13.5V17H10V11Z" fill="#34d399" />
+                                    <path d="M4 6H7.5L10.5 21H27L30 9H9.5" stroke="#f1f5f9" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M11 15H28.5" stroke="#f1f5f9" stroke-width="1.4" stroke-linecap="round"/>
+                                    <circle cx="13" cy="26" r="2.5" fill="#60a5fa" stroke="#f1f5f9" stroke-width="1.8"/>
+                                    <circle cx="25" cy="26" r="2.5" fill="#60a5fa" stroke="#f1f5f9" stroke-width="1.8"/>
+                                </svg>
                             </div>
+                            <h3 class="fw-bold text-dark mb-1">Iniciar Sesión</h3>
+                            <p class="text-secondary small mb-0">Bienvenido de vuelta a tu tienda MultiStore</p>
+                        </div>
 
-                            <div th:if="${param.error}"
-                                 class="alert alert-danger text-center">
-                                Correo o contraseña incorrectos.
-                            </div>
+                        <!-- Feedback Alerts -->
+                        <div th:if="${param.exito}" class="alert alert-success d-flex align-items-center gap-2 small rounded-3 py-2 px-3 mb-3" role="alert">
+                            <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                            <div>¡Cuenta creada con éxito! Ahora puedes iniciar sesión.</div>
+                        </div>
 
-                            <form th:action="@{/inicio-sesion}" method="post">
+                        <div th:if="${param.error}" class="alert alert-danger d-flex align-items-center gap-2 small rounded-3 py-2 px-3 mb-3" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i>
+                            <div>Correo o contraseña incorrectos. Verifica tus datos.</div>
+                        </div>
 
-                                <div class="mb-3">
-                                    <label for="username" class="form-label">
-                                        Correo Electrónico
-                                    </label>
+                        <form th:action="@{/inicio-sesion}" method="post">
 
+                            <div class="mb-3">
+                                <label for="username" class="form-label small fw-bold text-secondary mb-1">
+                                    Correo Electrónico
+                                </label>
+                                <div class="input-group auth-input-group">
+                                    <span class="input-group-text bg-white border-end-0 text-muted">
+                                        <i class="bi bi-envelope"></i>
+                                    </span>
                                     <input type="email"
                                            id="username"
                                            name="username"
-                                           class="form-control"
-                                           placeholder="ejemplo@correo.com"
+                                           class="form-control border-start-0 ps-0"
+                                           placeholder="tu-correo@ejemplo.com"
                                            autocomplete="username"
                                            required>
                                 </div>
+                            </div>
 
-                                <div class="mb-4">
-                                    <label for="password" class="form-label">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="password" class="form-label small fw-bold text-secondary mb-0">
                                         Contraseña
                                     </label>
-
+                                </div>
+                                <div class="input-group auth-input-group">
+                                    <span class="input-group-text bg-white border-end-0 text-muted">
+                                        <i class="bi bi-shield-lock"></i>
+                                    </span>
                                     <input type="password"
                                            id="password"
                                            name="password"
-                                           class="form-control"
+                                           class="form-control border-start-0 border-end-0 ps-0"
+                                           placeholder="••••••••"
                                            autocomplete="current-password"
                                            required>
-                                </div>
-
-                                <div class="d-grid">
-                                    <button type="submit"
-                                            class="btn btn-primary btn-lg">
-                                        Entrar
+                                    <button class="btn btn-outline-secondary border-start-0 bg-white text-muted"
+                                            type="button"
+                                            onclick="togglePasswordVisibility('password', this)"
+                                            title="Mostrar u ocultar contraseña">
+                                        <i class="bi bi-eye"></i>
                                     </button>
                                 </div>
+                            </div>
 
-                                <div class="text-center mt-4">
-                                        <span class="text-muted">
-                                            ¿No tienes cuenta?
-                                        </span>
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" id="remember-me" name="remember-me" checked>
+                                <label class="form-check-label small text-secondary" for="remember-me">
+                                    Mantener mi sesión iniciada
+                                </label>
+                            </div>
 
-                                    <a th:href="@{/registro}"
-                                       class="text-decoration-none">
-                                        Regístrate aquí
-                                    </a>
-                                </div>
+                            <div class="d-grid mb-3">
+                                <button type="submit" class="btn btn-mustard btn-lg fw-bold py-2 rounded-3 shadow-xs d-flex align-items-center justify-content-center gap-2">
+                                    <i class="bi bi-box-arrow-in-right"></i>
+                                    <span>Entrar a mi cuenta</span>
+                                </button>
+                            </div>
 
-                            </form>
+                            <div class="text-center pt-3 border-top">
+                                <span class="text-muted small">¿No tienes una cuenta aún?</span>
+                                <a th:href="@{/registro}" class="small fw-bold text-primary text-decoration-none ms-1">
+                                    Regístrate aquí gratis
+                                </a>
+                            </div>
 
-                        </div>
+                        </form>
+
                     </div>
 
                 </div>

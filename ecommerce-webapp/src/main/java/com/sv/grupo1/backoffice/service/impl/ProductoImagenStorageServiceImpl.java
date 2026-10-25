@@ -191,6 +191,7 @@ public class ProductoImagenStorageServiceImpl implements ProductoImagenStorageSe
         producto.setImagenPrincipalUrl(urlPrincipal);
         producto.setTotalImagenes(mapaSlots.size());
         producto.setImagenesSlotsJson(serializarMapaSlotsJson(mapaSlots));
+        producto.setImagenesSlots(mapaSlots);
     }
 
     private void guardarArchivoSlot(Path carpetaProducto, int slot, MultipartFile archivo) {
@@ -376,3 +377,4 @@ public class ProductoImagenStorageServiceImpl implements ProductoImagenStorageSe
         return cwd.resolve(configuredDir).toAbsolutePath().normalize();
     }
 }
+

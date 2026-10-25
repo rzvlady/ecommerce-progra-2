@@ -59,6 +59,15 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
             return;
         }
 
+        String requestedWith = request.getHeader("X-Requested-With");
+        String accept = request.getHeader("Accept");
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith) || (accept != null && accept.contains("application/json"))) {
+            response.setContentType("application/json;charset=UTF-8");
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getWriter().write("{\"ok\":true,\"redirect\":\"" + targetUrl + "\"}");
+            return;
+        }
+
         redirectStrategy.sendRedirect(request, response, targetUrl);
     }
 }

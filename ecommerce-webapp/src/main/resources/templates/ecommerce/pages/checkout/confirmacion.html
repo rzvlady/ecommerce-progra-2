@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 
-<head th:replace="~{ecommerce/fragments/ecommerce-head :: head('Compra confirmada')}">
+<head th:replace="~{ecommerce/fragments/ecommerce-head :: head('Compra Confirmada')}">
 </head>
 
 <body class="store-body">
@@ -9,63 +9,158 @@
 <div th:replace="~{ecommerce/layout/ecommerce-layout :: layout(~{::contenido})}">
     <th:block th:fragment="contenido">
 
-        <section class="container store-section"
-                 style="padding-top: 40px; padding-bottom: 55px; min-height: 60vh;">
+        <section class="container py-4 py-md-5" style="min-height: 65vh;">
+
+            <!-- Barra de Pasos del Checkout -->
+            <div class="checkout-steps-bar d-none d-md-flex mb-4">
+                <div class="checkout-step-item completed">
+                    <span class="checkout-step-num"><i class="bi bi-check"></i></span>
+                    <span>1. Carrito</span>
+                </div>
+                <div class="checkout-step-separator"></div>
+                <div class="checkout-step-item completed">
+                    <span class="checkout-step-num"><i class="bi bi-check"></i></span>
+                    <span>2. Entrega y Pago</span>
+                </div>
+                <div class="checkout-step-separator"></div>
+                <div class="checkout-step-item completed">
+                    <span class="checkout-step-num"><i class="bi bi-check-lg"></i></span>
+                    <span>3. Confirmación</span>
+                </div>
+            </div>
+
             <div class="row justify-content-center">
-                <div class="col-lg-8">
+                <div class="col-12 col-md-10 col-lg-7">
 
+                    <!-- Cabecera de Confirmación con Icono -->
                     <div class="text-center mb-4">
-                        <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
-                        <h1 class="section-title mt-3">¡Gracias por tu compra!</h1>
-                        <p class="section-description">
-                            Tu pedido <strong th:text="${'#' + resumen.idPedido}">#0</strong> fue confirmado.
+                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-success-subtle text-success p-3 mb-3 shadow-xs" style="width: 80px; height: 80px;">
+                            <i class="bi bi-check2-circle" style="font-size: 3rem;"></i>
+                        </div>
+                        <h1 class="h3 fw-bold text-dark mb-1">¡Muchas gracias por tu compra!</h1>
+                        <p class="text-secondary small mb-2">
+                            Hemos recibido y confirmado tu pedido exitosamente.
                         </p>
-                    </div>
-
-                    <div th:if="${mensajeExito}" class="alert alert-success" role="alert">
-                        <span th:text="${mensajeExito}"></span>
-                    </div>
-
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <h2 class="h5 mb-3">Detalle del pedido</h2>
-
-                            <ul class="list-group list-group-flush mb-3">
-                                <li class="list-group-item px-0 d-flex justify-content-between"
-                                    th:each="item : ${resumen.items}">
-                                    <div>
-                                        <span th:text="${item.nombreProducto}">Producto</span>
-                                        <small class="text-secondary d-block"
-                                               th:text="${item.cantidad + ' x $' + #numbers.formatDecimal(item.precioUnitario, 1, 'COMMA', 2, 'POINT')}">
-                                            1 x $0.00
-                                        </small>
-                                    </div>
-                                    <span th:text="${'$' + #numbers.formatDecimal(item.subtotal, 1, 'COMMA', 2, 'POINT')}">$0.00</span>
-                                </li>
-                            </ul>
-
-                            <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
-                                <span>Total pagado</span>
-                                <span th:text="${'$' + #numbers.formatDecimal(resumen.total, 1, 'COMMA', 2, 'POINT')}">$0.00</span>
-                            </div>
-
-                            <p class="mb-1">
-                                <i class="bi bi-geo-alt me-2"></i>
-                                <strong>Entrega en:</strong>
-                                <span th:text="${resumen.direccionEntrega}">Dirección</span>
-                            </p>
-                            <p class="mb-0" th:if="${resumen.referenciaPago != null}">
-                                <i class="bi bi-receipt me-2"></i>
-                                <strong>Referencia de pago:</strong>
-                                <span th:text="${resumen.referenciaPago}">TX-0000</span>
-                            </p>
+                        <div class="d-inline-block">
+                            <span class="badge bg-warning-subtle text-dark border border-warning-subtle px-3 py-2 fw-bold fs-6">
+                                Pedido <span th:text="${'#' + resumen.idPedido}">#0</span>
+                            </span>
                         </div>
                     </div>
 
-                    <div class="text-center">
-                        <a th:href="@{/productos}" class="btn btn-mustard">
-                            <i class="bi bi-bag me-2"></i>
-                            Seguir comprando
+                    <!-- Alerta de Éxito si viene mensaje adicional -->
+                    <div th:if="${mensajeExito}" class="alert alert-success d-flex align-items-center gap-2 rounded-3 shadow-xs py-2 px-3 mb-4" role="alert">
+                        <i class="bi bi-check-circle-fill text-success fs-5 flex-shrink-0"></i>
+                        <span class="small fw-medium" th:text="${mensajeExito}"></span>
+                    </div>
+
+                    <!-- Tarjeta con el Detalle del Pedido -->
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white">
+                        <div class="px-4 py-3 bg-white border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="rounded-circle bg-warning-subtle text-warning d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                                    <i class="bi bi-receipt-cutoff fs-5 text-dark"></i>
+                                </div>
+                                <div>
+                                    <h2 class="h6 fw-bold text-dark mb-0">Detalle de la Orden</h2>
+                                    <span class="text-secondary small" th:text="${resumen.items != null ? resumen.items.size() + ' producto(s) confirmado(s)' : ''}">1 producto</span>
+                                </div>
+                            </div>
+                            <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-3 py-1.5 fw-semibold small d-inline-flex align-items-center gap-1">
+                                <i class="bi bi-shield-check"></i> Pago Aprobado
+                            </span>
+                        </div>
+
+                        <div class="p-4">
+                            <!-- Lista de Artículos -->
+                            <div class="mb-3">
+                                <div class="d-flex align-items-center justify-content-between gap-3 py-3 border-bottom"
+                                     th:each="item : ${resumen.items}">
+                                    <div class="d-flex align-items-center gap-3 min-w-0">
+                                        <div class="position-relative flex-shrink-0">
+                                            <img th:if="${item.imagenUrl != null and !#strings.isEmpty(item.imagenUrl)}"
+                                                 th:src="${item.imagenUrl}"
+                                                 th:alt="${item.nombreProducto}"
+                                                 class="rounded-3 border object-fit-contain bg-light p-1"
+                                                 style="width: 58px; height: 58px;"
+                                                 loading="lazy"
+                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                            <div th:style="${item.imagenUrl != null and !#strings.isEmpty(item.imagenUrl)} ? 'display: none;' : 'display: flex;'"
+                                                 class="rounded-3 border object-fit-contain bg-light p-1 flex-shrink-0 align-items-center justify-content-center text-muted"
+                                                 style="width: 58px; height: 58px;">
+                                                <i class="bi bi-image opacity-50 fs-5"></i>
+                                            </div>
+                                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary text-white border border-white"
+                                                  style="font-size: 0.7rem;"
+                                                  th:text="${item.cantidad}">1</span>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <span class="fw-bold text-dark d-block text-truncate" style="max-width: 340px; font-size: 0.95rem;" th:text="${item.nombreProducto}">Producto</span>
+                                            <div class="text-secondary small d-flex align-items-center gap-2 mt-1">
+                                                <span class="badge bg-light text-secondary border font-monospace fw-normal" style="font-size: 0.75rem;" th:text="${item.codigoSku}">SKU</span>
+                                                <span class="text-muted">Precio: <strong class="text-dark" th:text="${'$' + #numbers.formatDecimal(item.precioUnitario, 1, 'COMMA', 2, 'POINT')}">$0.00</strong></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-end flex-shrink-0">
+                                        <span class="fw-bold text-dark fs-6"
+                                              th:text="${'$' + #numbers.formatDecimal(item.subtotal, 1, 'COMMA', 2, 'POINT')}">$0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Desglose de Totales -->
+                            <div class="bg-light-subtle rounded-3 p-3 mb-4 border border-dashed">
+                                <div class="d-flex justify-content-between align-items-center mb-2 small text-secondary">
+                                    <span>Envío a domicilio estándar</span>
+                                    <span class="text-success fw-bold d-inline-flex align-items-center gap-1"><i class="bi bi-truck"></i> Gratis</span>
+                                </div>
+                                <hr class="my-2 opacity-25">
+                                <div class="d-flex justify-content-between align-items-center pt-1">
+                                    <div>
+                                        <span class="h6 fw-bold text-dark d-block mb-0">Total Pagado</span>
+                                        <span class="text-muted" style="font-size: 0.75rem;">Impuestos y envío incluidos</span>
+                                    </div>
+                                    <span class="h3 fw-bold text-dark mb-0"
+                                          th:text="${'$' + #numbers.formatDecimal(resumen.total, 1, 'COMMA', 2, 'POINT')}">$0.00</span>
+                                </div>
+                            </div>
+
+                            <!-- Información de Entrega y Pago -->
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <div class="h-100 p-3 bg-light rounded-3 border d-flex gap-3 align-items-start">
+                                        <div class="rounded-circle bg-warning-subtle text-dark p-2 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px;">
+                                            <i class="bi bi-geo-alt-fill text-warning fs-5"></i>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <span class="text-uppercase text-secondary fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Destino de Entrega</span>
+                                            <p class="small fw-medium text-dark mb-0 mt-0.5 text-break" th:text="${resumen.direccionEntrega}">Dirección</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6" th:if="${resumen.referenciaPago != null}">
+                                    <div class="h-100 p-3 bg-light rounded-3 border d-flex gap-3 align-items-start">
+                                        <div class="rounded-circle bg-primary-subtle text-primary p-2 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px;">
+                                            <i class="bi bi-credit-card-2-front fs-5"></i>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <span class="text-uppercase text-secondary fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Comprobante Digital</span>
+                                            <p class="small font-monospace fw-bold text-dark mb-0 mt-0.5 text-break" th:text="${resumen.referenciaPago}">TX-0000</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones de Acción -->
+                    <div class="d-flex flex-wrap justify-content-center gap-2">
+                        <a th:href="@{/productos}" class="btn btn-mustard px-4 py-2.5 fw-bold rounded-pill shadow-xs">
+                            <i class="bi bi-grid me-2"></i> Seguir Explorando el Catálogo
+                        </a>
+                        <a th:href="@{/}" class="btn btn-outline-secondary px-4 py-2.5 fw-semibold rounded-pill">
+                            Ir a la Página de Inicio
                         </a>
                     </div>
 
