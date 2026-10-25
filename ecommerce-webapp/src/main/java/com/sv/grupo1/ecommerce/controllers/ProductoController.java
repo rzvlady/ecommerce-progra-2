@@ -7,6 +7,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /*
  * @author Miguel-A-Serrano
@@ -40,9 +44,20 @@ public class ProductoController {
 
     @GetMapping("/{id}")
     public String detalleProducto(@PathVariable("id") Integer id, Model model) {
-        var producto = productoService.obtenerPorId(id)
-                .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado: " + id));
+        var productoOpt = productoService.obtenerPorId(id);
+        if (productoOpt.isEmpty()) {
+            return "redirect:/productos";
+        }
+        var producto = productoOpt.get();
         model.addAttribute("producto", producto);
+        Map<String, String> especificaciones = new LinkedHashMap<>();
+        if (producto.getMetadata() != null && !producto.getMetadata().isBlank()) {
+            Matcher m = Pattern.compile("\"([^\"]+)\"\\s*:\\s*\"([^\"]+)\"").matcher(producto.getMetadata());
+            while (m.find()) {
+                especificaciones.put(m.group(1), m.group(2));
+            }
+        }
+        model.addAttribute("especificaciones", especificaciones);
         return "ecommerce/pages/producto-detalle";
     }
 }
