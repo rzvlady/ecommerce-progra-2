@@ -3,19 +3,29 @@ package com.sv.grupo1.backoffice.controller;
 import com.sv.grupo1.backoffice.dto.DespachoPedidoDTO;
 import com.sv.grupo1.backoffice.dto.ItemPedidoDTO;
 import com.sv.grupo1.backoffice.dto.PedidoBackofficeDTO;
+import com.sv.grupo1.backoffice.service.ProductoImagenStorageService;
+import com.sv.grupo1.ecommerce.dao.*;
+import com.sv.grupo1.ecommerce.entities.core.*;
+import com.sv.grupo1.ecommerce.entities.seguridad.Usuario;
+import com.sv.grupo1.ecommerce.entities.seguridad.UsuarioContacto;
+import com.sv.grupo1.ecommerce.entities.seguridad.UsuarioDireccion;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 @RequestMapping(path = "/backoffice/pedidos")
@@ -23,22 +33,59 @@ import java.util.List;
 public class BackofficePedidoController {
 
     private static final Logger LOG = LoggerFactory.getLogger(BackofficePedidoController.class);
+    private static final DateTimeFormatter FORMATO_FECHA = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+    private final PedidoRepository pedidoRepository;
+    private final DetallePedidoRepository detallePedidoRepository;
+    private final PagoRepository pagoRepository;
+    private final EnvioRepository envioRepository;
+    private final ProductoRepository productoRepository;
+    private final MovimientoInventarioRepository movimientoRepository;
+    private final ProductoImagenStorageService imagenStorageService;
+
+    public BackofficePedidoController(
+            PedidoRepository pedidoRepository,
+            DetallePedidoRepository detallePedidoRepository,
+            PagoRepository pagoRepository,
+            EnvioRepository envioRepository,
+            ProductoRepository productoRepository,
+            MovimientoInventarioRepository movimientoRepository,
+            ProductoImagenStorageService imagenStorageService) {
+        this.pedidoRepository = pedidoRepository;
+        this.detallePedidoRepository = detallePedidoRepository;
+        this.pagoRepository = pagoRepository;
+        this.envioRepository = envioRepository;
+        this.productoRepository = productoRepository;
+        this.movimientoRepository = movimientoRepository;
+        this.imagenStorageService = imagenStorageService;
+    }
 
     @GetMapping
+    @Transactional(readOnly = true)
     public String vistaPedidos(
             @RequestParam(name = "estado", required = false, defaultValue = "TODOS") String filtroEstado,
             Model model) {
-        LOG.info("Cargando boceto de la vista de gestión de pedidos en backoffice. Filtro: {}", filtroEstado);
+        LOG.info("Cargando vista de gestión de pedidos en backoffice desde Supabase. Filtro: {}", filtroEstado);
 
-        List<PedidoBackofficeDTO> pedidos = obtenerPedidosEjemplo();
+        List<Pedido> pedidosEntidad = pedidoRepository.findAllConRelaciones();
+        List<PedidoBackofficeDTO> todosLosPedidos = pedidosEntidad.stream()
+                .map(this::convertirAPedidoBackofficeDTO)
+                .toList();
 
-        long totalPedidos = pedidos.size();
-        long pendientesPago = pedidos.stream().filter(p -> "PENDIENTE".equalsIgnoreCase(p.getEstadoPedido())).count();
-        long listosDespacho = pedidos.stream().filter(p -> "PAGADO".equalsIgnoreCase(p.getEstadoPedido()) || "EN_PREPARACION".equalsIgnoreCase(p.getEstadoPedido())).count();
-        long enTransito = pedidos.stream().filter(p -> "DESPACHADO".equalsIgnoreCase(p.getEstadoPedido())).count();
-        long entregados = pedidos.stream().filter(p -> "ENTREGADO".equalsIgnoreCase(p.getEstadoPedido())).count();
+        List<PedidoBackofficeDTO> pedidos = "TODOS".equalsIgnoreCase(filtroEstado)
+                ? todosLosPedidos
+                : todosLosPedidos.stream()
+                    .filter(p -> filtroEstado.equalsIgnoreCase(p.getEstadoPedido()))
+                    .toList();
 
-        BigDecimal montoTotalFacturado = pedidos.stream()
+        long totalPedidos = todosLosPedidos.size();
+        long pendientesPago = todosLosPedidos.stream().filter(p -> "PENDIENTE".equalsIgnoreCase(p.getEstadoPedido())).count();
+        long listosDespacho = todosLosPedidos.stream().filter(p -> "PAGADO".equalsIgnoreCase(p.getEstadoPedido()) || "EN_PREPARACION".equalsIgnoreCase(p.getEstadoPedido())).count();
+        long enTransito = todosLosPedidos.stream().filter(p -> "DESPACHADO".equalsIgnoreCase(p.getEstadoPedido())).count();
+        long entregados = todosLosPedidos.stream().filter(p -> "ENTREGADO".equalsIgnoreCase(p.getEstadoPedido())).count();
+        long anulados = todosLosPedidos.stream().filter(p -> "ANULADO".equalsIgnoreCase(p.getEstadoPedido())).count();
+
+        BigDecimal montoTotalFacturado = todosLosPedidos.stream()
                 .filter(p -> !"ANULADO".equalsIgnoreCase(p.getEstadoPedido()))
                 .map(PedidoBackofficeDTO::getTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -50,8 +97,9 @@ public class BackofficePedidoController {
         model.addAttribute("listosDespacho", listosDespacho);
         model.addAttribute("enTransito", enTransito);
         model.addAttribute("entregados", entregados);
+        model.addAttribute("anulados", anulados);
         model.addAttribute("montoTotalFacturado", montoTotalFacturado);
-        model.addAttribute("pedidosJson", serializarPedidosAJson(pedidos));
+        model.addAttribute("pedidosJson", serializarPedidosAJson(todosLosPedidos));
 
         if (!model.containsAttribute("despachoDTO")) {
             model.addAttribute("despachoDTO", new DespachoPedidoDTO());
@@ -61,6 +109,7 @@ public class BackofficePedidoController {
     }
 
     @PostMapping("/despachar")
+    @Transactional
     public String registrarDespacho(
             @Valid @ModelAttribute("despachoDTO") DespachoPedidoDTO despachoDTO,
             BindingResult result,
@@ -71,17 +120,43 @@ public class BackofficePedidoController {
             return "redirect:/backoffice/pedidos";
         }
 
-        LOG.info("Simulando despacho de pedido #{} con transporte {} y guía {}",
+        LOG.info("Registrando despacho real para pedido #{} con transporte {} y guía {}",
                 despachoDTO.getIdPedido(), despachoDTO.getEmpresaTransporte(), despachoDTO.getNumeroSeguimiento());
 
+        Pedido pedido = pedidoRepository.findById(despachoDTO.getIdPedido()).orElse(null);
+        if (pedido == null) {
+            redirectAttributes.addFlashAttribute("mensajeError", "No se encontró el pedido #" + despachoDTO.getIdPedido());
+            return "redirect:/backoffice/pedidos";
+        }
+
+        // Actualizar estado del pedido a 'E' (Enviado / Despachado)
+        pedido.setEstadoPedido('E');
+        pedido.setFechaActualizacion(OffsetDateTime.now());
+        pedidoRepository.save(pedido);
+
+        // Crear o actualizar registro en core.envios
+        Envio envio = envioRepository.findByPedido_IdPedido(pedido.getIdPedido())
+                .orElseGet(() -> {
+                    Envio e = new Envio();
+                    e.setPedido(pedido);
+                    return e;
+                });
+
+        envio.setEmpresaTransporte(despachoDTO.getEmpresaTransporte());
+        envio.setNumeroSeguimiento(despachoDTO.getNumeroSeguimiento());
+        envio.setEstadoEnvio('T'); // 'T' = En Tránsito
+        envio.setFechaDespacho(OffsetDateTime.now());
+        envioRepository.save(envio);
+
         redirectAttributes.addFlashAttribute("mensajeExito",
-                "¡Pedido #" + despachoDTO.getIdPedido() + " despachado con éxito! Guía: "
+                "¡Pedido #" + despachoDTO.getIdPedido() + " despachado con éxito! Guía registrada: "
                         + despachoDTO.getNumeroSeguimiento() + " (" + despachoDTO.getEmpresaTransporte() + ").");
 
         return "redirect:/backoffice/pedidos";
     }
 
     @PostMapping("/cambiar-estado")
+    @Transactional
     public String cambiarEstadoPedido(
             @RequestParam("idPedido") Integer idPedido,
             @RequestParam("nuevoEstado") String nuevoEstado,
@@ -89,149 +164,256 @@ public class BackofficePedidoController {
 
         LOG.info("Cambiando estado de pedido #{} a {}", idPedido, nuevoEstado);
 
+        Pedido pedido = pedidoRepository.findById(idPedido).orElse(null);
+        if (pedido == null) {
+            redirectAttributes.addFlashAttribute("mensajeError", "No se encontró el pedido #" + idPedido);
+            return "redirect:/backoffice/pedidos";
+        }
+
+        char anteriorEstado = pedido.getEstadoPedido() != null ? pedido.getEstadoPedido() : 'P';
+        char targetEstado;
+        String nombreEstado;
+
+        switch (nuevoEstado.toUpperCase()) {
+            case "PAGADO":
+            case "CONFIRMADO":
+            case "C":
+                targetEstado = 'C';
+                nombreEstado = "Pagado (Listo para despacho)";
+                break;
+            case "DESPACHADO":
+            case "ENVIADO":
+            case "E":
+                targetEstado = 'E';
+                nombreEstado = "Despachado (En Tránsito)";
+                break;
+            case "ENTREGADO":
+            case "FINALIZADO":
+            case "F":
+                targetEstado = 'F';
+                nombreEstado = "Entregado";
+                envioRepository.findByPedido_IdPedido(pedido.getIdPedido()).ifPresent(envio -> {
+                    envio.setEstadoEnvio('E'); // 'E' = Entregado
+                    envio.setFechaEntrega(OffsetDateTime.now());
+                    envioRepository.save(envio);
+                });
+                break;
+            case "ANULADO":
+            case "A":
+                targetEstado = 'A';
+                nombreEstado = "Anulado";
+                // Si el pedido estaba confirmado ('C' o 'E'), reponer stock y asentar en Kardex
+                if (anteriorEstado == 'C' || anteriorEstado == 'E') {
+                    List<DetallePedido> detalles = detallePedidoRepository.findByPedido_IdPedido(pedido.getIdPedido());
+                    for (DetallePedido det : detalles) {
+                        Producto prod = det.getProducto();
+                        if (prod != null) {
+                            prod.setStockDisponible((prod.getStockDisponible() != null ? prod.getStockDisponible() : 0) + det.getCantidad());
+                            productoRepository.save(prod);
+
+                            MovimientoInventario mov = new MovimientoInventario();
+                            mov.setProducto(prod);
+                            mov.setTipoMovimiento("ENTRADA");
+                            mov.setCantidad(det.getCantidad());
+                            mov.setMotivo("DEVOLUCION - Cancelación Pedido #" + pedido.getIdPedido());
+                            mov.setPedido(pedido);
+                            movimientoRepository.save(mov);
+                        }
+                    }
+                }
+                break;
+            default:
+                targetEstado = 'P';
+                nombreEstado = "Pendiente";
+                break;
+        }
+
+        pedido.setEstadoPedido(targetEstado);
+        pedido.setFechaActualizacion(OffsetDateTime.now());
+        pedidoRepository.save(pedido);
+
         redirectAttributes.addFlashAttribute("mensajeExito",
-                "El estado del pedido #" + idPedido + " ha sido actualizado a " + nuevoEstado + ".");
+                "El estado del pedido #" + idPedido + " ha sido actualizado a " + nombreEstado + ".");
 
         return "redirect:/backoffice/pedidos";
     }
 
-    /**
-     * Datos de prueba representativos para el boceto visual.
-     */
-    private List<PedidoBackofficeDTO> obtenerPedidosEjemplo() {
-        List<PedidoBackofficeDTO> lista = new ArrayList<>();
+    private PedidoBackofficeDTO convertirAPedidoBackofficeDTO(Pedido pedido) {
+        PedidoBackofficeDTO dto = new PedidoBackofficeDTO();
+        dto.setIdPedido(pedido.getIdPedido());
+        dto.setCodigoPedido("ORD-2026-" + String.format("%04d", pedido.getIdPedido()));
 
-        // Pedido 1: Pagado / Listo para despacho
-        PedidoBackofficeDTO p1 = new PedidoBackofficeDTO();
-        p1.setIdPedido(1081);
-        p1.setCodigoPedido("ORD-2026-1081");
-        p1.setFechaCreacion("2026-10-23 15:42");
-        p1.setClienteNombre("Carlos Mendoza");
-        p1.setClienteEmail("carlos.mendoza@email.com");
-        p1.setClienteTelefono("+503 7845-1234");
-        p1.setDireccionEntrega("Colonia Escalón, Calle El Mirador #452");
-        p1.setDepartamento("San Salvador");
-        p1.setMunicipio("San Salvador Centro");
-        p1.setEstadoPedido("PAGADO");
-        p1.setEstadoPago("APROBADO");
-        p1.setMetodoPago("TARJETA_CREDITO");
-        p1.setReferenciaPago("TXN-VISA-994182");
-        p1.setSubtotal(new BigDecimal("185.00"));
-        p1.setDescuento(new BigDecimal("10.00"));
-        p1.setCostoEnvio(new BigDecimal("5.00"));
-        p1.setTotal(new BigDecimal("180.00"));
-        p1.setNotas("Entregar preferiblemente por la tarde");
-        List<ItemPedidoDTO> items1 = new ArrayList<>();
-        items1.add(new ItemPedidoDTO("SKU-AUD-001", "Auriculares Inalámbricos Pro Noise Cancelling", "Electrónica", "/backoffice/img/sample-headphones.png", new BigDecimal("120.00"), 1, new BigDecimal("120.00")));
-        items1.add(new ItemPedidoDTO("SKU-ACC-004", "Mouse Ergonómico Bluetooth Recargable", "Accesorios", "/backoffice/img/sample-mouse.png", new BigDecimal("32.50"), 2, new BigDecimal("65.00")));
-        p1.setItems(items1);
-        lista.add(p1);
+        if (pedido.getFechaCreacion() != null) {
+            dto.setFechaCreacion(pedido.getFechaCreacion().format(FORMATO_FECHA));
+        } else {
+            dto.setFechaCreacion("Reciente");
+        }
 
-        // Pedido 2: En tránsito / Despachado
-        PedidoBackofficeDTO p2 = new PedidoBackofficeDTO();
-        p2.setIdPedido(1080);
-        p2.setCodigoPedido("ORD-2026-1080");
-        p2.setFechaCreacion("2026-10-23 11:15");
-        p2.setClienteNombre("Sofía Vanessa Reyes");
-        p2.setClienteEmail("sofia.reyes@gmail.com");
-        p2.setClienteTelefono("+503 7122-8899");
-        p2.setDireccionEntrega("Residencial Santa Teresa, Senda 4, Polígono B #12");
-        p2.setDepartamento("La Libertad");
-        p2.setMunicipio("Santa Tecla");
-        p2.setEstadoPedido("DESPACHADO");
-        p2.setEstadoPago("APROBADO");
-        p2.setMetodoPago("TARJETA_DEBITO");
-        p2.setReferenciaPago("TXN-MASTERCARD-44219");
-        p2.setSubtotal(new BigDecimal("350.00"));
-        p2.setDescuento(BigDecimal.ZERO);
-        p2.setCostoEnvio(new BigDecimal("4.50"));
-        p2.setTotal(new BigDecimal("354.50"));
-        p2.setEmpresaTransporte("DHL Express");
-        p2.setNumeroSeguimiento("TRK-DHL-992381");
-        p2.setFechaDespacho("2026-10-23 14:00");
-        List<ItemPedidoDTO> items2 = new ArrayList<>();
-        items2.add(new ItemPedidoDTO("SKU-GAM-002", "Monitor Gamer 27\" IPS 165Hz QHD", "Electrónica", "", new BigDecimal("350.00"), 1, new BigDecimal("350.00")));
-        p2.setItems(items2);
-        lista.add(p2);
+        // Cliente
+        Usuario usuario = pedido.getUsuario();
+        String nombreCliente = "Usuario #" + (usuario != null ? usuario.getIdUsuario() : "");
+        String emailCliente = (usuario != null && usuario.getCorreoInicioSesion() != null) ? usuario.getCorreoInicioSesion() : "";
+        String telefonoCliente = "Sin teléfono registrado";
 
-        // Pedido 3: Pendiente de pago
-        PedidoBackofficeDTO p3 = new PedidoBackofficeDTO();
-        p3.setIdPedido(1079);
-        p3.setCodigoPedido("ORD-2026-1079");
-        p3.setFechaCreacion("2026-10-23 09:30");
-        p3.setClienteNombre("Mauricio Alejandro López");
-        p3.setClienteEmail("mlopez@outlook.com");
-        p3.setClienteTelefono("+503 7988-1122");
-        p3.setDireccionEntrega("Condominio Las Vistas, Apto 402");
-        p3.setDepartamento("San Salvador");
-        p3.setMunicipio("Antiguo Cuscatlán");
-        p3.setEstadoPedido("PENDIENTE");
-        p3.setEstadoPago("PENDIENTE");
-        p3.setMetodoPago("TRANSFERENCIA");
-        p3.setReferenciaPago("TRANSF-PEND-771");
-        p3.setSubtotal(new BigDecimal("64.99"));
-        p3.setDescuento(BigDecimal.ZERO);
-        p3.setCostoEnvio(new BigDecimal("3.50"));
-        p3.setTotal(new BigDecimal("68.49"));
-        List<ItemPedidoDTO> items3 = new ArrayList<>();
-        items3.add(new ItemPedidoDTO("SKU-HOG-015", "Cafetera de Goteo Programable 12 Tazas", "Hogar", "", new BigDecimal("64.99"), 1, new BigDecimal("64.99")));
-        p3.setItems(items3);
-        lista.add(p3);
+        if (usuario != null) {
+            if (usuario.getPerfil() != null) {
+                String n = usuario.getPerfil().getNombres();
+                String a = usuario.getPerfil().getApellidos();
+                if ((n != null && !n.isBlank()) || (a != null && !a.isBlank())) {
+                    nombreCliente = ((n != null ? n : "") + " " + (a != null ? a : "")).trim();
+                }
+            }
+            if (usuario.getContactos() != null && !usuario.getContactos().isEmpty()) {
+                // 1. Priorizar tipo de contacto MOVIL / CELULAR ('M', 'T')
+                for (UsuarioContacto c : usuario.getContactos()) {
+                    if (c.getTipoContacto() != null && (Character.toUpperCase(c.getTipoContacto()) == 'M' || Character.toUpperCase(c.getTipoContacto()) == 'T')
+                            && c.getValor() != null && !c.getValor().isBlank()) {
+                        telefonoCliente = c.getValor().trim();
+                        break;
+                    }
+                }
+                // 2. Si no encontró explícito 'M', buscar cualquier contacto que no sea email (no contenga '@')
+                if ("Sin teléfono registrado".equals(telefonoCliente)) {
+                    for (UsuarioContacto c : usuario.getContactos()) {
+                        if (c.getValor() != null && !c.getValor().isBlank() && !c.getValor().contains("@")) {
+                            telefonoCliente = c.getValor().trim();
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        dto.setClienteNombre(nombreCliente);
+        dto.setClienteEmail(emailCliente);
+        dto.setClienteTelefono(telefonoCliente);
 
-        // Pedido 4: Entregado
-        PedidoBackofficeDTO p4 = new PedidoBackofficeDTO();
-        p4.setIdPedido(1078);
-        p4.setCodigoPedido("ORD-2026-1078");
-        p4.setFechaCreacion("2026-10-22 14:10");
-        p4.setClienteNombre("Beatriz Elizabeth Peña");
-        p4.setClienteEmail("b.pena@empresa.com");
-        p4.setClienteTelefono("+503 7654-3210");
-        p4.setDireccionEntrega("Boulevard Los Próceres, Edificio Torre Roble, Nivel 7");
-        p4.setDepartamento("San Salvador");
-        p4.setMunicipio("San Salvador");
-        p4.setEstadoPedido("ENTREGADO");
-        p4.setEstadoPago("APROBADO");
-        p4.setMetodoPago("TARJETA_CREDITO");
-        p4.setReferenciaPago("TXN-VISA-882190");
-        p4.setSubtotal(new BigDecimal("520.00"));
-        p4.setDescuento(new BigDecimal("25.00"));
-        p4.setCostoEnvio(BigDecimal.ZERO);
-        p4.setTotal(new BigDecimal("495.00"));
-        p4.setEmpresaTransporte("Cargo Express");
-        p4.setNumeroSeguimiento("CRG-8871239");
-        p4.setFechaDespacho("2026-10-22 16:30");
-        p4.setFechaEntrega("2026-10-23 10:45");
-        List<ItemPedidoDTO> items4 = new ArrayList<>();
-        items4.add(new ItemPedidoDTO("SKU-LAP-001", "Laptop Ultrabook 14\" Core i7 16GB 512GB SSD", "Computación", "", new BigDecimal("520.00"), 1, new BigDecimal("520.00")));
-        p4.setItems(items4);
-        lista.add(p4);
+        // Dirección y Punto de Referencia
+        UsuarioDireccion direccion = pedido.getDireccion();
+        if (direccion != null) {
+            dto.setDireccionEntrega(direccion.getDireccionLinea1());
+            if (direccion.getMunicipio() != null) {
+                dto.setMunicipio(direccion.getMunicipio().getNombreMunicipio());
+                if (direccion.getMunicipio().getDepartamento() != null) {
+                    dto.setDepartamento(direccion.getMunicipio().getDepartamento().getNombreDepartamento());
+                } else {
+                    dto.setDepartamento("El Salvador");
+                }
+            } else {
+                dto.setMunicipio("San Salvador");
+                dto.setDepartamento("San Salvador");
+            }
+            if (direccion.getMetadata() != null && direccion.getMetadata().get("punto_referencia") != null) {
+                String ref = String.valueOf(direccion.getMetadata().get("punto_referencia")).trim();
+                if (!ref.isBlank()) {
+                    dto.setNotas(ref);
+                }
+            }
+        } else {
+            dto.setDireccionEntrega("Dirección estándar registrada");
+            dto.setMunicipio("San Salvador");
+            dto.setDepartamento("San Salvador");
+        }
 
-        // Pedido 5: Anulado
-        PedidoBackofficeDTO p5 = new PedidoBackofficeDTO();
-        p5.setIdPedido(1075);
-        p5.setCodigoPedido("ORD-2026-1075");
-        p5.setFechaCreacion("2026-10-21 18:22");
-        p5.setClienteNombre("Jorge Ernesto Castro");
-        p5.setClienteEmail("jorge.castro@gmail.com");
-        p5.setClienteTelefono("+503 7001-2233");
-        p5.setDireccionEntrega("Colonia San Benito, Pasaje 3, Casa #8");
-        p5.setDepartamento("San Salvador");
-        p5.setMunicipio("San Salvador");
-        p5.setEstadoPedido("ANULADO");
-        p5.setEstadoPago("RECHAZADO");
-        p5.setMetodoPago("TARJETA_CREDITO");
-        p5.setReferenciaPago("TXN-DECLINED-02");
-        p5.setSubtotal(new BigDecimal("89.90"));
-        p5.setDescuento(BigDecimal.ZERO);
-        p5.setCostoEnvio(new BigDecimal("4.00"));
-        p5.setTotal(new BigDecimal("93.90"));
-        p5.setNotas("Transacción rechazada por el banco emisor");
-        List<ItemPedidoDTO> items5 = new ArrayList<>();
-        items5.add(new ItemPedidoDTO("SKU-ACC-010", "Teclado Mecánico RGB Switch Brown", "Accesorios", "", new BigDecimal("89.90"), 1, new BigDecimal("89.90")));
-        p5.setItems(items5);
-        lista.add(p5);
+        // Estado del pedido
+        char estado = pedido.getEstadoPedido() != null ? pedido.getEstadoPedido() : 'P';
+        String estadoStr;
+        switch (estado) {
+            case 'C':
+                estadoStr = "PAGADO";
+                break;
+            case 'E':
+                estadoStr = "DESPACHADO";
+                break;
+            case 'F':
+                estadoStr = "ENTREGADO";
+                break;
+            case 'A':
+                estadoStr = "ANULADO";
+                break;
+            case 'P':
+            default:
+                estadoStr = "PENDIENTE";
+                break;
+        }
+        dto.setEstadoPedido(estadoStr);
 
-        return lista;
+        // Pago
+        Optional<Pago> pagoOpt = pagoRepository.findFirstByPedido_IdPedidoOrderByIdPagoDesc(pedido.getIdPedido());
+        if (pagoOpt.isPresent()) {
+            Pago pago = pagoOpt.get();
+            dto.setMetodoPago(pago.getMetodoPago() != null ? pago.getMetodoPago() : "TARJETA_CREDITO");
+            dto.setReferenciaPago(pago.getReferenciaPasarela() != null ? pago.getReferenciaPasarela() : "TXN-" + pago.getIdPago());
+
+            char ep = pago.getEstadoTransaccion() != null ? pago.getEstadoTransaccion() : 'P';
+            if (ep == 'E' || ep == 'A') {
+                dto.setEstadoPago("APROBADO");
+            } else if (ep == 'R') {
+                dto.setEstadoPago("RECHAZADO");
+            } else {
+                dto.setEstadoPago("PENDIENTE");
+            }
+        } else {
+            if (estado == 'C' || estado == 'E' || estado == 'F') {
+                dto.setMetodoPago("TARJETA_CREDITO");
+                dto.setReferenciaPago("TXN-ORD-" + pedido.getIdPedido());
+                dto.setEstadoPago("APROBADO");
+            } else if (estado == 'A') {
+                dto.setMetodoPago("TARJETA_CREDITO");
+                dto.setReferenciaPago("DECLINED");
+                dto.setEstadoPago("RECHAZADO");
+            } else {
+                dto.setMetodoPago("PENDIENTE");
+                dto.setReferenciaPago("PENDIENTE");
+                dto.setEstadoPago("PENDIENTE");
+            }
+        }
+
+        // Envío
+        Optional<Envio> envioOpt = envioRepository.findByPedido_IdPedido(pedido.getIdPedido());
+        BigDecimal costoEnvio = BigDecimal.ZERO;
+        if (envioOpt.isPresent()) {
+            Envio envio = envioOpt.get();
+            dto.setEmpresaTransporte(envio.getEmpresaTransporte());
+            dto.setNumeroSeguimiento(envio.getNumeroSeguimiento());
+            if (envio.getCostoEnvio() != null) {
+                costoEnvio = envio.getCostoEnvio();
+            }
+            if (envio.getFechaDespacho() != null) {
+                dto.setFechaDespacho(envio.getFechaDespacho().format(FORMATO_FECHA));
+            }
+            if (envio.getFechaEntrega() != null) {
+                dto.setFechaEntrega(envio.getFechaEntrega().format(FORMATO_FECHA));
+            }
+        }
+        dto.setCostoEnvio(costoEnvio);
+
+        // Financiero
+        BigDecimal total = pedido.getTotal() != null ? pedido.getTotal() : BigDecimal.ZERO;
+        BigDecimal descuento = pedido.getDescuento() != null ? pedido.getDescuento() : BigDecimal.ZERO;
+        dto.setTotal(total);
+        dto.setDescuento(descuento);
+        dto.setSubtotal(total.add(descuento).subtract(costoEnvio).max(BigDecimal.ZERO));
+
+        // Items
+        List<DetallePedido> detalles = detallePedidoRepository.findByPedido_IdPedido(pedido.getIdPedido());
+        List<ItemPedidoDTO> itemsDto = new ArrayList<>();
+        for (DetallePedido det : detalles) {
+            Producto prod = det.getProducto();
+            if (prod != null) {
+                imagenStorageService.cargarImagenesEnProducto(prod);
+                String sku = prod.getCodigoSku();
+                String nombreProd = prod.getNombreProducto();
+                String cat = prod.getCategoria() != null ? prod.getCategoria().getNombreCategoria() : "General";
+                String img = prod.getImagenPrincipalUrl() != null ? prod.getImagenPrincipalUrl() : "";
+                BigDecimal precioUnit = det.getPrecioUnitario() != null ? det.getPrecioUnitario() : BigDecimal.ZERO;
+                int cant = det.getCantidad() != null ? det.getCantidad() : 1;
+                BigDecimal sub = det.getSubtotal() != null ? det.getSubtotal() : precioUnit.multiply(BigDecimal.valueOf(cant));
+                itemsDto.add(new ItemPedidoDTO(sku, nombreProd, cat, img, precioUnit, cant, sub));
+            }
+        }
+        dto.setItems(itemsDto);
+
+        return dto;
     }
 
     private String serializarPedidosAJson(List<PedidoBackofficeDTO> pedidos) {

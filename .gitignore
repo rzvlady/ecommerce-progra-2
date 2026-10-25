@@ -44,6 +44,7 @@ mock-gateway-api/logs/
 
 .agents
 *.png
+!docs/*.png
 *.webp
 *.log
 .env

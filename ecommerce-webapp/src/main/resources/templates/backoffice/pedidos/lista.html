@@ -75,6 +75,178 @@
                 color: #64748b;
                 margin-bottom: 0.35rem;
             }
+
+            /* Mejoras de apariencia para botones y menú de acciones */
+            .dropdown-menu .dropdown-item:hover {
+                background-color: #f1f5f9;
+            }
+
+            /* Estilos de Impresión / Print Preview de Comprobante */
+            @media print {
+                @page {
+                    size: letter portrait;
+                    margin: 12mm 15mm;
+                }
+
+                body, html {
+                    background: #ffffff !important;
+                    color: #0f172a !important;
+                    font-size: 10.5pt !important;
+                }
+
+                body.modal-open {
+                    overflow: visible !important;
+                    padding-right: 0 !important;
+                }
+
+                /* Ocultar elementos de layout e interactivos */
+                .sidebar,
+                .topbar,
+                header,
+                nav,
+                .floating-alert-container,
+                .filter-card,
+                .card:not(#modalDetallePedido .card),
+                #tablaPedidos,
+                .pagination,
+                .modal-backdrop,
+                #modalRegistrarDespacho, #modalAnularPedido,
+                .btn,
+                .btn-close,
+                .modal-footer,
+                .stepper-card,
+                .d-flex.flex-column.flex-md-row.justify-content-between.align-items-md-center,
+                .row.g-3.mb-4,
+                #modalDetallePedido .modal-header {
+                    display: none !important;
+                }
+
+                .admin-layout, .admin-main, .main-content {
+                    display: block !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    width: 100% !important;
+                }
+
+                /* Mostrar exclusivamente el modal de detalle como documento continuo */
+                #modalDetallePedido {
+                    position: static !important;
+                    display: block !important;
+                    opacity: 1 !important;
+                    visibility: visible !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    height: auto !important;
+                    overflow: visible !important;
+                    background: transparent !important;
+                }
+
+                #modalDetallePedido .modal-dialog {
+                    max-width: 100% !important;
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    transform: none !important;
+                }
+
+                #modalDetallePedido .modal-content {
+                    border: none !important;
+                    box-shadow: none !important;
+                    border-radius: 0 !important;
+                    padding: 0 !important;
+                    background: transparent !important;
+                    overflow: visible !important;
+                }
+
+                #modalDetallePedido .modal-header {
+                    border-bottom: 2px solid #0f172a !important;
+                    padding: 0 0 10px 0 !important;
+                    margin-bottom: 15px !important;
+                    background: transparent !important;
+                }
+
+                #modalDetallePedido .modal-header .btn,
+                #modalDetallePedido .modal-header .btn-close {
+                    display: none !important;
+                }
+
+                #modalDetallePedido .modal-body {
+                    padding: 0 !important;
+                    overflow: visible !important;
+                    max-height: none !important;
+                }
+
+                /* Columnas en impresión: artículos a la izquierda, cliente/pago a la derecha */
+                #modalDetallePedido .row {
+                    display: flex !important;
+                    flex-wrap: nowrap !important;
+                    gap: 16px !important;
+                }
+
+                #modalDetallePedido .col-lg-7 {
+                    width: 58% !important;
+                    flex: 0 0 58% !important;
+                }
+
+                #modalDetallePedido .col-lg-5 {
+                    width: 42% !important;
+                    flex: 0 0 42% !important;
+                }
+
+                #modalDetallePedido .card {
+                    border: 1px solid #e2e8f0 !important;
+                    box-shadow: none !important;
+                    break-inside: avoid;
+                    margin-bottom: 12px !important;
+                }
+
+                #modalDetallePedido .card-header,
+                #modalDetallePedido .card-footer {
+                    background-color: #f8fafc !important;
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                }
+
+                #modalDetallePedido .table-responsive {
+                    display: block !important;
+                    overflow: visible !important;
+                    width: 100% !important;
+                }
+
+                #modalDetallePedido table {
+                    display: table !important;
+                    width: 100% !important;
+                    border-collapse: collapse !important;
+                }
+
+                #modalDetallePedido thead {
+                    display: table-header-group !important;
+                }
+
+                #modalDetallePedido tbody {
+                    display: table-row-group !important;
+                }
+
+                #modalDetallePedido tr {
+                    display: table-row !important;
+                }
+
+                #modalDetallePedido th,
+                #modalDetallePedido td {
+                    display: table-cell !important;
+                    padding: 6px 4px !important;
+                    font-size: 9pt !important;
+                    border-bottom: 1px solid #e2e8f0 !important;
+                }
+
+                .badge-pedido {
+                    border: 1px solid currentColor !important;
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                }
+            }
         </style>
 
         <!-- Alertas flotantes -->
@@ -111,10 +283,7 @@
                     <i class="bi bi-arrow-clockwise"></i>
                     <span>Actualizar</span>
                 </a>
-                <button type="button" class="btn btn-outline-secondary bg-white d-inline-flex align-items-center gap-2 shadow-sm" id="btnExportarCSV">
-                    <i class="bi bi-download"></i>
-                    <span>Exportar CSV</span>
-                </button>
+
             </div>
         </div>
 
@@ -244,7 +413,7 @@
                             Entregados <span class="badge bg-success ms-1" th:text="${entregados}">1</span>
                         </button>
                         <button type="button" class="btn btn-sm btn-outline-secondary bg-white px-3" data-quick-estado="ANULADO">
-                            Anulados
+                            Anulados <span class="badge bg-danger ms-1" th:text="${anulados}">0</span>
                         </button>
                     </div>
                 </div>
@@ -325,7 +494,7 @@
                         <th scope="col">Estado Pedido</th>
                         <th scope="col">Pago</th>
                         <th scope="col">Logística / Guía</th>
-                        <th scope="col" class="text-end pe-4">Acciones</th>
+                        <th scope="col" class="text-end pe-4" style="min-width: 140px;">Acciones</th>
                     </tr>
                     </thead>
                     <tbody class="divide-y" id="cuerpoTablaPedidos">
@@ -434,62 +603,61 @@
                         </td>
 
                         <!-- Acciones -->
-                        <td class="text-end pe-4">
-                            <div class="d-flex justify-content-end gap-1">
+                        <td class="text-end pe-4 text-nowrap">
+                            <div class="d-inline-flex align-items-center justify-content-end gap-1">
                                 <button type="button"
-                                        class="btn btn-sm btn-outline-primary btn-ver-detalle"
+                                        class="btn btn-sm btn-outline-primary btn-ver-detalle d-inline-flex align-items-center gap-1 shadow-sm"
                                         th:attr="data-id=${pedido.idPedido}"
-                                        title="Ver detalle completo del pedido">
+                                        title="Ver comprobante y detalle del pedido">
                                     <i class="bi bi-eye"></i>
-                                    <span class="d-none d-xl-inline ms-1">Detalle</span>
+                                    <span class="d-none d-xl-inline">Detalle</span>
                                 </button>
 
                                 <button th:if="${pedido.estadoPedido == 'PAGADO'}"
                                         type="button"
-                                        class="btn btn-sm btn-success btn-abrir-despacho"
+                                        class="btn btn-sm btn-success btn-abrir-despacho d-inline-flex align-items-center gap-1 shadow-sm"
                                         th:attr="data-id=${pedido.idPedido}, data-codigo=${pedido.codigoPedido}"
                                         title="Registrar despacho a paquetería">
                                     <i class="bi bi-truck"></i>
-                                    <span class="d-none d-xl-inline ms-1">Despachar</span>
+                                    <span class="d-none d-xl-inline">Despachar</span>
                                 </button>
 
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-light border" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <!-- Dropdown de acciones de estado: solo si el pedido puede cambiar de estado -->
+                                <div th:if="${pedido.estadoPedido != 'ANULADO' and pedido.estadoPedido != 'ENTREGADO'}" class="dropdown">
+                                    <button class="btn btn-sm btn-light border shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Más opciones de pedido">
                                         <i class="bi bi-three-dots-vertical"></i>
                                     </button>
-                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                                        <li>
-                                            <a class="dropdown-item btn-ver-detalle" href="javascript:void(0)" th:attr="data-id=${pedido.idPedido}">
-                                                <i class="bi bi-receipt me-2 text-secondary"></i>Ver Comprobante
-                                            </a>
-                                        </li>
-                                        <li><hr class="dropdown-divider"></li>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 py-1">
                                         <li th:if="${pedido.estadoPedido == 'PENDIENTE'}">
-                                            <form th:action="@{/backoffice/pedidos/cambiar-estado}" method="post">
+                                            <form th:action="@{/backoffice/pedidos/cambiar-estado}" method="post" class="m-0">
                                                 <input type="hidden" name="idPedido" th:value="${pedido.idPedido}">
                                                 <input type="hidden" name="nuevoEstado" value="PAGADO">
-                                                <button type="submit" class="dropdown-item text-primary">
-                                                    <i class="bi bi-check2-circle me-2"></i>Marcar como Pagado
+                                                <button type="submit" class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 text-primary small fw-medium">
+                                                    <i class="bi bi-check2-circle text-primary"></i>
+                                                    <span>Marcar como Pagado</span>
                                                 </button>
                                             </form>
                                         </li>
                                         <li th:if="${pedido.estadoPedido == 'DESPACHADO'}">
-                                            <form th:action="@{/backoffice/pedidos/cambiar-estado}" method="post">
+                                            <form th:action="@{/backoffice/pedidos/cambiar-estado}" method="post" class="m-0">
                                                 <input type="hidden" name="idPedido" th:value="${pedido.idPedido}">
                                                 <input type="hidden" name="nuevoEstado" value="ENTREGADO">
-                                                <button type="submit" class="dropdown-item text-success">
-                                                    <i class="bi bi-house-check me-2"></i>Marcar como Entregado
+                                                <button type="submit" class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 text-success small fw-medium">
+                                                    <i class="bi bi-house-check text-success"></i>
+                                                    <span>Marcar como Entregado</span>
                                                 </button>
                                             </form>
                                         </li>
+                                        <li th:if="${pedido.estadoPedido == 'PENDIENTE' or pedido.estadoPedido == 'DESPACHADO'}">
+                                            <hr class="dropdown-divider my-1">
+                                        </li>
                                         <li th:if="${pedido.estadoPedido != 'ANULADO' and pedido.estadoPedido != 'ENTREGADO'}">
-                                            <form th:action="@{/backoffice/pedidos/cambiar-estado}" method="post">
-                                                <input type="hidden" name="idPedido" th:value="${pedido.idPedido}">
-                                                <input type="hidden" name="nuevoEstado" value="ANULADO">
-                                                <button type="submit" class="dropdown-item text-danger" onclick="return confirm('¿Está seguro de anular este pedido?')">
-                                                    <i class="bi bi-x-circle me-2"></i>Anular Pedido
-                                                </button>
-                                            </form>
+                                            <button type="button"
+                                                    class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 text-danger small fw-medium btn-solicitar-anulacion"
+                                                    th:attr="data-id=${pedido.idPedido}, data-codigo=${pedido.codigoPedido}">
+                                                <i class="bi bi-x-circle text-danger"></i>
+                                                <span>Anular Pedido</span>
+                                            </button>
                                         </li>
                                     </ul>
                                 </div>
@@ -524,28 +692,47 @@
             <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content border-0 shadow">
                     
-                    <div class="modal-header bg-light">
+                    <div class="modal-header bg-white border-bottom px-4 py-3 d-flex justify-content-between align-items-center w-100">
                         <div>
                             <div class="d-flex align-items-center gap-2">
-                                <h5 class="modal-title fw-bold" id="detalleCodigoPedido">ORD-2026-1081</h5>
+                                <h5 class="modal-title fw-bold text-dark font-monospace mb-0" id="detalleCodigoPedido" style="letter-spacing: -0.02em;">ORD-2026-1081</h5>
                                 <span id="detalleBadgeEstado" class="badge-pedido badge-pedido-pagado">PAGADO</span>
                             </div>
-                            <div class="text-secondary small mt-1">
-                                Realizado el <span id="detalleFechaCreacion" class="fw-medium">2026-10-23 15:42</span>
+                            <div class="text-secondary small mt-1 d-flex align-items-center gap-2">
+                                <i class="bi bi-calendar3 text-muted"></i>
+                                <span>Realizado el <strong id="detalleFechaCreacion" class="text-dark">2026-10-23 15:42</strong></span>
                             </div>
                         </div>
-                        <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">
-                                <i class="bi bi-printer me-1"></i> Imprimir
+                        <div class="d-flex align-items-center gap-2 ms-auto">
+                            <button type="button" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-2 px-3 shadow-sm" onclick="imprimirComprobanteActual()" title="Imprimir Comprobante Oficial">
+                                <i class="bi bi-printer"></i>
+                                <span class="fw-medium">Imprimir</span>
                             </button>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                            <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                         </div>
                     </div>
 
                     <div class="modal-body p-4">
 
-                        <!-- Stepper visual de ciclo de vida del pedido -->
-                        <div class="card border-0 bg-light mb-4 p-3">
+                        <!-- Encabezado exclusivo de impresión -->
+                        <div class="d-none d-print-block mb-4 pb-3 border-bottom">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h4 class="fw-bold mb-0 text-dark">Mi Tienda Online</h4>
+                                    <p class="text-secondary small mb-0">Comprobante Oficial de Pedido y Despacho</p>
+                                </div>
+                                <div class="text-end">
+                                    <div class="d-flex align-items-center gap-2 justify-content-end mb-1">
+                                        <span class="fs-5 fw-bold font-monospace text-dark" id="printCodigoPedido">ORD-2026-0001</span>
+                                        <span id="printBadgeEstado" class="badge-pedido">PAGADO</span>
+                                    </div>
+                                    <div class="small text-secondary" id="printFechaCreacion">2026-10-25 05:31</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stepper visual de ciclo de vida del pedido (oculto en impresión) -->
+                        <div class="card border-0 bg-light mb-4 p-3 stepper-card">
                             <div class="d-flex justify-content-between position-relative px-2">
                                 <div class="text-center" style="z-index: 2;">
                                     <div class="badge rounded-circle bg-success p-2 mb-1" id="step1"><i class="bi bi-check-lg fs-6"></i></div>
@@ -631,9 +818,15 @@
                                             <h6 class="fw-bold mb-2">
                                                 <i class="bi bi-person me-2 text-primary"></i>Datos del Cliente
                                             </h6>
-                                            <div class="fw-semibold text-dark" id="detalleClienteNombre">Cliente</div>
-                                            <div class="small text-secondary" id="detalleClienteEmail">email@demo.com</div>
-                                            <div class="small text-secondary" id="detalleClienteTelefono">+503 0000-0000</div>
+                                            <div class="fw-semibold text-dark mb-1" id="detalleClienteNombre">Cliente</div>
+                                            <div class="small text-secondary d-flex align-items-center gap-1 mb-1" id="detalleClienteEmail">
+                                                <i class="bi bi-envelope text-muted"></i>
+                                                <span>email@demo.com</span>
+                                            </div>
+                                            <div class="small text-secondary d-flex align-items-center gap-1" id="detalleClienteTelefono">
+                                                <i class="bi bi-telephone text-muted"></i>
+                                                <span>+503 0000-0000</span>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -648,7 +841,7 @@
                                                 <span id="detalleMunicipio">Municipio</span>, <span id="detalleDepartamento">Departamento</span>
                                             </div>
                                             <div class="small text-muted fst-italic mt-2" id="detalleNotas">
-                                                Notas: Ninguna
+                                                Sin punto de referencia adicional
                                             </div>
                                         </div>
                                     </div>
@@ -772,15 +965,62 @@
             </div>
         </div>
 
+        <!-- ============================================================ -->
+        <!-- MODAL: CONFIRMAR ANULACIÓN DE PEDIDO                        -->
+        <!-- ============================================================ -->
+        <div class="modal fade" id="modalAnularPedido" tabindex="-1" aria-labelledby="modalAnularPedidoLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+                    <form th:action="@{/backoffice/pedidos/cambiar-estado}" method="post">
+                        <div class="modal-header bg-danger text-white py-3">
+                            <h5 class="modal-title fw-bold d-flex align-items-center gap-2 mb-0" id="modalAnularPedidoLabel">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                                Confirmar Anulación de Pedido
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <input type="hidden" name="idPedido" id="anularIdPedido">
+                            <input type="hidden" name="nuevoEstado" value="ANULADO">
+
+                            <p class="text-secondary mb-3">
+                                ¿Está seguro de que desea anular el pedido <strong class="text-dark font-monospace" id="anularCodigoPedido">ORD-2026-0000</strong>?
+                            </p>
+
+                            <div class="alert alert-warning border-0 small d-flex gap-2 py-2 mb-0">
+                                <i class="bi bi-info-circle-fill text-warning flex-shrink-0 fs-6"></i>
+                                <span>Esta acción devolverá las unidades de stock al inventario y marcará la orden como <strong>ANULADA</strong>. No se puede deshacer.</span>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-light py-2">
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-danger btn-sm d-inline-flex align-items-center gap-1 shadow-sm">
+                                <i class="bi bi-x-circle"></i>
+                                Confirmar Anulación
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <!-- Almacén seguro de datos JSON (evita errores de Thymeleaf 3.1+ en event handlers) -->
-        <script id="pedidosDataJson" type="application/json" th:text="${pedidosJson}"></script>
+        <script id="pedidosDataJson" type="application/json" th:utext="${pedidosJson}"></script>
 
         <!-- Script interactivo robusto de filtros y modales -->
         <script>
             let listaPedidos = [];
             try {
-                const rawJson = document.getElementById('pedidosDataJson').textContent;
-                listaPedidos = JSON.parse(rawJson || '[]');
+                const el = document.getElementById('pedidosDataJson');
+                if (el) {
+                    let raw = (el.textContent || '').trim();
+                    if (raw.indexOf('&quot;') !== -1 || raw.indexOf('&amp;') !== -1 || raw.indexOf('&#') !== -1) {
+                        const txtArea = document.createElement('textarea');
+                        txtArea.innerHTML = raw;
+                        raw = txtArea.value;
+                    }
+                    listaPedidos = JSON.parse(raw || '[]');
+                }
             } catch (err) {
                 console.error('Error al parsear datos de pedidos:', err);
             }
@@ -937,25 +1177,47 @@
                         abrirModalDespachoPorId(id, codigo);
                         return;
                     }
+
+                    const btnAnular = e.target.closest('.btn-solicitar-anulacion');
+                    if (btnAnular) {
+                        e.preventDefault();
+                        const id = btnAnular.getAttribute('data-id');
+                        const codigo = btnAnular.getAttribute('data-codigo');
+                        document.getElementById('anularIdPedido').value = id;
+                        document.getElementById('anularCodigoPedido').textContent = codigo;
+                        if (window.bootstrap && bootstrap.Modal) {
+                            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAnularPedido'));
+                            modal.show();
+                        }
+                        return;
+                    }
                 });
 
-                // Botón exportar CSV
-                const btnExportar = document.getElementById('btnExportarCSV');
-                if (btnExportar) {
-                    btnExportar.addEventListener('click', function () {
-                        let csv = 'Codigo,Fecha,Cliente,Email,Articulos,Total,Estado,MetodoPago,Guia\n';
-                        listaPedidos.forEach(p => {
-                            csv += `"${p.codigoPedido}","${p.fechaCreacion}","${p.clienteNombre}","${p.clienteEmail}",${p.cantidadTotalArticulos},${p.total},"${p.estadoPedido}","${p.metodoPago}","${p.numeroSeguimiento || ''}"\n`;
-                        });
-                        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `reporte_pedidos_${new Date().toISOString().slice(0, 10)}.csv`;
-                        a.click();
-                    });
-                }
+
             });
+
+            // Función para imprimir comprobante y nombrar el PDF con el ID del pedido
+            function imprimirComprobanteActual() {
+                const codigoEl = document.getElementById('detalleCodigoPedido');
+                const codigo = codigoEl ? codigoEl.textContent.trim() : 'ORD-COMPROBANTE';
+                const tituloOriginal = document.title;
+
+                // Modificar el título de la página temporalmente para que el navegador nombre el PDF automáticamente
+                document.title = codigo;
+
+                const restaurarTitulo = function () {
+                    document.title = tituloOriginal;
+                    window.removeEventListener('afterprint', restaurarTitulo);
+                };
+                window.addEventListener('afterprint', restaurarTitulo);
+
+                window.print();
+
+                // Fallback de restauración por si el navegador no dispara afterprint
+                setTimeout(function () {
+                    document.title = tituloOriginal;
+                }, 1500);
+            }
 
             // Función para abrir modal de detalle
             function abrirModalDetallePorId(idPedido) {
@@ -967,6 +1229,20 @@
 
                 document.getElementById('detalleCodigoPedido').textContent = pedido.codigoPedido;
                 document.getElementById('detalleFechaCreacion').textContent = pedido.fechaCreacion;
+                const printCod = document.getElementById('printCodigoPedido');
+                if (printCod) printCod.textContent = pedido.codigoPedido;
+                const printFec = document.getElementById('printFechaCreacion');
+                if (printFec) printFec.textContent = pedido.fechaCreacion;
+                const printBadge = document.getElementById('printBadgeEstado');
+                if (printBadge) {
+                    printBadge.textContent = pedido.estadoPedido;
+                    printBadge.className = 'badge-pedido';
+                    if (pedido.estadoPedido === 'PAGADO') printBadge.classList.add('badge-pedido-pagado');
+                    else if (pedido.estadoPedido === 'DESPACHADO') printBadge.classList.add('badge-pedido-despachado');
+                    else if (pedido.estadoPedido === 'ENTREGADO') printBadge.classList.add('badge-pedido-entregado');
+                    else if (pedido.estadoPedido === 'PENDIENTE') printBadge.classList.add('badge-pedido-pendiente');
+                    else if (pedido.estadoPedido === 'ANULADO') printBadge.classList.add('badge-pedido-anulado');
+                }
                 
                 const badge = document.getElementById('detalleBadgeEstado');
                 badge.textContent = pedido.estadoPedido;
@@ -982,12 +1258,32 @@
 
                 // Datos cliente
                 document.getElementById('detalleClienteNombre').textContent = pedido.clienteNombre;
-                document.getElementById('detalleClienteEmail').textContent = pedido.clienteEmail;
-                document.getElementById('detalleClienteTelefono').textContent = pedido.clienteTelefono || 'No especificado';
+                
+                const emailEl = document.getElementById('detalleClienteEmail');
+                if (emailEl) {
+                    emailEl.innerHTML = `<i class="bi bi-envelope text-muted me-1"></i><span>${pedido.clienteEmail || 'Sin correo registrado'}</span>`;
+                }
+
+                const telEl = document.getElementById('detalleClienteTelefono');
+                if (telEl) {
+                    const tel = (pedido.clienteTelefono && pedido.clienteTelefono !== '+503 ----') ? pedido.clienteTelefono : 'Sin teléfono registrado';
+                    telEl.innerHTML = `<i class="bi bi-telephone text-muted me-1"></i><span>${tel}</span>`;
+                }
+
                 document.getElementById('detalleDireccion').textContent = pedido.direccionEntrega;
                 document.getElementById('detalleMunicipio').textContent = pedido.municipio;
                 document.getElementById('detalleDepartamento').textContent = pedido.departamento;
-                document.getElementById('detalleNotas').textContent = pedido.notas ? `Notas: ${pedido.notas}` : 'Sin notas adicionales';
+                
+                const notasEl = document.getElementById('detalleNotas');
+                if (notasEl) {
+                    if (pedido.notas && pedido.notas.trim() !== '') {
+                        notasEl.innerHTML = `<i class="bi bi-geo text-danger me-1"></i><strong>Punto de referencia:</strong> ${pedido.notas}`;
+                        notasEl.className = 'small text-dark mt-2';
+                    } else {
+                        notasEl.textContent = 'Sin punto de referencia adicional';
+                        notasEl.className = 'small text-muted fst-italic mt-2';
+                    }
+                }
 
                 // Datos pago & transporte
                 document.getElementById('detalleMetodoPago').textContent = pedido.metodoPago;
