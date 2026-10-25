@@ -40,6 +40,8 @@ public class SecurityConfig {
             // 3. Rutas web públicas
             .requestMatchers(
                     "/",
+                    "/favicon.ico",
+                    "/favicon.png",
                     "/registro",
                     "/inicio-sesion",
                     "/login",

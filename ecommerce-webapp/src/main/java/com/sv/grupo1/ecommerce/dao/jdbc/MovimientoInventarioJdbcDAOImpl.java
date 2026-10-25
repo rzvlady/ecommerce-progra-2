@@ -15,13 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Implementación de persistencia con JDBC puro para movimientos de inventario.
- * Demuestra el uso explícito de:
- * - DataSource para adquisición de conexiones administradas por el pool.
- * - Connection, PreparedStatement y ResultSet.
- * - Métodos executeQuery() y executeUpdate().
- * - Try-with-resources para el cierre automático y determinista de recursos.
- * - Manejo robusto de excepciones convirtiendo SQLException a DatabasePersistenceException.
+ * Implementación JDBC para la gestión de movimientos de inventario.
  */
 @Repository
 public class MovimientoInventarioJdbcDAOImpl implements MovimientoInventarioJdbcDAO {
@@ -94,7 +88,7 @@ public class MovimientoInventarioJdbcDAOImpl implements MovimientoInventarioJdbc
                 "m.cantidad, m.motivo, m.fecha_movimiento, m.id_pedido, " +
                 "p.nombre_producto, p.codigo_sku " +
                 "FROM core.movimientos_inventario m " +
-                "INNER JOIN catalogo.productos p ON m.id_producto = p.id_producto " +
+                "INNER JOIN core.productos p ON m.id_producto = p.id_producto " +
                 "WHERE m.id_movimiento = ?";
 
         try (Connection conn = dataSource.getConnection();
@@ -122,7 +116,7 @@ public class MovimientoInventarioJdbcDAOImpl implements MovimientoInventarioJdbc
                 "m.cantidad, m.motivo, m.fecha_movimiento, m.id_pedido, " +
                 "p.nombre_producto, p.codigo_sku " +
                 "FROM core.movimientos_inventario m " +
-                "INNER JOIN catalogo.productos p ON m.id_producto = p.id_producto " +
+                "INNER JOIN core.productos p ON m.id_producto = p.id_producto " +
                 "ORDER BY m.fecha_movimiento DESC, m.id_movimiento DESC";
 
         List<MovimientoInventario> lista = new ArrayList<>();
@@ -149,7 +143,7 @@ public class MovimientoInventarioJdbcDAOImpl implements MovimientoInventarioJdbc
                 "m.cantidad, m.motivo, m.fecha_movimiento, m.id_pedido, " +
                 "p.nombre_producto, p.codigo_sku " +
                 "FROM core.movimientos_inventario m " +
-                "INNER JOIN catalogo.productos p ON m.id_producto = p.id_producto " +
+                "INNER JOIN core.productos p ON m.id_producto = p.id_producto " +
                 "WHERE m.id_producto = ? " +
                 "ORDER BY m.fecha_movimiento DESC, m.id_movimiento DESC";
 

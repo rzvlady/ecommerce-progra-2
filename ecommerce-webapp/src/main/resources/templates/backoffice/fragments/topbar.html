@@ -23,7 +23,7 @@
                     data-bs-toggle="dropdown"
                     aria-expanded="false">
                 <i class="bi bi-person-circle text-primary"></i>
-                <span th:text="${nombreMostradoUsuario != null ? nombreMostradoUsuario : #authentication.name}">
+                <span th:text="${nombreMostradoUsuario != null ? nombreMostradoUsuario : (#authentication != null ? #authentication.name : 'Administrador')}">
                     Administrador
                 </span>
             </button>
@@ -33,7 +33,7 @@
                     <h6 class="dropdown-header text-uppercase small text-secondary pb-0">Conectado como</h6>
                     <div class="px-3 py-1 fw-bold text-dark small text-truncate"
                          style="max-width: 240px;"
-                         th:text="${correoUsuarioAutenticado != null ? correoUsuarioAutenticado : #authentication.name}">
+                         th:text="${correoUsuarioAutenticado != null ? correoUsuarioAutenticado : (#authentication != null ? #authentication.name : 'admin@testing.com')}">
                         admin@testing.com
                     </div>
                 </li>

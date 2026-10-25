@@ -3,8 +3,7 @@ package com.sv.grupo1.ecommerce.dto;
 import java.io.Serializable;
 
 /**
- * DTO que representa el resultado de la auditoría de inventario
- * procesada de forma concurrente para una categoría específica.
+ * DTO para el resultado de auditoría de inventario por categoría.
  */
 public class AuditoriaCategoriaItem implements Serializable {
 

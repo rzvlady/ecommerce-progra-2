@@ -61,10 +61,10 @@ class AuditoriaInventarioConcurrenteServiceTest {
         when(rsCategorias.getString("nombre_categoria")).thenReturn("Tecnología", "Calzado", "Hogar");
 
         // Mock para consulta de productos por categoría
-        when(connection.prepareStatement(contains("catalogo.productos"))).thenReturn(psProductos);
+        when(connection.prepareStatement(contains("core.productos"))).thenReturn(psProductos);
         when(psProductos.executeQuery()).thenReturn(rsProductos);
         when(rsProductos.next()).thenReturn(true, false);
-        when(rsProductos.getInt("stock_actual")).thenReturn(5);
+        when(rsProductos.getInt("stock_disponible")).thenReturn(5);
         when(rsProductos.getInt("stock_minimo")).thenReturn(2);
 
         // Act

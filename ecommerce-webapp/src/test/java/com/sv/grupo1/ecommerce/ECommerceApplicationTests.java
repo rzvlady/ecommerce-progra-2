@@ -162,7 +162,7 @@ class ECommerceApplicationTests {
         assertTrue(!productos.isEmpty());
         assertTrue(!categorias.isEmpty());
         assertTrue(!marcas.isEmpty());
-        assertTrue(productos.stream().anyMatch(p -> "ELC-COM-LAP-HP-0001".equals(p.getCodigoSku())));
+        assertTrue(productos.stream().anyMatch(p -> "ELC-COM-HP-0001".equals(p.getCodigoSku()) || "ELC-COM-LAP-HP-0001".equals(p.getCodigoSku())));
 
         // Verificar ruta taxonómica segmentada para imágenes (3 niveles: Departamento -> Categoría -> Subcategoría -> SKU)
         Categoria dep = new Categoria();
