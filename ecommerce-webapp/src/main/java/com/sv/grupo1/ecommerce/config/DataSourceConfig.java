@@ -9,11 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
 /**
- * Configuración explícita del Pool de Conexiones mediante DataSource (Tomcat JDBC Pool).
- * 
- * Cumple con los requerimientos de la Rúbrica de Evaluación (Avance 3 - Páginas 5-7):
- * - Demuestra comprensión y justificación técnica de los parámetros del pool.
- * - Asegura alta disponibilidad, validación de conexiones inactivas y prevención de fugas (connection leaks).
+ * Configuración del pool de conexiones DataSource.
  */
 @Configuration
 public class DataSourceConfig {
@@ -35,7 +31,7 @@ public class DataSourceConfig {
     @Bean
     @Primary
     public javax.sql.DataSource dataSource() {
-        log.info("Inicializando DataSource con Tomcat JDBC Pool según especificaciones de la entrega final...");
+        log.info("Inicializando pool de conexiones DataSource...");
 
         DataSource dataSource = new DataSource();
         dataSource.setDriverClassName(driverClassName);
@@ -43,54 +39,25 @@ public class DataSourceConfig {
         dataSource.setUsername(username);
         dataSource.setPassword(password);
 
-        // 1. validationQuery: Consulta ligera para verificar que la conexión esté viva antes de entregarla.
         dataSource.setValidationQuery("SELECT 1");
-
-        // 2. initialSize: Conexiones creadas inmediatamente al arrancar la aplicación (5 conexiones).
         dataSource.setInitialSize(5);
-
-        // 3. minIdle: Número mínimo de conexiones que se mantienen abiertas en reposo (5 conexiones).
         dataSource.setMinIdle(5);
-
-        // 4. maxActive: Capacidad máxima concurrente de conexiones simultáneas del pool (20 conexiones).
         dataSource.setMaxActive(20);
-
-        // 5. maxIdle: Límite superior de conexiones inactivas permitidas para liberar recursos (10 conexiones).
         dataSource.setMaxIdle(10);
-
-        // 6. maxWait: Tiempo máximo (en milisegundos) que un hilo espera por una conexión antes de lanzar error (10 segundos).
         dataSource.setMaxWait(10000);
 
-        // 7. testOnBorrow: Valida la conexión antes de entregarla al hilo solicitante.
         dataSource.setTestOnBorrow(true);
-
-        // 8. testOnReturn: No valida al devolver la conexión para evitar sobrecarga de red innecesaria.
         dataSource.setTestOnReturn(false);
-
-        // 9. testWhileIdle: Valida periódicamente las conexiones inactivas para evitar desconexiones por timeout de Supabase/PostgreSQL.
         dataSource.setTestWhileIdle(true);
-
-        // 10. testOnConnect: Valida la conexión al momento exacto de ser creada con el servidor de base de datos.
         dataSource.setTestOnConnect(true);
 
-        // 11. timeBetweenEvictionRunsMillis: Frecuencia con la que el hilo limpiador examina conexiones ociosas (30 segundos).
         dataSource.setTimeBetweenEvictionRunsMillis(30000);
-
-        // 12. minEvictableIdleTimeMillis: Tiempo mínimo que una conexión debe permanecer ociosa para ser candidata a expulsión (60 segundos).
         dataSource.setMinEvictableIdleTimeMillis(60000);
-
-        // 13. removeAbandoned: Activa la detección y cierre automático de conexiones huérfanas que no fueron cerradas por el código.
         dataSource.setRemoveAbandoned(true);
-
-        // 14. removeAbandonedTimeout: Tiempo tras el cual una conexión en uso se considera abandonada/filtrada (60 segundos).
         dataSource.setRemoveAbandonedTimeout(60);
-
-        // 15. validationInterval: Intervalo mínimo entre validaciones de una misma conexión para optimizar rendimiento (30 segundos).
         dataSource.setValidationInterval(30000);
 
-        log.info("Pool de conexiones DataSource configurado exitosamente: maxActive={}, minIdle={}, initialSize={}",
-                dataSource.getMaxActive(), dataSource.getMinIdle(), dataSource.getInitialSize());
-
+        log.info("Pool de conexiones configurado: maxActive=20, minIdle=5, initialSize=5");
         return dataSource;
     }
 }

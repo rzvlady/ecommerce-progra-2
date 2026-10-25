@@ -18,13 +18,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Implementación del servicio de concurrencia integrada con Base de Datos.
- * Cumple con los requerimientos específicos de la rúbrica de entrega final:
- * - Empleo de ExecutorService para ejecución de tareas concurrentes.
- * - Acceso a la base de datos mediante el DataSource con pool de conexiones.
- * - Manejo adecuado de conexiones con try-with-resources.
- * - Captura y control de excepciones dentro de cada hilo (evitando fallo en cascada).
- * - Sincronización y seguridad de concurrencia mediante estructuras atómicas e inmutables.
+ * Servicio de auditoría concurrente de inventario.
  */
 @Service
 public class AuditoriaInventarioConcurrenteServiceImpl implements AuditoriaInventarioConcurrenteService {
@@ -54,7 +48,7 @@ public class AuditoriaInventarioConcurrenteServiceImpl implements AuditoriaInven
 
         int poolSize = Math.max(1, Math.min(hilosConcurrencia, 10));
 
-        // 1. Obtener lista de categorías a auditar utilizando JDBC directo
+        // Obtener categorías a auditar
         List<CategoriaRef> categorias = obtenerCategoriasParaAuditar();
         if (categorias.isEmpty()) {
             resultado.setMensaje("No se encontraron categorías disponibles para auditar.");
@@ -62,7 +56,7 @@ public class AuditoriaInventarioConcurrenteServiceImpl implements AuditoriaInven
             return resultado;
         }
 
-        // 2. Configurar ThreadPool con ThreadFactory personalizado para identificar los hilos de trabajo
+        // Configurar pool de hilos de trabajo
         AtomicInteger threadCounter = new AtomicInteger(1);
         ThreadFactory threadFactory = runnable -> {
             Thread t = new Thread(runnable, "audit-worker-thread-" + threadCounter.getAndIncrement());
@@ -141,8 +135,7 @@ public class AuditoriaInventarioConcurrenteServiceImpl implements AuditoriaInven
     }
 
     /**
-     * Tarea individual ejecutada concurrentemente por un hilo del ExecutorService.
-     * Accede de forma independiente a la base de datos solicitando una conexión al pool DataSource.
+     * Procesa la auditoría de inventario para una categoría específica.
      */
     private AuditoriaCategoriaItem procesarAuditoriaCategoria(CategoriaRef categoria) {
         long inicioTarea = System.currentTimeMillis();
@@ -154,14 +147,14 @@ public class AuditoriaInventarioConcurrenteServiceImpl implements AuditoriaInven
         int discrepancias = 0;
         String estado = "CONFORME";
 
-        final String sql = "SELECT p.id_producto, p.nombre_producto, p.stock_actual, p.stock_minimo, " +
+        final String sql = "SELECT p.id_producto, p.nombre_producto, p.stock_disponible, p.stock_minimo, " +
                 "COALESCE(SUM(CASE WHEN m.tipo_movimiento = 'ENTRADA' THEN m.cantidad " +
                 "                  WHEN m.tipo_movimiento IN ('SALIDA', 'VENTA') THEN -m.cantidad " +
                 "                  ELSE 0 END), 0) AS balance_movimientos " +
-                "FROM catalogo.productos p " +
+                "FROM core.productos p " +
                 "LEFT JOIN core.movimientos_inventario m ON p.id_producto = m.id_producto " +
                 "WHERE p.id_categoria = ? " +
-                "GROUP BY p.id_producto, p.nombre_producto, p.stock_actual, p.stock_minimo";
+                "GROUP BY p.id_producto, p.nombre_producto, p.stock_disponible, p.stock_minimo";
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -171,7 +164,7 @@ public class AuditoriaInventarioConcurrenteServiceImpl implements AuditoriaInven
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     totalProductos++;
-                    int stockActual = rs.getInt("stock_actual");
+                    int stockActual = rs.getInt("stock_disponible");
                     int stockMinimo = rs.getInt("stock_minimo");
                     stockTotal += stockActual;
 

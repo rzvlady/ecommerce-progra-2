@@ -1097,9 +1097,10 @@ body.store-body {
 }
 
 .product-card-img-link {
-    background: #f8fafc;
+    background: #ffffff;
     border-bottom: 1px solid #f1f5f9;
     overflow: hidden;
+    display: block;
 }
 
 .product-card-img-container {
@@ -1107,7 +1108,7 @@ body.store-body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f8fafc;
+    background: #ffffff;
     position: relative;
     overflow: hidden;
 }
@@ -1117,7 +1118,25 @@ body.store-body {
     height: 100%;
     object-fit: contain;
     padding: 14px;
+    background: #ffffff;
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.product-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 5;
+    background: #f59e0b;
+    color: #ffffff;
+    font-size: 0.70rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    pointer-events: none;
 }
 
 .producto-catalogo-card:hover .product-card-img {

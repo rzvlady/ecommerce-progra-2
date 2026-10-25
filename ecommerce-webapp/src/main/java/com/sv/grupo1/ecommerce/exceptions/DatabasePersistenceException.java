@@ -3,9 +3,7 @@ package com.sv.grupo1.ecommerce.exceptions;
 import java.sql.SQLException;
 
 /**
- * Excepción personalizada para encapsular y gestionar errores de acceso
- * y persistencia a nivel de base de datos relacional mediante JDBC puro.
- * Permite desacoplar las capas superiores de detalles específicos de bajo nivel (SQLException).
+ * Excepción para errores de persistencia en base de datos.
  */
 public class DatabasePersistenceException extends RuntimeException {
 

@@ -7,9 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * DTO que consolida los resultados de la auditoría de inventario multihilo.
- * Incluye métricas de rendimiento, hilos ejecutores concurrentes del pool
- * y detalle de integridad por categoría.
+ * DTO para el resultado consolidado de la auditoría de inventario.
  */
 public class ResultadoAuditoriaConcurrente implements Serializable {
 
