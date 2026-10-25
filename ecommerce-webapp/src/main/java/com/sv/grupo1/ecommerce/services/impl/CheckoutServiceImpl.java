@@ -29,10 +29,12 @@ import com.sv.grupo1.ecommerce.enums.EstadoPasarela;
 import com.sv.grupo1.ecommerce.enums.EstadoPedido;
 import com.sv.grupo1.ecommerce.enums.EstadoTransaccion;
 import com.sv.grupo1.ecommerce.services.CheckoutService;
+import com.sv.grupo1.backoffice.service.ProductoImagenStorageService;
 import com.sv.grupo1.ecommerce.services.PasarelaPagoService;
 import com.sv.grupo1.ecommerce.utils.Constantes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,7 +42,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -61,6 +65,7 @@ public class CheckoutServiceImpl implements CheckoutService {
     private final MovimientoInventarioRepository movimientoInventarioRepository;
     private final CarritoSesionService carritoService;
     private final PasarelaPagoService pasarelaPagoService;
+    private final ProductoImagenStorageService imagenStorageService;
 
     public CheckoutServiceImpl(
             UsuarioRepository usuarioRepository,
@@ -73,6 +78,24 @@ public class CheckoutServiceImpl implements CheckoutService {
             MovimientoInventarioRepository movimientoInventarioRepository,
             CarritoSesionService carritoService,
             PasarelaPagoService pasarelaPagoService) {
+        this(usuarioRepository, usuarioDireccionRepository, municipioRepository, productoRepository,
+             pedidoRepository, detallePedidoRepository, pagoRepository, movimientoInventarioRepository,
+             carritoService, pasarelaPagoService, null);
+    }
+
+    @Autowired
+    public CheckoutServiceImpl(
+            UsuarioRepository usuarioRepository,
+            UsuarioDireccionRepository usuarioDireccionRepository,
+            MunicipioRepository municipioRepository,
+            ProductoRepository productoRepository,
+            PedidoRepository pedidoRepository,
+            DetallePedidoRepository detallePedidoRepository,
+            PagoRepository pagoRepository,
+            MovimientoInventarioRepository movimientoInventarioRepository,
+            CarritoSesionService carritoService,
+            PasarelaPagoService pasarelaPagoService,
+            @Autowired(required = false) ProductoImagenStorageService imagenStorageService) {
         this.usuarioRepository = usuarioRepository;
         this.usuarioDireccionRepository = usuarioDireccionRepository;
         this.municipioRepository = municipioRepository;
@@ -83,6 +106,7 @@ public class CheckoutServiceImpl implements CheckoutService {
         this.movimientoInventarioRepository = movimientoInventarioRepository;
         this.carritoService = carritoService;
         this.pasarelaPagoService = pasarelaPagoService;
+        this.imagenStorageService = imagenStorageService;
     }
 
     @Override
@@ -364,14 +388,37 @@ public class CheckoutServiceImpl implements CheckoutService {
     }
 
     private List<ItemCompraDTO> convertirAItems(List<DetallePedido> detalles) {
+        Map<Integer, String> imagenes = new HashMap<>();
+        try {
+            for (CarritoItem ci : carritoService.items()) {
+                if (ci.getIdProducto() != null && ci.getImagenUrl() != null && !ci.getImagenUrl().isBlank()) {
+                    imagenes.put(ci.getIdProducto(), ci.getImagenUrl());
+                }
+            }
+        } catch (Exception ignored) {}
         List<ItemCompraDTO> items = new ArrayList<>();
         for (DetallePedido detalle : detalles) {
             ItemCompraDTO item = new ItemCompraDTO();
-            item.setNombreProducto(detalle.getProducto().getNombreProducto());
-            item.setCodigoSku(detalle.getProducto().getCodigoSku());
+            Producto p = detalle.getProducto();
+            item.setNombreProducto(p.getNombreProducto());
+            item.setCodigoSku(p.getCodigoSku());
             item.setCantidad(detalle.getCantidad());
             item.setPrecioUnitario(detalle.getPrecioUnitario());
             item.setSubtotal(detalle.getSubtotal());
+            if (p != null) {
+                String img = imagenes.get(p.getIdProducto());
+                if ((img == null || img.isBlank()) && imagenStorageService != null) {
+                    try {
+                        imagenStorageService.cargarImagenesEnProducto(p);
+                        if (p.getImagenPrincipalUrl() != null && !p.getImagenPrincipalUrl().isBlank()) {
+                            img = p.getImagenPrincipalUrl();
+                        } else if (p.getImagenesSlots() != null && !p.getImagenesSlots().isEmpty()) {
+                            img = p.getImagenesSlots().values().iterator().next();
+                        }
+                    } catch (Exception ignored) {}
+                }
+                item.setImagenUrl(img);
+            }
             items.add(item);
         }
         return items;

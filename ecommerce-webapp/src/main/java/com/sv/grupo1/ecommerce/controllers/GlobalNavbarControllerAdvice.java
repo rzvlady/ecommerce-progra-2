@@ -1,6 +1,7 @@
 package com.sv.grupo1.ecommerce.controllers;
 
 import com.sv.grupo1.ecommerce.dao.UsuarioRepository;
+import com.sv.grupo1.ecommerce.dto.CategoriaNodoDTO;
 import com.sv.grupo1.ecommerce.entities.catalogo.Categoria;
 import com.sv.grupo1.ecommerce.entities.seguridad.Usuario;
 import com.sv.grupo1.ecommerce.entities.seguridad.UsuarioPerfil;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 
 import java.util.List;
 
-@ControllerAdvice(basePackages = {"com.sv.grupo1.ecommerce.controllers", "com.sv.grupo1.backoffice.controller"})
+@ControllerAdvice(basePackages = {"com.sv.grupo1.ecommerce", "com.sv.grupo1.backoffice.controller"})
 public class GlobalNavbarControllerAdvice {
 
     private final ProductoService productoService;
@@ -28,6 +29,11 @@ public class GlobalNavbarControllerAdvice {
     @ModelAttribute("categoriasNavbar")
     public List<Categoria> populateCategoriasNavbar() {
         return productoService.listarCategorias();
+    }
+
+    @ModelAttribute("categoriasArbol")
+    public List<CategoriaNodoDTO> populateCategoriasArbol() {
+        return productoService.obtenerArbolCategorias();
     }
 
     @ModelAttribute("correoUsuarioAutenticado")

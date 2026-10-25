@@ -1,7 +1,9 @@
 package com.sv.grupo1.ecommerce.services;
 
 import com.sv.grupo1.ecommerce.dto.CategoriaHomeDTO;
+import com.sv.grupo1.ecommerce.dto.CategoriaNodoDTO;
 import com.sv.grupo1.ecommerce.dto.ProductoHomeDTO;
+import com.sv.grupo1.ecommerce.dto.SugerenciaBusquedaDTO;
 import com.sv.grupo1.ecommerce.entities.catalogo.Marca;
 import com.sv.grupo1.ecommerce.entities.catalogo.Categoria;
 import com.sv.grupo1.ecommerce.entities.core.Producto;
@@ -24,4 +26,8 @@ public interface ProductoService {
     List<ProductoHomeDTO> obtenerProductosDestacadosHome();
 
     List<CategoriaHomeDTO> obtenerCategoriasHome();
+
+    SugerenciaBusquedaDTO buscarSugerencias(String termino);
+
+    List<CategoriaNodoDTO> obtenerArbolCategorias();
 }

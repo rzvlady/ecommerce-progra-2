@@ -13,19 +13,29 @@ public class CarritoItem implements Serializable {
     private BigDecimal precioUnitario;
     private int cantidad;
     private int stockDisponible;
+    private String imagenUrl;
+
+    public CarritoItem() {
+    }
 
     public CarritoItem(Integer idProducto, String sku, String nombre,
                        BigDecimal precioUnitario, int cantidad, int stockDisponible) {
+        this(idProducto, sku, nombre, precioUnitario, cantidad, stockDisponible, null);
+    }
+
+    public CarritoItem(Integer idProducto, String sku, String nombre,
+                       BigDecimal precioUnitario, int cantidad, int stockDisponible, String imagenUrl) {
         this.idProducto = idProducto;
         this.sku = sku;
         this.nombre = nombre;
         this.precioUnitario = precioUnitario;
         this.cantidad = cantidad;
         this.stockDisponible = stockDisponible;
+        this.imagenUrl = imagenUrl;
     }
 
     public BigDecimal getSubtotal() {
-        return precioUnitario.multiply(BigDecimal.valueOf(cantidad));
+        return precioUnitario != null ? precioUnitario.multiply(BigDecimal.valueOf(cantidad)) : BigDecimal.ZERO;
     }
 
     public Integer getIdProducto() { return idProducto; }
@@ -34,8 +44,13 @@ public class CarritoItem implements Serializable {
     public BigDecimal getPrecioUnitario() { return precioUnitario; }
     public int getCantidad() { return cantidad; }
     public int getStockDisponible() { return stockDisponible; }
+    public String getImagenUrl() { return imagenUrl; }
 
+    public void setIdProducto(Integer idProducto) { this.idProducto = idProducto; }
+    public void setSku(String sku) { this.sku = sku; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
     public void setPrecioUnitario(BigDecimal precioUnitario) { this.precioUnitario = precioUnitario; }
     public void setCantidad(int cantidad) { this.cantidad = cantidad; }
     public void setStockDisponible(int stockDisponible) { this.stockDisponible = stockDisponible; }
+    public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
 }

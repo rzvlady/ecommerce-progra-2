@@ -8,6 +8,8 @@ import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Entity
 @Table(name = "productos", schema = "core")
@@ -66,6 +68,9 @@ public class Producto {
     @Transient
     private String imagenesSlotsJson = "{}";
 
+    @Transient
+    private Map<Integer, String> imagenesSlots = new LinkedHashMap<>();
+
     public Producto() {}
 
     // Getters y Setters
@@ -102,4 +107,10 @@ public class Producto {
     public void setTotalImagenes(Integer totalImagenes) { this.totalImagenes = totalImagenes; }
     public String getImagenesSlotsJson() { return imagenesSlotsJson; }
     public void setImagenesSlotsJson(String imagenesSlotsJson) { this.imagenesSlotsJson = imagenesSlotsJson; }
+    public Map<Integer, String> getImagenesSlots() { return imagenesSlots; }
+    public void setImagenesSlots(Map<Integer, String> imagenesSlots) { this.imagenesSlots = imagenesSlots != null ? imagenesSlots : new LinkedHashMap<>(); }
+    public boolean isTieneImagenes() {
+        return (imagenPrincipalUrl != null && !imagenPrincipalUrl.isBlank())
+                || (imagenesSlots != null && !imagenesSlots.isEmpty());
+    }
 }

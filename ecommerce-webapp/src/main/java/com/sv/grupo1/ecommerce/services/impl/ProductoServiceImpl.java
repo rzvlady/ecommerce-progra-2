@@ -5,7 +5,9 @@ import com.sv.grupo1.ecommerce.dao.CategoriaRepository;
 import com.sv.grupo1.ecommerce.dao.MarcaRepository;
 import com.sv.grupo1.ecommerce.dao.ProductoRepository;
 import com.sv.grupo1.ecommerce.dto.CategoriaHomeDTO;
+import com.sv.grupo1.ecommerce.dto.CategoriaNodoDTO;
 import com.sv.grupo1.ecommerce.dto.ProductoHomeDTO;
+import com.sv.grupo1.ecommerce.dto.SugerenciaBusquedaDTO;
 import com.sv.grupo1.ecommerce.entities.catalogo.Marca;
 import com.sv.grupo1.ecommerce.entities.catalogo.Categoria;
 import com.sv.grupo1.ecommerce.entities.core.Producto;
@@ -16,8 +18,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.text.Normalizer;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -125,25 +129,81 @@ public class ProductoServiceImpl implements ProductoService {
         List<Categoria> cats = categoriaRepository.findAllByOrderByNombreCategoriaAsc();
         if (cats == null || cats.isEmpty()) {
             cats = new ArrayList<>();
-            cats.add(crearCategoriaMock(1, "Tecnología"));
-            cats.add(crearCategoriaMock(2, "Computación"));
-            cats.add(crearCategoriaMock(3, "Celulares"));
-            cats.add(crearCategoriaMock(4, "Audio"));
-            cats.add(crearCategoriaMock(5, "Televisores"));
-            cats.add(crearCategoriaMock(6, "Gaming"));
-            cats.add(crearCategoriaMock(7, "Hogar"));
-            cats.add(crearCategoriaMock(8, "Electrodomésticos"));
-            cats.add(crearCategoriaMock(10, "Accesorios"));
+            Categoria tec = crearCategoriaMock(1, "Electrónica", null);
+            cats.add(tec);
+            cats.add(crearCategoriaMock(2, "Computación", tec));
+            cats.add(crearCategoriaMock(3, "Celulares", tec));
+            cats.add(crearCategoriaMock(4, "Audio", tec));
+            cats.add(crearCategoriaMock(5, "Televisores", tec));
+            cats.add(crearCategoriaMock(6, "Gaming", tec));
+            Categoria hog = crearCategoriaMock(7, "Hogar", null);
+            cats.add(hog);
+            cats.add(crearCategoriaMock(8, "Electrodomésticos", hog));
+            cats.add(crearCategoriaMock(9, "Cuidado Personal", hog));
+            cats.add(crearCategoriaMock(10, "Accesorios", null));
         }
         return cats;
     }
 
-    private Categoria crearCategoriaMock(Integer id, String nombre) {
+    private Categoria crearCategoriaMock(Integer id, String nombre, Categoria padre) {
         Categoria c = new Categoria();
         c.setIdCategoria(id);
         c.setNombreCategoria(nombre);
+        c.setCategoriaPadre(padre);
         c.setEstado('A');
         return c;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CategoriaNodoDTO> obtenerArbolCategorias() {
+        List<Categoria> todas;
+        try {
+            todas = categoriaRepository.findAllConJerarquia();
+        } catch (Exception e) {
+            todas = listarCategorias();
+        }
+        if (todas == null || todas.isEmpty()) {
+            todas = listarCategorias();
+        }
+
+        Map<Integer, CategoriaNodoDTO> nodoMap = new LinkedHashMap<>();
+        for (Categoria c : todas) {
+            if (c.getEstado() != null && !Character.valueOf('A').equals(c.getEstado())) {
+                continue;
+            }
+            CategoriaNodoDTO nodo = new CategoriaNodoDTO(c.getIdCategoria(), c.getNombreCategoria());
+            if (c.getCategoriaPadre() != null) {
+                nodo.setIdCategoriaPadre(c.getCategoriaPadre().getIdCategoria());
+                nodo.setNombreCategoriaPadre(c.getCategoriaPadre().getNombreCategoria());
+            }
+            nodoMap.put(c.getIdCategoria(), nodo);
+        }
+
+        List<CategoriaNodoDTO> raices = new ArrayList<>();
+        for (Categoria c : todas) {
+            if (c.getEstado() != null && !Character.valueOf('A').equals(c.getEstado())) {
+                continue;
+            }
+            CategoriaNodoDTO nodo = nodoMap.get(c.getIdCategoria());
+            if (c.getCategoriaPadre() != null && nodoMap.containsKey(c.getCategoriaPadre().getIdCategoria())) {
+                CategoriaNodoDTO padre = nodoMap.get(c.getCategoriaPadre().getIdCategoria());
+                if (!padre.getSubcategorias().contains(nodo)) {
+                    padre.getSubcategorias().add(nodo);
+                }
+            } else {
+                if (!raices.contains(nodo)) {
+                    raices.add(nodo);
+                }
+            }
+        }
+
+        raices.sort((a, b) -> a.getNombreCategoria().compareToIgnoreCase(b.getNombreCategoria()));
+        for (CategoriaNodoDTO r : raices) {
+            r.getSubcategorias().sort((a, b) -> a.getNombreCategoria().compareToIgnoreCase(b.getNombreCategoria()));
+        }
+
+        return raices;
     }
 
     @Override
@@ -234,6 +294,152 @@ public class ProductoServiceImpl implements ProductoService {
         categorias.add(new CategoriaHomeDTO(9, "Novedades", "Lo más reciente en catálogo", "https://images.unsplash.com/photo-1511556532299-8f662fc26c06?auto=format&fit=crop&w=450&q=80", "/productos"));
         return categorias;
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SugerenciaBusquedaDTO buscarSugerencias(String termino) {
+        SugerenciaBusquedaDTO dto = new SugerenciaBusquedaDTO();
+        if (termino == null || termino.trim().isBlank()) {
+            return dto;
+        }
+
+        final String normTerm = normalizarTexto(termino);
+        if (normTerm.isEmpty()) {
+            return dto;
+        }
+
+        // 1. Categorías sugeridas
+        List<Categoria> todasCategorias = listarCategorias();
+        List<CategoriaScore> catScores = new ArrayList<>();
+        for (Categoria cat : todasCategorias) {
+            String normCat = normalizarTexto(cat.getNombreCategoria());
+            int score = calcularScoreCoincidencia(normCat, normTerm);
+            if (score > 0) {
+                catScores.add(new CategoriaScore(cat, score));
+            }
+        }
+        catScores.sort((a, b) -> {
+            int cmp = Integer.compare(b.score(), a.score());
+            if (cmp != 0) return cmp;
+            return a.cat().getNombreCategoria().compareToIgnoreCase(b.cat().getNombreCategoria());
+        });
+
+        List<SugerenciaBusquedaDTO.SugerenciaCategoriaDTO> sugerenciasCategorias = catScores.stream()
+                .limit(5)
+                .map(cs -> new SugerenciaBusquedaDTO.SugerenciaCategoriaDTO(
+                        cs.cat().getIdCategoria(),
+                        cs.cat().getNombreCategoria(),
+                        "/productos?idCategoria=" + cs.cat().getIdCategoria()))
+                .toList();
+        dto.setCategorias(sugerenciasCategorias);
+
+        // 2. Marcas sugeridas
+        List<Marca> todasMarcas = listarMarcas();
+        List<MarcaScore> marcaScores = new ArrayList<>();
+        for (Marca marca : todasMarcas) {
+            String normMarca = normalizarTexto(marca.getNombreMarca());
+            int score = calcularScoreCoincidencia(normMarca, normTerm);
+            if (score > 0) {
+                marcaScores.add(new MarcaScore(marca, score));
+            }
+        }
+        marcaScores.sort((a, b) -> {
+            int cmp = Integer.compare(b.score(), a.score());
+            if (cmp != 0) return cmp;
+            return a.marca().getNombreMarca().compareToIgnoreCase(b.marca().getNombreMarca());
+        });
+
+        List<SugerenciaBusquedaDTO.SugerenciaMarcaDTO> sugerenciasMarcas = marcaScores.stream()
+                .limit(5)
+                .map(ms -> new SugerenciaBusquedaDTO.SugerenciaMarcaDTO(
+                        ms.marca().getIdMarca(),
+                        ms.marca().getNombreMarca(),
+                        "/productos?idMarca=" + ms.marca().getIdMarca()))
+                .toList();
+        dto.setMarcas(sugerenciasMarcas);
+
+        // 3. Productos sugeridos (solo activos 'A')
+        List<Producto> todosProductos = productoRepository.findAllConRelaciones();
+        List<ProductoScore> prodScores = new ArrayList<>();
+        for (Producto prod : todosProductos) {
+            if (!Character.valueOf('A').equals(prod.getEstado())) {
+                continue;
+            }
+            String normNombre = normalizarTexto(prod.getNombreProducto());
+            String normSku = normalizarTexto(prod.getCodigoSku());
+            String normMarca = prod.getMarca() != null ? normalizarTexto(prod.getMarca().getNombreMarca()) : "";
+            String normCat = prod.getCategoria() != null ? normalizarTexto(prod.getCategoria().getNombreCategoria()) : "";
+
+            int scoreNombre = calcularScoreCoincidencia(normNombre, normTerm);
+            int scoreSku = calcularScoreCoincidencia(normSku, normTerm);
+            int scoreMarca = calcularScoreCoincidencia(normMarca, normTerm);
+            int scoreCat = calcularScoreCoincidencia(normCat, normTerm);
+
+            int maxScore = Math.max(scoreNombre * 3, Math.max(scoreSku * 2, Math.max(scoreMarca, scoreCat)));
+            if (maxScore > 0) {
+                prodScores.add(new ProductoScore(prod, maxScore));
+            }
+        }
+        prodScores.sort((a, b) -> {
+            int cmp = Integer.compare(b.score(), a.score());
+            if (cmp != 0) return cmp;
+            return a.prod().getNombreProducto().compareToIgnoreCase(b.prod().getNombreProducto());
+        });
+
+        List<SugerenciaBusquedaDTO.SugerenciaProductoDTO> sugerenciasProductos = new ArrayList<>();
+        int pIndex = 0;
+        for (ProductoScore ps : prodScores) {
+            if (pIndex >= 6) break;
+            Producto p = ps.prod();
+            imagenStorageService.cargarImagenesEnProducto(p);
+
+            String imgUrl = (p.getImagenPrincipalUrl() != null && !p.getImagenPrincipalUrl().isBlank())
+                    ? p.getImagenPrincipalUrl()
+                    : IMAGENES_FALLBACK[pIndex % IMAGENES_FALLBACK.length];
+
+            String catNombre = p.getCategoria() != null ? p.getCategoria().getNombreCategoria() : null;
+            String marcaNombre = p.getMarca() != null ? p.getMarca().getNombreMarca() : null;
+
+            sugerenciasProductos.add(new SugerenciaBusquedaDTO.SugerenciaProductoDTO(
+                    p.getIdProducto(),
+                    p.getCodigoSku(),
+                    p.getNombreProducto(),
+                    p.getPrecioVenta(),
+                    imgUrl,
+                    catNombre,
+                    marcaNombre,
+                    "/productos/" + p.getIdProducto()
+            ));
+            pIndex++;
+        }
+        dto.setProductos(sugerenciasProductos);
+
+        dto.setTotalResultados(catScores.size() + marcaScores.size() + prodScores.size());
+        return dto;
+    }
+
+    private int calcularScoreCoincidencia(String texto, String termino) {
+        if (texto == null || texto.isEmpty() || termino == null || termino.isEmpty()) {
+            return 0;
+        }
+        if (texto.startsWith(termino)) {
+            return 100;
+        }
+        String[] palabras = texto.split("\\s+");
+        for (String palabra : palabras) {
+            if (palabra.startsWith(termino)) {
+                return 75;
+            }
+        }
+        if (texto.contains(termino)) {
+            return 50;
+        }
+        return 0;
+    }
+
+    private record CategoriaScore(Categoria cat, int score) {}
+    private record MarcaScore(Marca marca, int score) {}
+    private record ProductoScore(Producto prod, int score) {}
 
     private String normalizarTexto(String texto) {
         if (texto == null) {

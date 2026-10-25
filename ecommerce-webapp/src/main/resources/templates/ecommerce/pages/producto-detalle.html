@@ -9,187 +9,485 @@
 <div th:replace="~{ecommerce/layout/ecommerce-layout :: layout(~{::contenido})}">
   <th:block th:fragment="contenido">
 
-    <section class="container store-section" style="padding-top: 40px; padding-bottom: 48px; min-height: 55vh;">
+    <section class="container py-4 py-lg-5" style="min-height: 70vh;">
 
-
+      <!-- Breadcrumbs de Navegación -->
       <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb" style="font-size: 0.85rem;">
-          <li class="breadcrumb-item"><a th:href="@{/}" class="text-decoration-none">Inicio</a></li>
-          <li class="breadcrumb-item"><a th:href="@{/productos}" class="text-decoration-none">Productos</a></li>
-          <li class="breadcrumb-item active" aria-current="page" th:text="${producto?.nombreProducto}">Producto</li>
+        <ol class="breadcrumb align-items-center mb-0 small" style="font-size: 0.88rem;">
+          <li class="breadcrumb-item">
+            <a th:href="@{/}" class="text-decoration-none text-muted d-inline-flex align-items-center gap-1">
+              <i class="bi bi-house-door"></i> Inicio
+            </a>
+          </li>
+          <li class="breadcrumb-item">
+            <a th:href="@{/productos}" class="text-decoration-none text-muted">Productos</a>
+          </li>
+          <li th:if="${producto?.categoria != null}" class="breadcrumb-item">
+            <a th:href="@{/productos(idCategoria=${producto.categoria.idCategoria})}"
+               class="text-decoration-none text-muted"
+               th:text="${producto.categoria.nombreCategoria}">Categoría</a>
+          </li>
+          <li class="breadcrumb-item active text-truncate fw-semibold text-dark"
+              style="max-width: 320px;"
+              aria-current="page"
+              th:text="${producto?.nombreProducto}">Nombre del Producto</li>
         </ol>
       </nav>
 
-      <div class="row g-5">
+      <!-- Tarjeta Principal del Producto (Hero Card) -->
+      <div class="product-detail-card p-3 p-sm-4 p-lg-5 mb-5">
+        <div class="row g-4 g-lg-5">
 
-        <!-- COLUMNA 1: Galería / Imagen -->
-        <div class="col-md-5">
-          <div style="width: 100%; height: 380px; background: #f8fafc; border-radius: 14px;
-                        border: 1px solid var(--store-border, #eadcc0);
-                        display: flex; align-items: center; justify-content: center; overflow: hidden;">
-            <!-- Imagen dinámica basada en el nombre del producto -->
-            <img id="imagen-principal"
-                 th:src="@{'https://placehold.co/600x450/f8fafc/0f172a.png?text=' + ${#strings.replace(producto?.nombreProducto != null ? producto.nombreProducto : 'Producto', ' ', '+')}}"
-                 th:alt="${producto?.nombreProducto}"
-                 style="width: 100%; height: 100%; object-fit: contain; padding: 15px;">
-          </div>
+          <!-- COLUMNA 1: Galería de Fotografías (4 Slots configurados) -->
+          <div class="col-12 col-md-5 col-lg-5">
+            <div class="product-gallery-box" id="galleryBox">
 
-          <div class="d-flex gap-2 mt-3 justify-content-center">
-            <div style="width: 70px; height: 70px; border: 2px solid var(--store-primary, #d99b00); border-radius: 8px; overflow: hidden; cursor: pointer;">
-              <img th:src="@{'https://placehold.co/100x100/f8fafc/0f172a.png?text=1'}" style="width: 100%; height: 100%; object-fit: cover;">
-            </div>
-            <div style="width: 70px; height: 70px; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; opacity: 0.6; cursor: pointer;">
-              <img th:src="@{'https://placehold.co/100x100/f8fafc/0f172a.png?text=2'}" style="width: 100%; height: 100%; object-fit: cover;">
-            </div>
-          </div>
-        </div>
+              <!-- Estado 1: TIENE IMAGEN (Muestra la imagen principal y opciones de zoom) -->
+              <th:block th:if="${tieneImagenes}">
+                <img id="imagen-principal"
+                     th:src="${producto.imagenPrincipalUrl}"
+                     th:alt="${producto?.nombreProducto}"
+                     class="product-main-img"
+                     onclick="abrirModalZoom()"
+                     title="Haz clic para ver imagen ampliada">
 
-        <div class="col-md-7 d-flex flex-column justify-content-between">
-          <div>
-            <div class="d-flex align-items-center gap-2 mb-2">
-              <span class="badge bg-secondary" th:text="${producto.marca != null ? producto.marca.nombreMarca : 'Sin Marca'}">Marca</span>
-              <span class="badge bg-light text-dark border" th:text="${producto.categoria != null ? producto.categoria.nombreCategoria : 'General'}">Categoría</span>
-              <small class="text-muted ms-auto">SKU: <strong th:text="${producto.codigoSku}">SKU-0000</strong></small>
-            </div>
+                <!-- Badge de Marca sobre la imagen -->
+                <span th:if="${producto?.marca != null}"
+                      class="badge position-absolute top-0 start-0 m-3 px-3 py-2 rounded-pill bg-dark text-white fw-semibold shadow-xs"
+                      style="font-size: 0.78rem;"
+                      th:text="${producto.marca.nombreMarca}">Marca</span>
 
-            <!-- Nombre del Producto -->
-            <h1 class="section-title text-capitalize" th:text="${producto.nombreProducto}">
-              Nombre del producto
-            </h1>
+                <!-- Botón flotante para ver en grande -->
+                <button type="button"
+                        class="btn btn-sm btn-light border position-absolute bottom-0 end-0 m-3 rounded-pill shadow-xs d-flex align-items-center gap-1.5 px-3 py-1.5 fw-semibold small"
+                        onclick="abrirModalZoom()"
+                        title="Ver foto en tamaño completo">
+                  <i class="bi bi-arrows-fullscreen text-warning"></i>
+                  <span>Ampliar</span>
+                </button>
+              </th:block>
 
-            <!-- Precio -->
-            <div class="my-3">
-              <span class="h2 fw-bold" style="color: var(--store-primary, #d99b00);"
-                th:text="${producto?.precioVenta != null ? '$' + #numbers.formatDecimal(producto.precioVenta, 1, 2) : '$0.00'}">$0.00</span>
-              <small class="text-muted"> (IVA incluido)</small>
-            </div>
-
-            <!-- Estado de Existencias / Stock -->
-            <div class="mb-3">
-              <!-- Agotado -->
-              <span th:if="${producto.stockDisponible == null or producto.stockDisponible <= 0}"
-                    class="badge bg-danger p-2" style="font-size: 0.9rem;">
-                  <i class="bi bi-x-circle me-1"></i> Agotado temporalmente
-                </span>
-
-              <!-- Pocas unidades -->
-              <span th:if="${producto.stockDisponible != null and producto.stockDisponible > 0 and producto.stockMinimo != null and producto.stockDisponible <= producto.stockMinimo}"
-                    class="badge bg-warning text-dark p-2" style="font-size: 0.9rem;">
-                  <i class="bi bi-exclamation-triangle me-1"></i> ¡Pocas unidades! (<span th:text="${producto.stockDisponible}">0</span> disponibles)
-                </span>
-
-              <!-- Stock Normal -->
-              <span th:if="${producto.stockDisponible != null and (producto.stockMinimo == null or producto.stockDisponible > producto.stockMinimo)}"
-                    class="badge bg-success p-2" style="font-size: 0.9rem;">
-                  <i class="bi bi-check-circle me-1"></i> En Stock (<span th:text="${producto.stockDisponible}">0</span> unidades disponibles)
-                </span>
-            </div>
-
-            <div class="mb-4">
-              <h6 class="fw-bold mb-2">Descripción:</h6>
-              <p class="text-secondary" style="line-height: 1.6;" th:text="${producto.descripcionProducto}">
-                Descripción detallada del producto cargada desde la base de datos.
-              </p>
-            </div>
-          </div>
-
-
-          <div class="pt-3 border-top mt-auto">
-            <form id="form-carrito" onsubmit="event.preventDefault(); agregarAlCarrito();">
-              <input type="hidden" id="producto-id" name="idProducto" th:value="${producto.idProducto}">
-
-              <div class="row g-3 align-items-center">
-
-
-                <div class="col-auto">
-                  <label for="cantidad-input" class="col-form-label fw-bold">Cantidad:</label>
+              <!-- Estado 2: SIN IMÁGENES (Mismo diseño limpio y responsive de la vista /productos) -->
+              <th:block th:unless="${tieneImagenes}">
+                <div class="product-no-img-box">
+                  <div class="no-img-icon-wrapper mb-3">
+                    <i class="bi bi-image fs-1"></i>
+                  </div>
+                  <h6 class="fw-bold text-dark mb-1">Sin fotografía disponible</h6>
+                  <p class="text-muted small mb-0 px-3">
+                    Este producto aún no cuenta con fotografías registradas en el catálogo.
+                  </p>
+                  <small class="text-muted mt-2 fw-semibold" th:text="'SKU: ' + ${producto.codigoSku}">SKU-0000</small>
                 </div>
-                <div class="col-auto">
-                  <div class="input-group" style="width: 140px;">
-                    <button type="button" class="btn btn-outline-secondary" onclick="ajustarCantidad(-1)">-</button>
-                    <input type="number"
-                           id="cantidad-input"
-                           name="cantidad"
-                           class="form-control text-center"
-                           value="1"
-                           min="1"
-                           th:max="${producto.stockDisponible}"
-                           th:disabled="${producto.stockDisponible == null or producto.stockDisponible <= 0}">
-                    <button type="button" class="btn btn-outline-secondary" onclick="ajustarCantidad(1)">+</button>
+              </th:block>
+
+            </div>
+
+            <!-- Tira de Miniaturas: Los 4 Bloques / Slots del Backend -->
+            <div th:if="${tieneImagenes}"
+                 class="product-thumbnails-grid mt-3"
+                 id="thumbnailsGrid">
+              <th:block th:each="slotNum : ${#numbers.sequence(1, 4)}">
+                <!-- Slot con fotografía cargada -->
+                <button th:if="${imagenesSlots != null and imagenesSlots.containsKey(slotNum)}"
+                        type="button"
+                        class="product-thumb-btn"
+                        th:classappend="${imagenesSlots.get(slotNum) == producto.imagenPrincipalUrl} ? 'active-thumb' : ''"
+                        th:data-img-url="${imagenesSlots.get(slotNum)}"
+                        onclick="cambiarImagenPrincipal(this.getAttribute('data-img-url'), this)"
+                        th:title="'Bloque ' + ${slotNum}">
+                  <img th:src="${imagenesSlots.get(slotNum)}" th:alt="'Fotografía Bloque ' + ${slotNum}" class="product-thumb-img">
+                  <span class="product-thumb-slot-tag" th:text="'Slot ' + ${slotNum}">Slot 1</span>
+                </button>
+                <!-- Slot disponible sin fotografía cargada -->
+                <div th:unless="${imagenesSlots != null and imagenesSlots.containsKey(slotNum)}"
+                     class="product-thumb-btn opacity-50 bg-light"
+                     th:title="'Bloque ' + ${slotNum} + ' (Sin foto)'"
+                     style="cursor: default; border: 2px dashed #cbd5e1 !important;">
+                  <div class="d-flex flex-column align-items-center justify-content-center text-muted" style="font-size: 0.68rem;">
+                    <i class="bi bi-camera opacity-50 mb-0.5"></i>
+                    <span th:text="'Slot ' + ${slotNum}">Slot 2</span>
+                  </div>
+                </div>
+              </th:block>
+            </div>
+
+            <div th:if="${tieneImagenes and imagenesSlots != null and imagenesSlots.size() > 1}"
+                 class="text-center mt-2">
+              <small class="text-muted" style="font-size: 0.75rem;">
+                <i class="bi bi-hand-index-thumb me-1"></i> Selecciona un bloque para alternar la vista
+              </small>
+            </div>
+          </div>
+
+          <!-- COLUMNA 2: Información Comercial, Precio, Stock y Carrito -->
+          <div class="col-12 col-md-7 col-lg-7 d-flex flex-column justify-content-between">
+            <div>
+
+              <!-- Encabezado de Marcas, Categoría y SKU con botón de copia -->
+              <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                  <a th:if="${producto?.marca != null}"
+                     th:href="@{/productos(idMarca=${producto.marca.idMarca})}"
+                     class="product-detail-brand-badge shadow-xs"
+                     title="Ver más productos de esta marca"
+                     th:text="${producto.marca.nombreMarca}">Marca</a>
+
+                  <a th:if="${producto?.categoria != null}"
+                     th:href="@{/productos(idCategoria=${producto.categoria.idCategoria})}"
+                     class="product-detail-cat-badge shadow-xs"
+                     title="Explorar toda la categoría"
+                     th:text="${producto.categoria.nombreCategoria}">Categoría</a>
+                </div>
+
+                <div class="sku-copy-pill"
+                     onclick="copiarSku(this.getAttribute('data-sku'), this)"
+                     th:data-sku="${producto.codigoSku}"
+                     title="Clic para copiar SKU">
+                  <span>SKU: <strong th:text="${producto.codigoSku}">SKU-0000</strong></span>
+                  <i class="bi bi-clipboard text-muted" id="iconCopy"></i>
+                </div>
+              </div>
+
+              <!-- Nombre del Producto -->
+              <h1 class="product-detail-title mb-2" th:text="${producto.nombreProducto}">
+                Nombre del producto
+              </h1>
+
+              <!-- Valoración social y prueba de confianza -->
+              <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+                <div class="text-warning small d-flex gap-0.5">
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                </div>
+                <span class="fw-bold small text-dark">5.0</span>
+                <span class="text-muted small">(Opiniones verificadas)</span>
+                <span class="badge bg-light text-success border ms-2 py-1 px-2 fw-medium">
+                  <i class="bi bi-shield-check me-1"></i>Producto Garantizado
+                </span>
+              </div>
+
+              <!-- Sección de Precio Destacado -->
+              <div class="product-price-section mb-4">
+                <div class="d-flex align-items-baseline gap-2">
+                  <span class="product-price-val"
+                        th:text="${producto?.precioVenta != null ? '$' + #numbers.formatDecimal(producto.precioVenta, 1, 2) : '$0.00'}">$0.00</span>
+                  <span class="text-muted fw-semibold small">(IVA incluido)</span>
+                </div>
+              </div>
+
+              <!-- Estado de Existencias / Stock Dinámico -->
+              <div class="mb-4">
+                <!-- Agotado -->
+                <div th:if="${producto.stockDisponible == null or producto.stockDisponible <= 0}"
+                     class="alert alert-danger d-inline-flex align-items-center gap-2 py-2 px-3 m-0 rounded-3 shadow-xs">
+                  <i class="bi bi-x-circle-fill fs-5"></i>
+                  <div>
+                    <strong class="d-block">Agotado temporalmente</strong>
+                    <small>Este artículo no tiene unidades disponibles en bodega por ahora.</small>
                   </div>
                 </div>
 
-
-                <div class="col-12 col-sm-auto flex-grow-1">
-                  <button type="submit"
-                          id="btn-agregar-carrito"
-                          class="btn btn-mustard w-100 py-2"
-                          th:disabled="${producto.stockDisponible == null or producto.stockDisponible <= 0}">
-                    <i class="bi bi-cart-plus me-2"></i>
-                    Agregar al carrito
-                  </button>
+                <!-- Pocas unidades -->
+                <div th:if="${producto.stockDisponible != null and producto.stockDisponible > 0 and producto.stockMinimo != null and producto.stockDisponible <= producto.stockMinimo}"
+                     class="alert alert-warning text-dark d-inline-flex align-items-center gap-2 py-2 px-3 m-0 rounded-3 shadow-xs border-warning">
+                  <i class="bi bi-exclamation-triangle-fill fs-5 text-warning"></i>
+                  <div>
+                    <strong class="d-block">¡Últimas unidades disponibles!</strong>
+                    <small>Solo quedan <strong th:text="${producto.stockDisponible}">0</strong> unidades en inventario.</small>
+                  </div>
                 </div>
 
+                <!-- Stock Normal -->
+                <div th:if="${producto.stockDisponible != null and (producto.stockMinimo == null or producto.stockDisponible > producto.stockMinimo)}"
+                     class="alert alert-success d-inline-flex align-items-center gap-2 py-2 px-3 m-0 rounded-3 shadow-xs border-success">
+                  <i class="bi bi-check-circle-fill fs-5 text-success"></i>
+                  <div>
+                    <strong class="d-block">En Stock para despacho inmediato</strong>
+                    <small><strong th:text="${producto.stockDisponible}">0</strong> unidades listas para enviar.</small>
+                  </div>
+                </div>
               </div>
-            </form>
 
-            <div id="mensaje-carrito" class="alert d-none mt-3" role="alert"></div>
+              <!-- Descripción Breve del Producto -->
+              <div class="mb-4">
+                <h6 class="fw-bold text-dark text-uppercase small mb-2" style="letter-spacing: 0.05em;">Descripción:</h6>
+                <p class="text-secondary mb-0" style="line-height: 1.7; font-size: 0.98rem;" th:text="${producto.descripcionProducto}">
+                  Descripción detallada del producto cargada desde la base de datos.
+                </p>
+              </div>
 
-
-            <div class="d-flex gap-2 mt-4">
-              <a th:href="@{/carrito}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-cart3 me-1"></i> Ir a mi carrito
-              </a>
-              <a th:href="@{/productos}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-left me-1"></i> Volver al catálogo
-              </a>
             </div>
+
+            <!-- Formulario de Compra / Agregar al Carrito -->
+            <div class="pt-4 border-top mt-auto">
+              <form id="form-carrito" onsubmit="event.preventDefault(); agregarAlCarrito();">
+                <input type="hidden" id="producto-id" name="idProducto" th:value="${producto.idProducto}">
+
+                <div class="row g-3 align-items-center">
+
+                  <!-- Selector Stepper de Cantidad -->
+                  <div class="col-auto">
+                    <label for="cantidad-input" class="col-form-label fw-bold small text-muted text-uppercase">Cantidad:</label>
+                    <div>
+                      <div class="quantity-stepper">
+                        <button type="button" class="quantity-stepper-btn" onclick="ajustarCantidad(-1)" title="Disminuir">-</button>
+                        <input type="number"
+                               id="cantidad-input"
+                               name="cantidad"
+                               class="quantity-stepper-input"
+                               value="1"
+                               min="1"
+                               th:max="${producto.stockDisponible}"
+                               th:disabled="${producto.stockDisponible == null or producto.stockDisponible <= 0}">
+                        <button type="button" class="quantity-stepper-btn" onclick="ajustarCantidad(1)" title="Aumentar">+</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Botón Agregar al Carrito -->
+                  <div class="col-12 col-sm-auto flex-grow-1">
+                    <label class="col-form-label d-none d-sm-block">&nbsp;</label>
+                    <button type="submit"
+                            id="btn-agregar-carrito"
+                            class="btn btn-mustard w-100 py-2.5 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm"
+                            style="min-height: 46px; font-size: 1rem;"
+                            th:disabled="${producto.stockDisponible == null or producto.stockDisponible <= 0}">
+                      <i class="bi bi-cart-plus fs-5"></i>
+                      <span>Agregar al carrito</span>
+                    </button>
+                  </div>
+
+                </div>
+              </form>
+
+              <!-- Mensaje / Notificación de Carrito -->
+              <div id="mensaje-carrito" class="alert d-none mt-3 shadow-xs" role="alert"></div>
+
+              <!-- Barra de Beneficios / Trust Signals -->
+              <div class="product-trust-strip mt-4">
+                <div class="trust-item">
+                  <div class="trust-icon-box">
+                    <i class="bi bi-truck"></i>
+                  </div>
+                  <div>
+                    <div class="trust-text-title">Envío Express</div>
+                    <div class="trust-text-desc">Entrega rápida y segura</div>
+                  </div>
+                </div>
+
+                <div class="trust-item">
+                  <div class="trust-icon-box">
+                    <i class="bi bi-shield-check"></i>
+                  </div>
+                  <div>
+                    <div class="trust-text-title">Garantía MultiStore</div>
+                    <div class="trust-text-desc">12 meses de respaldo oficial</div>
+                  </div>
+                </div>
+
+                <div class="trust-item">
+                  <div class="trust-icon-box">
+                    <i class="bi bi-arrow-repeat"></i>
+                  </div>
+                  <div>
+                    <div class="trust-text-title">Devolución Fácil</div>
+                    <div class="trust-text-desc">30 días de cambio garantizado</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Enlaces de Retorno -->
+              <div class="d-flex flex-wrap gap-2 mt-4 pt-2">
+                <a th:href="@{/carrito}" class="btn btn-light border btn-sm fw-semibold d-inline-flex align-items-center gap-1.5 px-3 py-1.5 text-secondary">
+                  <i class="bi bi-cart3 text-warning"></i>
+                  <span>Ir a mi carrito</span>
+                </a>
+                <a th:href="@{/productos}" class="btn btn-light border btn-sm fw-semibold d-inline-flex align-items-center gap-1.5 px-3 py-1.5 text-secondary">
+                  <i class="bi bi-arrow-left"></i>
+                  <span>Volver al catálogo</span>
+                </a>
+              </div>
+
+            </div>
+
           </div>
 
         </div>
-
       </div>
-      <!-- SECCIÓN: Tabla de Especificaciones / Metadatos -->
-      <div class="mt-5 pt-4 border-top">
-        <ul class="nav nav-tabs mb-0 border-bottom-0" id="detallesTab" role="tablist">
+
+      <!-- SECCIÓN DE ESPECIFICACIONES TÉCNICAS (ESTILO RADIOSHACK - TABLA DE 2 COLUMNAS) -->
+      <div class="rs-details-container mb-5" id="especificacionesSection">
+
+        <!-- Pestañas de Navegación (Detalles / Descripción) -->
+        <ul class="nav nav-tabs rs-product-tabs" id="productoDetalleTabs" role="tablist">
           <li class="nav-item" role="presentation">
-            <button class="nav-link active fw-bold text-dark px-4 py-2" id="especificaciones-tab" data-bs-toggle="tab" type="button" role="tab"
-                    style="border-top: 3px solid var(--store-primary, #d99b00); background: #ffffff; border-radius: 8px 8px 0 0;">
-              <i class="bi bi-sliders me-2 text-warning"></i> Especificaciones técnicas
+            <button class="nav-link active"
+                    id="tab-detalles-btn"
+                    data-bs-toggle="tab"
+                    data-bs-target="#tab-detalles-pane"
+                    type="button"
+                    role="tab"
+                    aria-controls="tab-detalles-pane"
+                    aria-selected="true">
+              <span class="rs-tab-badge-dot"></span>
+              <span>Detalles</span>
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link"
+                    id="tab-descripcion-btn"
+                    data-bs-toggle="tab"
+                    data-bs-target="#tab-descripcion-pane"
+                    type="button"
+                    role="tab"
+                    aria-controls="tab-descripcion-pane"
+                    aria-selected="false">
+              <span>Descripción</span>
             </button>
           </li>
         </ul>
 
-        <div class="card border shadow-sm" style="border-radius: 0 12px 12px 12px; border-color: #e2e8f0 !important; overflow: hidden; max-width: 900px; background: #ffffff;">
-          <div class="table-responsive">
-            <table class="table table-striped table-hover mb-0 align-middle">
-              <tbody>
-              <tr>
-                <th scope="row" class="text-secondary ps-4 py-3" style="width: 35%; font-weight: 600; font-size: 0.9rem;">SKU</th>
-                <td class="ps-4 py-3 text-dark fw-medium" style="width: 65%; font-size: 0.95rem;" th:text="${producto.codigoSku}">SKU-0000</td>
-              </tr>
-              <tr>
-                <th scope="row" class="text-secondary ps-4 py-3" style="font-weight: 600; font-size: 0.9rem;">Marca</th>
-                <td class="ps-4 py-3 text-dark fw-medium" style="font-size: 0.95rem;" th:text="${producto.marca != null ? producto.marca.nombreMarca : 'No especificada'}">Marca</td>
-              </tr>
-              <tr>
-                <th scope="row" class="text-secondary ps-4 py-3" style="font-weight: 600; font-size: 0.9rem;">Categoría</th>
-                <td class="ps-4 py-3 text-dark fw-medium" style="font-size: 0.95rem;" th:text="${producto.categoria != null ? producto.categoria.nombreCategoria : 'General'}">Categoría</td>
-              </tr>
-              <!-- Filas dinámicas extraídas del JSON metadata -->
-              <tr th:each="entry : ${especificaciones}">
-                <th scope="row" class="text-secondary ps-4 py-3 text-capitalize" style="font-weight: 600; font-size: 0.9rem;"
-                    th:text="${#strings.replace(entry.key, '_', ' ')}">Atributo</th>
-                <td class="ps-4 py-3 text-dark fw-medium" style="font-size: 0.95rem;" th:text="${entry.value}">Valor</td>
-              </tr>
-              </tbody>
-            </table>
+        <!-- Contenido de las Pestañas -->
+        <div class="tab-content" id="productoDetalleTabsContent">
+
+          <!-- Pestaña 1: Ficha de Especificaciones (Tabla de 2 Columnas) -->
+          <div class="tab-pane fade show active"
+               id="tab-detalles-pane"
+               role="tabpanel"
+               aria-labelledby="tab-detalles-btn"
+               tabindex="0">
+
+            <div class="rs-spec-table-wrapper">
+              <table class="rs-spec-table">
+                <colgroup>
+                  <col class="rs-col-key" />
+                  <col class="rs-col-val" />
+                </colgroup>
+                <tbody>
+                  <!-- Atributos Dinámicos de Metadata (del JSON) -->
+                  <tr th:each="spec : ${especificaciones}">
+                    <th scope="row" class="rs-spec-key" th:text="${spec.etiqueta}">Atributo</th>
+                    <td class="rs-spec-val" th:text="${spec.valor}">Valor</td>
+                  </tr>
+
+                  <!-- Atributos Base del Sistema -->
+                  <tr>
+                    <th scope="row" class="rs-spec-key">SKU</th>
+                    <td class="rs-spec-val fw-semibold" th:text="${producto.codigoSku}">SKU-0000</td>
+                  </tr>
+                  <tr>
+                    <th scope="row" class="rs-spec-key">Marca</th>
+                    <td class="rs-spec-val" th:text="${producto.marca != null ? producto.marca.nombreMarca : 'No especificada'}">Marca</td>
+                  </tr>
+                  <tr>
+                    <th scope="row" class="rs-spec-key">Categoría</th>
+                    <td class="rs-spec-val" th:text="${producto.categoria != null ? producto.categoria.nombreCategoria : 'General'}">Categoría</td>
+                  </tr>
+                  <tr>
+                    <th scope="row" class="rs-spec-key">Condición</th>
+                    <td class="rs-spec-val">Nuevo / Original</td>
+                  </tr>
+                  <tr>
+                    <th scope="row" class="rs-spec-key">Garantía</th>
+                    <td class="rs-spec-val">12 meses oficial del fabricante</td>
+                  </tr>
+                  <tr>
+                    <th scope="row" class="rs-spec-key">Disponibilidad</th>
+                    <td class="rs-spec-val" th:text="${producto.stockDisponible != null and producto.stockDisponible > 0 ? producto.stockDisponible + ' unidades disponibles' : 'Agotado'}">En stock</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+
+          <!-- Pestaña 2: Descripción Completa del Producto -->
+          <div class="tab-pane fade p-4 p-lg-5 bg-white"
+               id="tab-descripcion-pane"
+               role="tabpanel"
+               aria-labelledby="tab-descripcion-btn"
+               tabindex="0">
+            <h5 class="fw-bold text-dark mb-3">Descripción General</h5>
+            <p class="text-secondary mb-0" style="line-height: 1.8; font-size: 1rem;" th:text="${producto.descripcionProducto}">
+              Descripción detallada del producto.
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- Modal para Zoom / Vista Completa de Imagen -->
+    <div class="modal fade" id="modalZoomImagen" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+          <div class="modal-header border-bottom bg-light py-2 px-3">
+            <h6 class="modal-title fw-bold text-dark m-0" th:text="${producto?.nombreProducto}">Fotografía del producto</h6>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body p-3 text-center bg-white" style="min-height: 400px; display: flex; align-items: center; justify-content: center;">
+            <img id="imgZoomModal" src="" alt="Vista ampliada" class="img-fluid rounded-3" style="max-height: 75vh; object-fit: contain;">
           </div>
         </div>
       </div>
-    </section>
+    </div>
 
+    <!-- Scripts Interactivos para Galería, Cantidad y Carrito -->
     <script>
+      // Alternar imagen principal al hacer clic en miniaturas de los 4 slots
+      function cambiarImagenPrincipal(url, botonElemento) {
+        if (!url) return;
+        const imgPrincipal = document.getElementById('imagen-principal');
+        if (!imgPrincipal) return;
+
+        // Efecto de desvanecimiento suave
+        imgPrincipal.style.opacity = '0.3';
+        imgPrincipal.src = url;
+        imgPrincipal.onload = function() {
+          imgPrincipal.style.opacity = '1';
+        };
+
+        // Resaltar miniatura activa
+        document.querySelectorAll('.product-thumb-btn').forEach(btn => {
+          btn.classList.remove('active-thumb');
+        });
+        if (botonElemento) {
+          botonElemento.classList.add('active-thumb');
+        }
+      }
+
+      // Abrir modal de ampliación
+      function abrirModalZoom() {
+        const imgPrincipal = document.getElementById('imagen-principal');
+        const imgZoomModal = document.getElementById('imgZoomModal');
+        if (!imgPrincipal || !imgZoomModal) return;
+
+        imgZoomModal.src = imgPrincipal.src;
+        const modal = new bootstrap.Modal(document.getElementById('modalZoomImagen'));
+        modal.show();
+      }
+
+      // Copiar código SKU al portapapeles
+      function copiarSku(sku, elemento) {
+        if (!sku) return;
+        navigator.clipboard.writeText(sku).then(() => {
+          const icon = elemento.querySelector('i');
+          if (icon) {
+            icon.className = 'bi bi-check-lg text-success';
+            setTimeout(() => {
+              icon.className = 'bi bi-clipboard text-muted';
+            }, 2000);
+          }
+        });
+      }
+
+      // Ajuste de cantidad del stepper
       function ajustarCantidad(cambio) {
         const input = document.getElementById('cantidad-input');
         if (!input || input.disabled) return;
@@ -204,6 +502,7 @@
         }
       }
 
+      // Agregar al carrito vía API reactiva
       async function agregarAlCarrito() {
         const idProducto = document.getElementById('producto-id').value;
         const cantidad = document.getElementById('cantidad-input').value;
@@ -215,32 +514,47 @@
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Agregando...';
 
         try {
-
           const response = await fetch(`/api/carrito/agregar?idProducto=${idProducto}&cantidad=${cantidad}`, {
             method: 'POST',
             headers: {
-              'X-Cliente-Id': '1'
+              'Accept': 'application/json'
             }
           });
+          const data = await response.json().catch(() => ({}));
 
-          if (response.ok) {
-            alerta.className = 'alert alert-success mt-3';
-            alerta.innerHTML = `<i class="bi bi-check-circle me-1"></i> ¡Se agregaron <strong>${cantidad}</strong> unidad(es) al carrito!`;
+          if (response.ok && data.ok) {
+            alerta.className = 'alert alert-success mt-3 d-flex align-items-center justify-content-between p-3 rounded-3 shadow-xs';
+            alerta.innerHTML = `
+              <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                <div>
+                  <strong>¡Producto agregado con éxito!</strong>
+                  <div class="small">Se añadieron ${cantidad} unidad(es) a tu carrito de compras.</div>
+                </div>
+              </div>
+              <a href="/carrito" class="btn btn-sm btn-mustard fw-bold text-nowrap ms-2">Ver Carrito</a>
+            `;
             alerta.classList.remove('d-none');
+
+            // Actualizar badge del carrito en el navbar si existe
+            const cartBadge = document.querySelector('.header-cart-badge');
+            if (cartBadge && data.carritoCantidad !== undefined) {
+              cartBadge.textContent = data.carritoCantidad;
+            }
           } else {
-            const errorText = await response.text();
-            alerta.className = 'alert alert-danger mt-3';
-            alerta.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i> No se pudo agregar: ${errorText}`;
+            const errorMsg = data.mensaje || 'No se pudo agregar el producto.';
+            alerta.className = 'alert alert-danger mt-3 d-flex align-items-center gap-2 p-3 rounded-3';
+            alerta.innerHTML = `<i class="bi bi-exclamation-triangle-fill fs-5"></i> <div><strong>No se pudo agregar:</strong> ${errorMsg}</div>`;
             alerta.classList.remove('d-none');
           }
         } catch (error) {
-          alerta.className = 'alert alert-danger mt-3';
-          alerta.innerHTML = '<i class="bi bi-wifi-off me-1"></i> Error de conexión con el servidor.';
+          alerta.className = 'alert alert-danger mt-3 d-flex align-items-center gap-2 p-3 rounded-3';
+          alerta.innerHTML = '<i class="bi bi-wifi-off fs-5"></i> <div>Error de conexión con el servidor. Inténtalo de nuevo.</div>';
           alerta.classList.remove('d-none');
         } finally {
           btn.disabled = false;
           btn.innerHTML = originalText;
-          setTimeout(() => alerta.classList.add('d-none'), 5000);
+          setTimeout(() => alerta.classList.add('d-none'), 8000);
         }
       }
     </script>

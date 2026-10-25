@@ -23,4 +23,10 @@ public class LoginController {
         return "ecommerce/pages/security/login";
     }
 
+    @GetMapping("/login")
+    public String redirigirLogin() {
+        LOG.info("redirigirLogin() => Redirigiendo /login hacia inicio");
+        return "redirect:/";
+    }
+
 }

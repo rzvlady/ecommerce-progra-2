@@ -9,6 +9,7 @@ public class ItemCompraDTO {
     private Integer cantidad;
     private BigDecimal precioUnitario;
     private BigDecimal subtotal;
+    private String imagenUrl;
 
     public ItemCompraDTO() {
     }
@@ -51,5 +52,13 @@ public class ItemCompraDTO {
 
     public void setSubtotal(BigDecimal subtotal) {
         this.subtotal = subtotal;
+    }
+
+    public String getImagenUrl() {
+        return this.imagenUrl;
+    }
+
+    public void setImagenUrl(String imagenUrl) {
+        this.imagenUrl = imagenUrl;
     }
 }
