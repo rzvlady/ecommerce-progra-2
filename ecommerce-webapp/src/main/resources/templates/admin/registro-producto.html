@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Producto - Admin</title>
+    <!-- Agregamos Bootstrap para que el formulario se vea presentable -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<!--/*@thymesVar id="productoDTO" type="com.sv.grupo1.ecommerce.dto.ProductoRegistroDTO"*/-->
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Registrar Nuevo Producto</h4>
+                </div>
+                <div class="card-body">
+
+                    <!-- Mensajes de Éxito o Error enviados desde el Controlador -->
+                    <div th:if="${mensajeExito}" class="alert alert-success" role="alert">
+                        <span th:text="${mensajeExito}"></span>
+                    </div>
+                    <div th:if="${mensajeError}" class="alert alert-danger" role="alert">
+                        <span th:text="${mensajeError}"></span>
+                    </div>
+
+                    <!-- Formulario conectado al DTO -->
+                    <!-- th:action apunta a la ruta del @PostMapping en tu controlador -->
+                    <!-- th:object vincula el formulario al objeto 'productoDTO' -->
+                    <form th:action="@{/admin/productos/guardar}" th:object="${productoDTO}" method="post">
+
+                        <div class="row">
+                            <!-- Campo SKU -->
+                            <div class="col-md-6 mb-3">
+                                <label for="sku" class="form-label">Código SKU</label>
+                                <input type="text" id="sku" class="form-control" th:field="*{sku}" placeholder="Ej: PROD-001">
+                                <!-- Mostrar errores de validación (@NotBlank) -->
+                                <div class="text-danger mt-1" th:if="${#fields.hasErrors('sku')}" th:errors="*{sku}"></div>
+                            </div>
+
+                            <!-- Campo Nombre -->
+                            <div class="col-md-6 mb-3">
+                                <label for="nombreProducto" class="form-label">Nombre del Producto</label>
+                                <input type="text" id="nombreProducto" class="form-control" th:field="*{nombreProducto}">
+                                <div class="text-danger mt-1" th:if="${#fields.hasErrors('nombreProducto')}" th:errors="*{nombreProducto}"></div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Campo Descripción -->
+                            <div class="col-12 mb-3">
+                                <label for="descripcionProducto" class="form-label">Descripción</label>
+                                <textarea id="descripcionProducto" class="form-control" rows="2" th:field="*{descripcionProducto}"></textarea>
+                                <div class="text-danger mt-1" th:if="${#fields.hasErrors('descripcionProducto')}" th:errors="*{descripcionProducto}"></div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Campo Precio -->
+                            <div class="col-md-6 mb-3">
+                                <label for="precioCosto" class="form-label">Precio Costo ($)</label>
+                                <input type="number" step="0.01" id="precioCosto" class="form-control" th:field="*{precioCosto}">
+                                <!-- Corregido aquí: #fields.hasErrors('precioCosto') -->
+                                <div class="text-danger mt-1" th:if="${#fields.hasErrors('precioCosto')}" th:errors="*{precioCosto}"></div>
+                            </div>
+
+                            <!-- Campo Stock -->
+                            <div class="col-md-6 mb-3">
+                                <label for="stockDisponible" class="form-label">Stock Inicial</label>
+                                <input type="number" id="stockDisponible" class="form-control" th:field="*{stockDisponible}">
+                                <div class="text-danger mt-1" th:if="${#fields.hasErrors('stockDisponible')}" th:errors="*{stockDisponible}"></div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Campo Stock Mínimo -->
+                            <div class="col-md-6 mb-3">
+                                <label for="stockMinimo" class="form-label">Stock Mínimo (alerta)</label>
+                                <input type="number" id="stockMinimo" class="form-control" th:field="*{stockMinimo}">
+                                <div class="text-danger mt-1" th:if="${#fields.hasErrors('stockMinimo')}" th:errors="*{stockMinimo}"></div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Campo Categoría -->
+                            <div class="col-md-6 mb-3">
+                                <label for="idCategoria" class="form-label">Categoría</label>
+                                <select id="idCategoria" class="form-select" th:field="*{idCategoria}">
+                                    <option value="" selected>Seleccione una categoría...</option>
+                                    <!-- Por ahora usamos datos estáticos. Luego los llenaremos desde la BD -->
+                                    <option value="1">Electrónica</option>
+                                    <option value="2">Ropa</option>
+                                </select>
+                                <div class="text-danger mt-1" th:if="${#fields.hasErrors('idCategoria')}" th:errors="*{idCategoria}"></div>
+                            </div>
+
+                            <!-- Campo Marca -->
+                            <div class="col-md-6 mb-3">
+                                <label for="idMarca" class="form-label">Marca</label>
+                                <select id="idMarca" class="form-select" th:field="*{idMarca}">
+                                    <option value="" selected>Seleccione una marca...</option>
+                                    <option value="1">Samsung</option>
+                                    <option value="2">Sony</option>
+                                </select>
+                                <div class="text-danger mt-1" th:if="${#fields.hasErrors('idMarca')}" th:errors="*{idMarca}"></div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">Guardar Producto</button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
