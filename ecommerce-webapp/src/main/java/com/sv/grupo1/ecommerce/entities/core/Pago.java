@@ -1,6 +1,5 @@
 package com.sv.grupo1.ecommerce.entities.core;
 
-import com.sv.grupo1.ecommerce.enums.EstadoTransaccion;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -14,8 +13,8 @@ public class Pago {
     @Column(name = "id_pago")
     private Integer idPago;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_pedido", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_pedido", nullable = false, unique = true)
     private Pedido pedido;
 
     @Column(name = "metodo_pago", nullable = false)
@@ -24,13 +23,10 @@ public class Pago {
     @Column(name = "monto", nullable = false, precision = 10, scale = 2)
     private BigDecimal monto;
 
-    @Column(name = "estado_transaccion", nullable = false, length = 1)
-    private Character estadoTransaccion = EstadoTransaccion.PENDIENTE.getCodigoEstado();
+    @Column(name = "estado_transaccion", nullable = false)
+    private String estadoTransaccion;
 
-    @Column(name = "referencia_pasarela")
-    private String referenciaPasarela;
-
-    @Column(name = "fecha_pago")
+    @Column(name = "fecha_pago", insertable = false, updatable = false)
     private OffsetDateTime fechaPago;
 
     public Pago() {}
@@ -44,10 +40,8 @@ public class Pago {
     public void setMetodoPago(String metodoPago) { this.metodoPago = metodoPago; }
     public BigDecimal getMonto() { return monto; }
     public void setMonto(BigDecimal monto) { this.monto = monto; }
-    public Character getEstadoTransaccion() { return estadoTransaccion; }
-    public void setEstadoTransaccion(Character estadoTransaccion) { this.estadoTransaccion = estadoTransaccion; }
-    public String getReferenciaPasarela() { return referenciaPasarela; }
-    public void setReferenciaPasarela(String referenciaPasarela) { this.referenciaPasarela = referenciaPasarela; }
+    public String getEstadoTransaccion() { return estadoTransaccion; }
+    public void setEstadoTransaccion(String estadoTransaccion) { this.estadoTransaccion = estadoTransaccion; }
     public OffsetDateTime getFechaPago() { return fechaPago; }
     public void setFechaPago(OffsetDateTime fechaPago) { this.fechaPago = fechaPago; }
 }

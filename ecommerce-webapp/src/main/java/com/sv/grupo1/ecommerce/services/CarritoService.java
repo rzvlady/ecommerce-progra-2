@@ -13,10 +13,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-//@Service
+@Service
 public class CarritoService {
 
-    //@Autowired
+    @Autowired
     private ProductoRepository productoRepository;
 
     // Colección en memoria para manejar carritos por "id de sesión o cliente"
@@ -27,8 +27,7 @@ public class CarritoService {
         // Obtenemos o creamos el carrito del cliente
         Map<Integer, DetallePedido> carrito = carritosActivos.computeIfAbsent(idCliente, k -> new HashMap<>());
 
-        //Optional<Producto> optProducto = productoRepository.findById(idProducto);
-        Optional<Producto> optProducto = Optional.of(new Producto());
+        Optional<Producto> optProducto = productoRepository.findById(idProducto);
         if (optProducto.isPresent()) {
             Producto producto = optProducto.get();
 

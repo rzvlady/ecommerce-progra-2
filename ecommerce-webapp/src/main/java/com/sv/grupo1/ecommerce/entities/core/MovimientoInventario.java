@@ -28,10 +28,8 @@ public class MovimientoInventario {
     @Column(name = "fecha_movimiento", insertable = false, updatable = false)
     private OffsetDateTime fechaMovimiento;
 
-    @Column(name = "id_pedido")
-    private Integer idPedido;
-
-    @Transient
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_pedido")
     private Pedido pedido;
 
     public MovimientoInventario() {}
@@ -49,11 +47,6 @@ public class MovimientoInventario {
     public void setMotivo(String motivo) { this.motivo = motivo; }
     public OffsetDateTime getFechaMovimiento() { return fechaMovimiento; }
     public void setFechaMovimiento(OffsetDateTime fechaMovimiento) { this.fechaMovimiento = fechaMovimiento; }
-    public Integer getIdPedido() { return idPedido; }
-    public void setIdPedido(Integer idPedido) { this.idPedido = idPedido; }
     public Pedido getPedido() { return pedido; }
-    public void setPedido(Pedido pedido) {
-        this.pedido = pedido;
-        this.idPedido = pedido != null ? pedido.getIdPedido() : null;
-    }
+    public void setPedido(Pedido pedido) { this.pedido = pedido; }
 }
