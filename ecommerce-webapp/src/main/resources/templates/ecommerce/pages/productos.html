@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{ecommerce/fragments/ecommerce-head :: head('Catálogo de Productos')}">
+</head>
+
+<body class="store-body">
+
+<div th:replace="~{ecommerce/layout/ecommerce-layout :: layout(~{::contenido})}">
+    <th:block th:fragment="contenido">
+
+        <section class="container store-section py-4 py-lg-5" style="min-height: 70vh;">
+
+            <!-- Encabezado de Sección -->
+            <div class="catalog-page-header mb-4">
+                <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-white border small fw-bold text-muted mb-2 shadow-xs">
+                    <i class="bi bi-bag-check-fill text-warning"></i>
+                    <span>TIENDA OFICIAL</span>
+                </div>
+                <h1 class="section-title mt-1 mb-1">Catálogo de productos</h1>
+                <p class="section-description">
+                    Explora nuestra amplia selección de tecnología, novedades y accesorios con disponibilidad inmediata.
+                </p>
+            </div>
+
+            <!-- Tarjeta de Filtros Modernizada (Buscador reactivo en vivo + Select2 sin botón Buscar) -->
+            <div class="catalog-filter-card mb-4 p-3 p-md-4">
+                <form th:action="@{/productos}" method="get" id="formFiltrosCatalogo" class="row g-3 align-items-end">
+
+                    <!-- Buscador reactivo en vivo (filtra directamente las tarjetas abajo al escribir) -->
+                    <div class="col-12 col-lg-6">
+                        <label class="form-label fw-semibold small text-muted text-uppercase mb-1">
+                            <i class="bi bi-search me-1 text-warning"></i> Buscar producto
+                        </label>
+                        <div class="search-reactive-wrapper position-relative">
+                            <div class="input-group search-catalog-group">
+                                <span class="input-group-text bg-white border-end-0 text-muted">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input type="search"
+                                       name="busqueda"
+                                       id="catalogSearchInput"
+                                       class="form-control border-start-0 border-end-0"
+                                       autocomplete="off"
+                                       placeholder="Escribe para filtrar productos por nombre, marca o categoría..."
+                                       th:value="${busqueda}"
+                                       aria-label="Buscar producto">
+                                <button type="button"
+                                        class="btn btn-link btn-clear-search d-none text-muted p-0 me-2"
+                                        id="btnCatalogClearSearch"
+                                        aria-label="Limpiar campo de búsqueda">
+                                    <i class="bi bi-x-circle-fill"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filtro Categoría con Select2 -->
+                    <div class="col-12 col-sm-6 col-lg-3">
+                        <label for="selectCategoriaCatalogo" class="form-label fw-semibold small text-muted text-uppercase mb-1">
+                            <i class="bi bi-grid me-1 text-warning"></i> Categoría
+                        </label>
+                        <select name="idCategoria"
+                                id="selectCategoriaCatalogo"
+                                class="form-select select2-catalogo"
+                                data-placeholder="Todas las categorías">
+                            <option value="">Todas las categorías</option>
+                            <option th:each="categoria : ${categorias}"
+                                    th:value="${categoria.idCategoria}"
+                                    th:text="${categoria.rutaJerarquica}"
+                                    th:selected="${idCategoriaSeleccionada != null and idCategoriaSeleccionada == categoria.idCategoria}">
+                                Categoría
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro Marca con Select2 -->
+                    <div class="col-12 col-sm-6 col-lg-3">
+                        <label for="selectMarcaCatalogo" class="form-label fw-semibold small text-muted text-uppercase mb-1">
+                            <i class="bi bi-award me-1 text-warning"></i> Marca
+                        </label>
+                        <select name="idMarca"
+                                id="selectMarcaCatalogo"
+                                class="form-select select2-catalogo"
+                                data-placeholder="Todas las marcas">
+                            <option value="">Todas las marcas</option>
+                            <option th:each="marca : ${marcas}"
+                                    th:value="${marca.idMarca}"
+                                    th:text="${marca.nombreMarca}"
+                                    th:selected="${idMarcaSeleccionada != null and idMarcaSeleccionada == marca.idMarca}">
+                                Marca
+                            </option>
+                        </select>
+                    </div>
+
+                </form>
+            </div>
+
+            <!-- Barra de Resumen de Resultados & Chips de Filtros Activos -->
+            <div class="catalog-results-bar d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="catalog-count-text text-secondary">
+                        <strong class="text-dark fs-6" id="catalogProductsCount" th:text="${#lists.size(productos)}">0</strong>
+                        <span id="catalogProductsLabel" th:text="${#lists.size(productos) == 1 ? 'producto encontrado' : 'productos encontrados'}">productos encontrados</span>
+                    </span>
+
+                    <!-- Chips de filtros activos -->
+                    <span th:if="${busqueda != null and !#strings.isEmpty(busqueda)}" class="active-filter-chip">
+                        <span>Búsqueda: "<strong th:text="${busqueda}"></strong>"</span>
+                        <a th:href="@{/productos(idCategoria=${idCategoriaSeleccionada}, idMarca=${idMarcaSeleccionada})}" title="Quitar búsqueda" class="ms-1 text-reset text-decoration-none">✕</a>
+                    </span>
+
+                    <span th:if="${idCategoriaSeleccionada != null}" class="active-filter-chip">
+                        <span>Categoría filtrada</span>
+                        <a th:href="@{/productos(busqueda=${busqueda}, idMarca=${idMarcaSeleccionada})}" title="Quitar categoría" class="ms-1 text-reset text-decoration-none">✕</a>
+                    </span>
+
+                    <span th:if="${idMarcaSeleccionada != null}" class="active-filter-chip">
+                        <span>Marca filtrada</span>
+                        <a th:href="@{/productos(busqueda=${busqueda}, idCategoria=${idCategoriaSeleccionada})}" title="Quitar marca" class="ms-1 text-reset text-decoration-none">✕</a>
+                    </span>
+                </div>
+
+                <!-- Botón Limpiar Filtros -->
+                <a th:if="${(busqueda != null and !#strings.isEmpty(busqueda)) or idCategoriaSeleccionada != null or idMarcaSeleccionada != null}"
+                   th:href="@{/productos}"
+                   class="btn-clear-all-filters btn btn-sm btn-outline-secondary rounded-pill px-3 d-inline-flex align-items-center gap-1">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                    <span>Limpiar filtros</span>
+                </a>
+            </div>
+
+            <!-- Grilla de Tarjetas de Productos -->
+            <div class="row g-3 g-md-4" id="catalogProductsGrid" th:if="${!#lists.isEmpty(productos)}">
+
+                <div class="col-12 col-sm-6 col-lg-4 col-xl-3 product-item-col"
+                     th:each="producto : ${productos}"
+                     th:attr="data-nombre=${#strings.toLowerCase(producto.nombreProducto)},
+                              data-sku=${#strings.toLowerCase(producto.codigoSku != null ? producto.codigoSku : '')},
+                              data-marca=${#strings.toLowerCase(producto.marca != null ? producto.marca.nombreMarca : '')},
+                              data-categoria=${#strings.toLowerCase(producto.categoria != null ? producto.categoria.rutaJerarquica : '')}">
+                    <div class="card h-100 border-0 producto-catalogo-card position-relative shadow-xs">
+
+                        <!-- Badge de Disponibilidad Flotante -->
+                        <div class="product-card-badge-wrap">
+                            <span th:if="${producto.stockDisponible != null and producto.stockDisponible > 0 and (producto.stockMinimo == null or producto.stockDisponible > producto.stockMinimo)}"
+                                  class="badge bg-success-subtle text-success border border-success-subtle fw-semibold rounded-pill px-2.5 py-1 small">
+                                <i class="bi bi-check-circle-fill me-1"></i>Disponible
+                            </span>
+                            <span th:if="${producto.stockDisponible != null and producto.stockDisponible > 0 and producto.stockMinimo != null and producto.stockDisponible <= producto.stockMinimo}"
+                                  class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-semibold rounded-pill px-2.5 py-1 small">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>Pocas unidades
+                            </span>
+                            <span th:if="${producto.stockDisponible == null or producto.stockDisponible <= 0}"
+                                  class="badge bg-danger-subtle text-danger border border-danger-subtle fw-semibold rounded-pill px-2.5 py-1 small">
+                                <i class="bi bi-x-circle-fill me-1"></i>Agotado
+                            </span>
+                        </div>
+
+                        <!-- Contenedor de Imagen -->
+                        <a th:href="@{/productos/{id}(id=${producto.idProducto})}"
+                           class="product-card-img-link d-block text-decoration-none"
+                           th:title="${producto.nombreProducto}">
+                            <div class="product-card-img-container">
+                                <img th:if="${producto.imagenPrincipalUrl != null and !#strings.isEmpty(producto.imagenPrincipalUrl)}"
+                                     th:src="${producto.imagenPrincipalUrl}"
+                                     th:alt="${producto.nombreProducto}"
+                                     class="product-card-img"
+                                     loading="lazy">
+
+                                <div th:unless="${producto.imagenPrincipalUrl != null and !#strings.isEmpty(producto.imagenPrincipalUrl)}"
+                                     class="product-card-no-img text-center text-muted">
+                                    <i class="bi bi-image fs-1 opacity-50"></i>
+                                    <p class="mb-0 mt-1 small fw-medium">Sin imagen</p>
+                                </div>
+                            </div>
+                        </a>
+
+                        <!-- Cuerpo de la Tarjeta -->
+                        <div class="card-body d-flex flex-column p-3 p-xl-3.5">
+
+                            <!-- Marca y SKU -->
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <span class="product-card-brand text-uppercase fw-bold text-muted small"
+                                      th:text="${producto.marca != null ? producto.marca.nombreMarca : 'MultiStore'}">
+                                    Marca
+                                </span>
+                                <span class="product-card-sku text-muted small"
+                                      th:if="${producto.codigoSku != null}"
+                                      th:text="${producto.codigoSku}">
+                                    SKU
+                                </span>
+                            </div>
+
+                            <!-- Título de Producto Uniforme (altura fija para alineación perfecta) -->
+                            <h3 class="product-card-title mb-1">
+                                <a th:href="@{/productos/{id}(id=${producto.idProducto})}"
+                                   class="text-decoration-none text-dark"
+                                   th:title="${producto.nombreProducto}"
+                                   th:text="${producto.nombreProducto}">
+                                    Nombre del producto
+                                </a>
+                            </h3>
+
+                            <!-- Categoría / Taxonomía -->
+                            <small class="product-card-cat text-muted text-truncate mb-2"
+                                   th:text="${producto.categoria != null ? producto.categoria.rutaJerarquica : 'General'}">
+                                Categoría
+                            </small>
+
+                            <!-- Fila de Precio y Stock -->
+                            <div class="product-card-price-row mt-auto pt-2 pb-2 d-flex align-items-baseline justify-content-between border-top mb-2">
+                                <div class="d-flex flex-column">
+                                    <span class="text-muted" style="font-size: 0.70rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Precio</span>
+                                    <span class="product-card-price"
+                                          th:text="${producto.precioVenta != null ? '$' + #numbers.formatDecimal(producto.precioVenta, 1, 'COMMA', 2, 'POINT') : '$0.00'}">
+                                        $0.00
+                                    </span>
+                                </div>
+                                <div class="text-end" th:if="${producto.stockDisponible != null and producto.stockDisponible > 0}">
+                                    <span class="text-muted" style="font-size: 0.70rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Stock</span>
+                                    <span class="d-block small fw-bold text-secondary" th:text="${producto.stockDisponible} + ' un.'">10 un.</span>
+                                </div>
+                            </div>
+
+                            <!-- Botones de Acción -->
+                            <div class="product-card-actions d-grid gap-2 mt-2 pt-1">
+                                <form th:action="@{/carrito/agregar}" method="post" class="d-grid m-0">
+                                    <input type="hidden" name="idProducto" th:value="${producto.idProducto}">
+                                    <input type="hidden" name="cantidad" value="1">
+                                    <button type="submit"
+                                            class="btn btn-mustard btn-sm fw-bold d-flex align-items-center justify-content-center gap-1.5 shadow-xs"
+                                            th:disabled="${producto.stockDisponible == null or producto.stockDisponible <= 0}">
+                                        <i class="bi bi-cart-plus fs-6"></i>
+                                        <span>Agregar al carrito</span>
+                                    </button>
+                                </form>
+
+                                <a th:href="@{/productos/{id}(id=${producto.idProducto})}"
+                                   class="btn btn-outline-dark btn-sm fw-semibold d-flex align-items-center justify-content-center gap-1">
+                                    <i class="bi bi-eye"></i>
+                                    <span>Ver detalle</span>
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Estado Vacío en Vivo cuando se filtra por texto dinámicamente -->
+            <div id="catalogLiveEmptyState"
+                 class="catalog-empty-state text-center py-5 px-3 bg-white rounded-4 border shadow-xs my-4 d-none">
+                <div class="empty-icon-wrap mb-3 mx-auto">
+                    <i class="bi bi-search text-warning fs-1"></i>
+                </div>
+                <h3 class="h4 fw-bold mb-2">No se encontraron productos</h3>
+                <p class="text-secondary max-w-md mx-auto mb-3" style="max-width: 440px;">
+                    No hay productos que coincidan con "<strong id="liveSearchQueryTerm"></strong>".
+                </p>
+                <button type="button" id="btnResetLiveSearch" class="btn btn-mustard px-4 py-2 fw-bold d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                    <span>Restablecer búsqueda</span>
+                </button>
+            </div>
+
+            <!-- Estado Vacío Inicial del Servidor (Sin Resultados de BD) -->
+            <div th:if="${#lists.isEmpty(productos)}"
+                 class="catalog-empty-state text-center py-5 px-3 bg-white rounded-4 border shadow-xs my-4">
+                <div class="empty-icon-wrap mb-3 mx-auto">
+                    <i class="bi bi-search text-warning fs-1"></i>
+                </div>
+                <h3 class="h4 fw-bold mb-2">No se encontraron productos</h3>
+                <p class="text-secondary max-w-md mx-auto mb-4" style="max-width: 440px;">
+                    No hay artículos que coincidan con los criterios seleccionados. Prueba modificando el término de búsqueda o limpiando los filtros.
+                </p>
+                <a th:href="@{/productos}" class="btn btn-mustard px-4 py-2 fw-bold d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                    <span>Ver todo el catálogo</span>
+                </a>
+            </div>
+
+        </section>
+
+    </th:block>
+</div>
+
+</body>
+</html>

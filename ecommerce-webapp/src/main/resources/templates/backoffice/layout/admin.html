@@ -1,0 +1,22 @@
+<div th:fragment="layout(titulo, activePage, content)"
+     xmlns:th="http://www.thymeleaf.org"
+     class="admin-layout d-flex">
+
+    <!-- Navegación lateral -->
+    <div th:replace="~{backoffice/fragments/sidebar :: sidebar(${activePage})}">
+    </div>
+
+    <!-- Área principal -->
+    <div class="admin-main flex-grow-1">
+
+        <div th:replace="~{backoffice/fragments/topbar :: topbar(${titulo})}">
+        </div>
+
+        <main class="main-content p-3 p-lg-4">
+            <div th:replace="${content}">
+                Contenido de la página
+            </div>
+        </main>
+
+    </div>
+</div>

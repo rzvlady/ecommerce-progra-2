@@ -1,55 +1,33 @@
 package com.sv.grupo1.ecommerce.services;
 
-import com.sv.grupo1.ecommerce.dao.CategoriaRepository;
-import com.sv.grupo1.ecommerce.dao.MarcaRepository;
-import com.sv.grupo1.ecommerce.dao.ProductoRepository;
-import com.sv.grupo1.ecommerce.dto.ProductoRegistroDTO;
+import com.sv.grupo1.ecommerce.dto.CategoriaHomeDTO;
+import com.sv.grupo1.ecommerce.dto.CategoriaNodoDTO;
+import com.sv.grupo1.ecommerce.dto.ProductoHomeDTO;
+import com.sv.grupo1.ecommerce.dto.SugerenciaBusquedaDTO;
+import com.sv.grupo1.ecommerce.entities.catalogo.Marca;
+import com.sv.grupo1.ecommerce.entities.catalogo.Categoria;
 import com.sv.grupo1.ecommerce.entities.core.Producto;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
-@Service
-public class ProductoService {
+public interface ProductoService {
 
-    private final ProductoRepository productoRepository;
-    private final CategoriaRepository categoriaRepository;
-    private final MarcaRepository marcaRepository;
-    private final StockMonitorTask stockMonitorTask;
+    List<Producto> listarProductos();
 
-    public ProductoService(ProductoRepository productoRepository, CategoriaRepository categoriaRepository, MarcaRepository marcaRepository, StockMonitorTask stockMonitorTask) {
-        this.productoRepository = productoRepository;
-        this.categoriaRepository = categoriaRepository;
-        this.marcaRepository = marcaRepository;
-        this.stockMonitorTask = stockMonitorTask;
-    }
+    List<Producto> filtrarProductos(String busqueda, Integer idCategoria, Integer idMarca);
 
-    public void registrarProducto(ProductoRegistroDTO dto) {
-        if (productoRepository.existsByCodigoSku(dto.getSku())) {
-            throw new IllegalArgumentException("El código SKU ya está registrado.");
-        }
+    Optional<Producto> obtenerPorId(Integer idProducto);
 
-        Producto producto = new Producto();
-        producto.setCodigoSku(dto.getSku());
-        producto.setNombreProducto(dto.getNombreProducto());
-        producto.setDescripcionProducto(dto.getDescripcionProducto());
-        producto.setPrecioVenta(dto.getPrecioCosto());
-        producto.setStockDisponible(dto.getStockDisponible());
-        producto.setStockMinimo(dto.getStockMinimo());
+    List<Categoria> listarCategorias();
 
-        //Se buscan las entidades para asociarlas
-        var categoria = categoriaRepository.findById(dto.getIdCategoria())
-                .orElseThrow(() -> new IllegalArgumentException("Categoría no encontrada"));
-        var marca = marcaRepository.findById(dto.getIdMarca())
-                .orElseThrow(() -> new IllegalArgumentException("Marca no encontrada"));
+    List<Marca> listarMarcas();
 
-        producto.setCategoria(categoria);
-        producto.setMarca(marca);
+    List<ProductoHomeDTO> obtenerProductosDestacadosHome();
 
-        productoRepository.save(producto);
-    }
+    List<CategoriaHomeDTO> obtenerCategoriasHome();
 
-    public List<Producto> listarProductosConStockBajo() {
-        return stockMonitorTask.getProductosBajoStockAlertados();
-    }
+    SugerenciaBusquedaDTO buscarSugerencias(String termino);
+
+    List<CategoriaNodoDTO> obtenerArbolCategorias();
 }

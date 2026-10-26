@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head th:replace="~{ecommerce/fragments/ecommerce-head :: head('Mi Carrito de Compras')}">
+</head>
+
+<body class="store-body">
+
+  <div th:replace="~{ecommerce/layout/ecommerce-layout :: layout(~{::contenido})}">
+    <th:block th:fragment="contenido">
+
+      <section class="container py-4 py-md-5" style="min-height: 65vh;">
+
+        <!-- Migas de Pan (Breadcrumb) -->
+        <nav aria-label="breadcrumb" class="mb-3">
+          <ol class="breadcrumb small">
+            <li class="breadcrumb-item">
+              <a th:href="@{/}" class="text-decoration-none text-secondary">
+                <i class="bi bi-house-door me-1"></i> Inicio
+              </a>
+            </li>
+            <li class="breadcrumb-item">
+              <a th:href="@{/productos}" class="text-decoration-none text-secondary">Catálogo</a>
+            </li>
+            <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">Mi Carrito</li>
+          </ol>
+        </nav>
+
+        <!-- Título de Sección -->
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+          <div class="d-flex align-items-center gap-2">
+            <h1 class="h3 fw-bold text-dark m-0">Mi Carrito de Compras</h1>
+            <span id="cart-header-badge"
+                  class="badge bg-warning-subtle text-dark border border-warning-subtle rounded-pill px-3 py-2 fw-bold"
+                  th:classappend="${resumen.cantidadTotal == 0} ? 'd-none' : ''">
+              <span id="cart-header-count" th:text="${resumen.cantidadTotal}">0</span>
+              <span id="cart-header-unit" th:text="${resumen.cantidadTotal == 1 ? 'artículo' : 'artículos'}">artículos</span>
+            </span>
+          </div>
+          <div id="cart-header-actions"
+               class="d-none d-md-block"
+               th:classappend="${resumen.cantidadTotal == 0} ? 'd-none' : ''">
+            <a th:href="@{/productos}" class="btn btn-outline-secondary btn-sm rounded-pill fw-semibold px-3">
+              <i class="bi bi-arrow-left me-1"></i> Continuar Explorando
+            </a>
+          </div>
+        </div>
+
+        <!-- Alertas de estado / retroalimentación -->
+        <div class="alert alert-success d-flex align-items-center gap-2 rounded-3 shadow-xs py-2 px-3 mb-4"
+             th:if="${ok}" role="alert">
+          <i class="bi bi-check-circle-fill text-success fs-5 flex-shrink-0"></i>
+          <div class="small fw-medium" th:text="${ok}">Operación completada con éxito.</div>
+        </div>
+        <div class="alert alert-danger d-flex align-items-center gap-2 rounded-3 shadow-xs py-2 px-3 mb-4"
+             th:if="${error}" role="alert">
+          <i class="bi bi-exclamation-triangle-fill text-danger fs-5 flex-shrink-0"></i>
+          <div class="small fw-medium" th:text="${error}">Ha ocurrido un error en el carrito.</div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- ESTADO 1: CARRITO VACÍO                                  -->
+        <!-- ======================================================== -->
+        <div id="cart-empty-view"
+             class="card border-0 shadow-sm rounded-4 text-center py-5 px-3 mb-5"
+             th:classappend="${resumen.cantidadTotal == 0} ? '' : 'd-none'">
+          <div class="card-body py-4">
+            <div class="cart-empty-icon-wrap mx-auto mb-3">
+              <div class="cart-empty-icon-circle">
+                <i class="bi bi-cart-x text-warning fs-1"></i>
+              </div>
+            </div>
+            <h3 class="fw-bold text-dark mb-2">Tu carrito está vacío</h3>
+            <p class="text-secondary mx-auto mb-4" style="max-width: 480px; font-size: 0.96rem; line-height: 1.6;">
+              Parece que aún no has agregado productos a tu bolsa de compras.
+              Descubre las mejores novedades en tecnología, audio, celulares y accesorios con garantía oficial.
+            </p>
+            <div class="d-flex flex-wrap justify-content-center gap-2">
+              <a th:href="@{/productos}" class="btn btn-mustard px-4 py-2 fw-bold rounded-pill shadow-xs">
+                <i class="bi bi-grid me-2"></i> Explorar Catálogo
+              </a>
+              <a th:href="@{/}" class="btn btn-outline-secondary px-4 py-2 fw-semibold rounded-pill">
+                Ir a la Página de Inicio
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- ESTADO 2: CARRITO CON PRODUCTOS                          -->
+        <!-- ======================================================== -->
+        <div id="cart-filled-view" class="row g-4" th:classappend="${resumen.cantidadTotal == 0} ? 'd-none' : ''">
+
+          <!-- Columna Izquierda: Lista de Artículos -->
+          <div class="col-12 col-lg-8">
+
+            <!-- Tarjeta de Contenedor de Items -->
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+
+              <!-- Cabecera de la lista (Desktop) - Grilla Estricta -->
+              <div class="cart-grid-layout d-none d-md-grid px-4 py-3 bg-light border-bottom text-muted small fw-bold text-uppercase">
+                <div>Producto</div>
+                <div class="text-center">Precio</div>
+                <div class="text-center">Cantidad</div>
+                <div class="text-end">Subtotal</div>
+                <div class="text-end"></div>
+              </div>
+
+              <!-- Lista de Items -->
+              <div class="cart-items-wrapper">
+                <div th:each="item : ${items}"
+                     th:id="'cart-row-' + ${item.idProducto}"
+                     class="cart-item-row p-3 p-md-4 border-bottom"
+                     th:data-id="${item.idProducto}"
+                     th:data-precio="${item.precioUnitario}"
+                     th:data-max="${item.stockDisponible}">
+
+                  <!-- Disposición Grilla Desktop (Alineación 100% fija con la cabecera) -->
+                  <div class="cart-grid-layout d-none d-md-grid">
+
+                    <!-- Columna 1: Imagen y Datos del Producto -->
+                    <div class="d-flex align-items-center gap-3 min-w-0 pe-2">
+                      <a th:href="@{/productos/{id}(id=${item.idProducto})}"
+                         class="cart-thumb-box flex-shrink-0 text-decoration-none"
+                         th:title="${item.nombre}">
+                        <img th:if="${item.imagenUrl != null and !#strings.isEmpty(item.imagenUrl)}"
+                             th:src="${item.imagenUrl}"
+                             th:alt="${item.nombre}"
+                             class="cart-thumb-img"
+                             loading="lazy"
+                             onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+                        <div th:style="${item.imagenUrl != null and !#strings.isEmpty(item.imagenUrl)} ? 'display: none;' : 'display: flex;'"
+                             class="cart-thumb-placeholder align-items-center justify-content-center text-muted">
+                          <i class="bi bi-image fs-4 opacity-50"></i>
+                        </div>
+                      </a>
+
+                      <div class="cart-item-info min-w-0">
+                        <a th:href="@{/productos/{id}(id=${item.idProducto})}"
+                           class="fw-bold text-dark text-decoration-none cart-item-title mb-1 d-block text-truncate-2"
+                           th:text="${item.nombre}"
+                           th:title="${item.nombre}">
+                          Nombre del Producto
+                        </a>
+                        <div class="d-flex flex-wrap align-items-center gap-2 small">
+                          <span class="badge bg-light text-secondary border fw-medium" th:text="${item.sku}">SKU-0000</span>
+                          <span class="text-success fw-semibold small d-inline-flex align-items-center gap-1">
+                            <i class="bi bi-check-circle-fill" style="font-size: 0.75rem;"></i> En Stock
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Columna 2: Precio Unitario -->
+                    <div class="text-center">
+                      <span class="fw-semibold text-secondary"
+                            th:text="'$' + ${#numbers.formatDecimal(item.precioUnitario, 1, 'COMMA', 2, 'POINT')}">
+                        $0.00
+                      </span>
+                    </div>
+
+                    <!-- Columna 3: Control de Cantidad (Stepper +/-) sin reload -->
+                    <div class="text-center">
+                      <div class="input-group input-group-sm cart-stepper-group rounded-pill overflow-hidden mx-auto">
+                        <button class="btn btn-outline-secondary border-0 px-2"
+                                type="button"
+                                th:id="'btn-decrement-' + ${item.idProducto}"
+                                th:onclick="'actualizarCantidadAjax(' + ${item.idProducto} + ', -1)'"
+                                th:disabled="${item.cantidad <= 1}"
+                                title="Disminuir cantidad">
+                          <i class="bi bi-dash"></i>
+                        </button>
+                        <input type="number"
+                               th:id="'item-cant-' + ${item.idProducto}"
+                               class="form-control text-center fw-bold border-0 p-0 shadow-none cart-stepper-input"
+                               min="1"
+                               th:max="${item.stockDisponible}"
+                               th:value="${item.cantidad}"
+                               th:onchange="'actualizarCantidadInputAjax(' + ${item.idProducto} + ', this.value)'"
+                               aria-label="Cantidad">
+                        <button class="btn btn-outline-secondary border-0 px-2"
+                                type="button"
+                                th:id="'btn-increment-' + ${item.idProducto}"
+                                th:onclick="'actualizarCantidadAjax(' + ${item.idProducto} + ', 1)'"
+                                th:disabled="${item.cantidad >= item.stockDisponible}"
+                                title="Aumentar cantidad">
+                          <i class="bi bi-plus"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Columna 4: Subtotal del Item -->
+                    <div class="text-end">
+                      <span class="fw-bold text-dark fs-6"
+                            th:id="'item-subtotal-' + ${item.idProducto}"
+                            th:text="'$' + ${#numbers.formatDecimal(item.subtotal, 1, 'COMMA', 2, 'POINT')}">
+                        $0.00
+                      </span>
+                    </div>
+
+                    <!-- Columna 5: Botón Eliminar Producto sin reload -->
+                    <div class="text-end">
+                      <button type="button"
+                              class="btn btn-outline-danger btn-sm border-0 rounded-circle cart-remove-btn"
+                              th:onclick="'eliminarItemAjax(' + ${item.idProducto} + ')'"
+                              title="Eliminar este artículo">
+                        <i class="bi bi-trash3"></i>
+                      </button>
+                    </div>
+
+                  </div>
+
+                  <!-- Disposición Adaptada Mobile (< 768px) -->
+                  <div class="cart-mobile-layout d-block d-md-none">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                      <a th:href="@{/productos/{id}(id=${item.idProducto})}"
+                         class="cart-thumb-box flex-shrink-0 text-decoration-none"
+                         th:title="${item.nombre}">
+                        <img th:if="${item.imagenUrl != null and !#strings.isEmpty(item.imagenUrl)}"
+                             th:src="${item.imagenUrl}"
+                             th:alt="${item.nombre}"
+                             class="cart-thumb-img"
+                             loading="lazy"
+                             onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+                        <div th:style="${item.imagenUrl != null and !#strings.isEmpty(item.imagenUrl)} ? 'display: none;' : 'display: flex;'"
+                             class="cart-thumb-placeholder align-items-center justify-content-center text-muted">
+                          <i class="bi bi-image fs-4 opacity-50"></i>
+                        </div>
+                      </a>
+                      <div class="cart-item-info min-w-0">
+                        <a th:href="@{/productos/{id}(id=${item.idProducto})}"
+                           class="fw-bold text-dark text-decoration-none cart-item-title mb-1 d-block text-truncate-2"
+                           th:text="${item.nombre}"
+                           th:title="${item.nombre}">
+                          Nombre del Producto
+                        </a>
+                        <div class="d-flex flex-wrap align-items-center gap-2 small">
+                          <span class="badge bg-light text-secondary border fw-medium" th:text="${item.sku}">SKU-0000</span>
+                          <span class="text-success fw-semibold small d-inline-flex align-items-center gap-1">
+                            <i class="bi bi-check-circle-fill" style="font-size: 0.75rem;"></i> En Stock
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="d-flex align-items-center justify-content-between pt-2 border-top">
+                      <div>
+                        <span class="text-muted small d-block" style="font-size: 0.75rem;">Precio</span>
+                        <span class="fw-semibold text-secondary small"
+                              th:text="'$' + ${#numbers.formatDecimal(item.precioUnitario, 1, 'COMMA', 2, 'POINT')}">
+                          $0.00
+                        </span>
+                      </div>
+                      <div>
+                        <div class="input-group input-group-sm cart-stepper-group rounded-pill overflow-hidden">
+                          <button class="btn btn-outline-secondary border-0 px-2"
+                                  type="button"
+                                  th:onclick="'actualizarCantidadAjax(' + ${item.idProducto} + ', -1)'"
+                                  th:disabled="${item.cantidad <= 1}">
+                            <i class="bi bi-dash"></i>
+                          </button>
+                          <input type="number"
+                                 th:id="'item-cant-mobile-' + ${item.idProducto}"
+                                 class="form-control text-center fw-bold border-0 p-0 shadow-none cart-stepper-input"
+                                 min="1"
+                                 th:max="${item.stockDisponible}"
+                                 th:value="${item.cantidad}"
+                                 th:onchange="'actualizarCantidadInputAjax(' + ${item.idProducto} + ', this.value)'">
+                          <button class="btn btn-outline-secondary border-0 px-2"
+                                  type="button"
+                                  th:onclick="'actualizarCantidadAjax(' + ${item.idProducto} + ', 1)'"
+                                  th:disabled="${item.cantidad >= item.stockDisponible}">
+                            <i class="bi bi-plus"></i>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="text-end">
+                        <span class="text-muted small d-block" style="font-size: 0.75rem;">Subtotal</span>
+                        <span class="fw-bold text-dark fs-6"
+                              th:id="'item-subtotal-mobile-' + ${item.idProducto}"
+                              th:text="'$' + ${#numbers.formatDecimal(item.subtotal, 1, 'COMMA', 2, 'POINT')}">
+                          $0.00
+                        </span>
+                      </div>
+                      <div>
+                        <button type="button"
+                                class="btn btn-outline-danger btn-sm border-0 rounded-circle cart-remove-btn"
+                                th:onclick="'eliminarItemAjax(' + ${item.idProducto} + ')'"
+                                title="Eliminar este artículo">
+                          <i class="bi bi-trash3"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              <!-- Pie de la Tarjeta con Enlaces y Botón Vaciar -->
+              <div class="card-footer bg-white p-3 p-md-4 d-flex flex-wrap align-items-center justify-content-between gap-2 border-0">
+                <a th:href="@{/productos}" class="btn btn-outline-secondary btn-sm rounded-pill fw-semibold px-3">
+                  <i class="bi bi-arrow-left me-1"></i> Seguir Comprando
+                </a>
+                <button type="button"
+                        class="btn btn-outline-danger btn-sm rounded-pill fw-semibold px-3"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalVaciarCarrito">
+                  <i class="bi bi-trash3 me-1"></i> Vaciar Carrito
+                </button>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- Columna Derecha: Resumen de Pedido y Checkout -->
+          <div class="col-12 col-lg-4">
+            <div class="cart-summary-sticky">
+
+              <!-- Tarjeta de Resumen Financiero -->
+              <div class="card border-0 shadow-sm rounded-4 p-4 mb-3 bg-white">
+                <h5 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                  <i class="bi bi-receipt text-warning"></i>
+                  <span>Resumen del Pedido</span>
+                </h5>
+
+                <div class="d-flex justify-content-between align-items-center mb-2 small text-secondary">
+                  <span>Subtotal (<span id="cart-summary-count" th:text="${resumen.cantidadTotal}">0</span> productos)</span>
+                  <span class="fw-semibold text-dark"
+                        id="cart-summary-subtotal"
+                        th:text="'$' + ${#numbers.formatDecimal(resumen.subtotal, 1, 'COMMA', 2, 'POINT')}">$0.00</span>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-2 small text-secondary">
+                  <span>Envío</span>
+                  <span id="cart-summary-shipping" class="fw-bold text-success d-inline-flex align-items-center gap-1">
+                    <i class="bi bi-check-lg"></i> Gratis
+                  </span>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-3 small text-secondary">
+                  <span>Impuestos incluidos</span>
+                  <span class="text-muted">$0.00</span>
+                </div>
+
+                <hr class="my-3 text-muted opacity-25">
+
+                <!-- Total Principal -->
+                <div class="d-flex justify-content-between align-items-baseline mb-4">
+                  <span class="h6 fw-bold text-dark m-0">Total a Pagar</span>
+                  <span class="h4 fw-bold text-dark m-0"
+                        id="cart-summary-total"
+                        th:text="'$' + ${#numbers.formatDecimal(resumen.total, 1, 'COMMA', 2, 'POINT')}">$0.00</span>
+                </div>
+
+                <!-- Botón de Checkout Primario -->
+                <!-- Si el usuario está autenticado, avanza a checkout -->
+                <a th:href="@{/checkout}"
+                   sec:authorize="isAuthenticated()"
+                   class="btn btn-mustard w-100 py-3 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2 mb-3">
+                  <span>Continuar con la Compra</span>
+                  <i class="bi bi-arrow-right"></i>
+                </a>
+
+                <!-- Si el usuario es anónimo, abre el modal de autenticación moderno con callback a checkout -->
+                <button type="button"
+                        sec:authorize="isAnonymous()"
+                        class="btn btn-mustard w-100 py-3 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2 mb-3"
+                        onclick="abrirModalAuth('login', () => { window.location.href = '/checkout'; })">
+                  <span>Continuar con la Compra</span>
+                  <i class="bi bi-arrow-right"></i>
+                </button>
+
+                <!-- Garantías de Confianza -->
+                <div class="cart-trust-badges pt-3 border-top">
+                  <div class="d-flex align-items-center gap-2 small text-secondary mb-2">
+                    <i class="bi bi-shield-check text-success fs-5"></i>
+                    <span>Compra 100% protegida y cifrada SSL</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-2 small text-secondary mb-2">
+                    <i class="bi bi-truck text-primary fs-5"></i>
+                    <span>Envíos rápidos a todo el país</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-2 small text-secondary">
+                    <i class="bi bi-arrow-counterclockwise text-warning fs-5"></i>
+                    <span>Garantía oficial del fabricante</span>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Métodos de pago aceptados -->
+              <div class="text-center py-2 text-muted small">
+                <div class="d-flex justify-content-center align-items-center gap-3 fs-4 text-secondary mb-1">
+                  <i class="bi bi-credit-card-2-front" title="Tarjetas de Crédito / Débito"></i>
+                  <i class="bi bi-wallet2" title="Billeteras Digitales"></i>
+                  <i class="bi bi-bank" title="Transferencia Bancaria"></i>
+                  <i class="bi bi-cash-stack" title="Pago Contra Entrega"></i>
+                </div>
+                <span style="font-size: 0.78rem;">Pagos seguros y verificados</span>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- Modal de Confirmación: Vaciar Carrito -->
+      <div class="modal fade" id="modalVaciarCarrito" tabindex="-1" aria-labelledby="modalVaciarCarritoLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+          <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-body text-center p-4">
+              <div class="text-danger mb-3">
+                <i class="bi bi-exclamation-triangle-fill" style="font-size: 2.75rem;"></i>
+              </div>
+              <h5 class="fw-bold text-dark mb-2" id="modalVaciarCarritoLabel">¿Vaciar tu carrito?</h5>
+              <p class="text-secondary small mb-4">
+                Se eliminarán todos los artículos seleccionados de tu carrito de compras. Esta acción no se puede deshacer.
+              </p>
+              <div class="d-grid gap-2">
+                <form th:action="@{/carrito/vaciar}" method="post" class="m-0">
+                  <button type="submit" class="btn btn-danger w-100 fw-bold py-2 rounded-3">
+                    Sí, vaciar carrito
+                  </button>
+                </form>
+                <button type="button" class="btn btn-light w-100 fw-semibold py-2 rounded-3 text-secondary" data-bs-dismiss="modal">
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </th:block>
+  </div>
+
+</body>
+</html>

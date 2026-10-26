@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.List;
 
-@Service
+//@Service
 public class DespachoService {
 
     private static final String RUTA_ARCHIVO = "despachos_temporal.dat";

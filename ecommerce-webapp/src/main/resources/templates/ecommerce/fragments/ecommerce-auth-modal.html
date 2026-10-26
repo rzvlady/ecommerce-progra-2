@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- Modal de Autenticación Moderno (Login / Registro en un solo lugar) -->
+<div th:fragment="authModal"
+     class="modal fade auth-modal"
+     id="authModal"
+     tabindex="-1"
+     aria-labelledby="authModalLabel"
+     aria-hidden="true">
+
+  <div class="modal-dialog modal-dialog-centered auth-modal-dialog">
+    <div class="modal-content auth-modal-content border-0 shadow-2xl rounded-4 overflow-hidden">
+
+      <!-- Header del Modal con Marca y Botón de Cierre -->
+      <div class="auth-modal-header d-flex align-items-center justify-content-between p-4 pb-2">
+        <div class="d-flex align-items-center gap-2">
+          <div class="logo-cart-badge" style="width: 38px; height: 38px;" aria-hidden="true">
+            <svg class="multistore-cart-icon" width="28" height="28" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="13" y="8" width="7.5" height="9" rx="1.5" fill="#60a5fa" />
+              <path d="M16.7 8V17" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" />
+              <rect x="19.5" y="5" width="8.5" height="12" rx="1.5" fill="#fbbf24" />
+              <path d="M23.7 5V17" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" />
+              <path d="M10 11C10 9.8 11 9 12.2 9H13.5V17H10V11Z" fill="#34d399" />
+              <path d="M4 6H7.5L10.5 21H27L30 9H9.5" stroke="#f1f5f9" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M11 15H28.5" stroke="#f1f5f9" stroke-width="1.4" stroke-linecap="round"/>
+              <circle cx="13" cy="26" r="2.5" fill="#60a5fa" stroke="#f1f5f9" stroke-width="1.8"/>
+              <circle cx="25" cy="26" r="2.5" fill="#60a5fa" stroke="#f1f5f9" stroke-width="1.8"/>
+            </svg>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold text-dark mb-0" id="authModalLabel">
+              <span class="text-primary">Multi</span><span class="text-warning">Store</span>
+            </h5>
+            <small class="text-muted d-block" style="font-size: 0.78rem;">Tu tienda de tecnología & accesorios</small>
+          </div>
+        </div>
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+
+      <!-- Segmented Switcher (Iniciar Sesión / Crear Cuenta) -->
+      <div class="px-4 pt-2 pb-0">
+        <div class="auth-segmented-nav d-flex p-1 rounded-3">
+          <button type="button" class="auth-segment-btn active flex-fill" id="authBtnTabLogin" onclick="switchAuthTab('login')">
+            <i class="bi bi-box-arrow-in-right me-1"></i> Iniciar Sesión
+          </button>
+          <button type="button" class="auth-segment-btn flex-fill" id="authBtnTabRegister" onclick="switchAuthTab('register')">
+            <i class="bi bi-person-plus me-1"></i> Crear Cuenta
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-body p-4 pt-3">
+
+        <!-- ========================================== -->
+        <!-- PANE 1: INICIAR SESIÓN                     -->
+        <!-- ========================================== -->
+        <div id="authPaneLogin" class="auth-pane">
+          <div class="text-center mb-3">
+            <h6 class="fw-bold text-dark mb-1">¡Qué gusto verte de nuevo!</h6>
+            <p class="text-muted small mb-0">Ingresa a tu cuenta para continuar con tus compras</p>
+          </div>
+
+          <!-- Alerta dinámica de error/éxito -->
+          <div id="authLoginAlert" class="alert d-none py-2 px-3 small rounded-3 mb-3" role="alert"></div>
+
+          <form id="formAuthLogin" onsubmit="handleAuthLogin(event)" novalidate>
+            <div class="mb-3">
+              <label for="authLoginEmail" class="form-label small fw-bold text-secondary mb-1">Correo Electrónico</label>
+              <div class="input-group auth-input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted">
+                  <i class="bi bi-envelope"></i>
+                </span>
+                <input type="email"
+                       id="authLoginEmail"
+                       name="username"
+                       class="form-control border-start-0 ps-0"
+                       placeholder="tu-correo@ejemplo.com"
+                       autocomplete="username"
+                       required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label for="authLoginPassword" class="form-label small fw-bold text-secondary mb-0">Contraseña</label>
+                <a href="javascript:void(0)" onclick="switchAuthTab('forgot')" class="small text-decoration-none text-primary fw-semibold">¿Olvidaste tu contraseña?</a>
+              </div>
+              <div class="input-group auth-input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted">
+                  <i class="bi bi-shield-lock"></i>
+                </span>
+                <input type="password"
+                       id="authLoginPassword"
+                       name="password"
+                       class="form-control border-start-0 border-end-0 ps-0"
+                       placeholder="••••••••"
+                       autocomplete="current-password"
+                       required>
+                <button class="btn btn-outline-secondary border-start-0 bg-white text-muted"
+                        type="button"
+                        onclick="togglePasswordVisibility('authLoginPassword', this)"
+                        title="Mostrar u ocultar contraseña">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-check mb-4">
+              <input class="form-check-input" type="checkbox" id="authLoginRemember" name="remember-me" checked>
+              <label class="form-check-label small text-secondary" for="authLoginRemember">
+                Mantener mi sesión iniciada
+              </label>
+            </div>
+
+            <button type="submit" id="btnSubmitLogin" class="btn btn-mustard w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2">
+              <i class="bi bi-box-arrow-in-right"></i>
+              <span>Iniciar Sesión</span>
+            </button>
+          </form>
+
+          <div class="text-center mt-3 pt-2 border-top">
+            <span class="text-muted small">¿No tienes una cuenta aún?</span>
+            <a href="javascript:void(0)" onclick="switchAuthTab('register')" class="small fw-bold text-primary text-decoration-none ms-1">
+              Regístrate gratis aquí
+            </a>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- PANE 2: CREAR CUENTA (REGISTRO)            -->
+        <!-- ========================================== -->
+        <div id="authPaneRegister" class="auth-pane d-none">
+          <div class="text-center mb-3">
+            <h6 class="fw-bold text-dark mb-1">Crea tu cuenta en MultiStore</h6>
+            <p class="text-muted small mb-0">Disfruta de ofertas exclusivas y pedidos rápidos</p>
+          </div>
+
+          <!-- Alerta dinámica de error/éxito -->
+          <div id="authRegisterAlert" class="alert d-none py-2 px-3 small rounded-3 mb-3" role="alert"></div>
+
+          <form id="formAuthRegister" onsubmit="handleAuthRegister(event)" novalidate>
+            <div class="mb-3">
+              <label for="authRegEmail" class="form-label small fw-bold text-secondary mb-1">Correo Electrónico</label>
+              <div class="input-group auth-input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted">
+                  <i class="bi bi-envelope"></i>
+                </span>
+                <input type="email"
+                       id="authRegEmail"
+                       class="form-control border-start-0 ps-0"
+                       placeholder="tu-correo@ejemplo.com"
+                       autocomplete="email"
+                       required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="authRegPassword" class="form-label small fw-bold text-secondary mb-1">Contraseña</label>
+              <div class="input-group auth-input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted">
+                  <i class="bi bi-shield-lock"></i>
+                </span>
+                <input type="password"
+                       id="authRegPassword"
+                       class="form-control border-start-0 border-end-0 ps-0"
+                       placeholder="Mínimo 6 caracteres"
+                       autocomplete="new-password"
+                       required>
+                <button class="btn btn-outline-secondary border-start-0 bg-white text-muted"
+                        type="button"
+                        onclick="togglePasswordVisibility('authRegPassword', this)"
+                        title="Mostrar u ocultar contraseña">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
+              <div class="form-text small" style="font-size: 0.75rem;">Debe contener al menos 6 caracteres.</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="authRegPasswordConfirm" class="form-label small fw-bold text-secondary mb-1">Confirmar Contraseña</label>
+              <div class="input-group auth-input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted">
+                  <i class="bi bi-shield-check"></i>
+                </span>
+                <input type="password"
+                       id="authRegPasswordConfirm"
+                       class="form-control border-start-0 border-end-0 ps-0"
+                       placeholder="Repite tu contraseña"
+                       autocomplete="new-password"
+                       required>
+                <button class="btn btn-outline-secondary border-start-0 bg-white text-muted"
+                        type="button"
+                        onclick="togglePasswordVisibility('authRegPasswordConfirm', this)"
+                        title="Mostrar u ocultar contraseña">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-check mb-4">
+              <input class="form-check-input" type="checkbox" id="authRegTerms" required checked>
+              <label class="form-check-label small text-secondary" for="authRegTerms" style="font-size: 0.8rem;">
+                Acepto los términos de servicio y la política de privacidad de MultiStore
+              </label>
+            </div>
+
+            <button type="submit" id="btnSubmitRegister" class="btn btn-primary w-100 py-2 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2">
+              <i class="bi bi-person-check-fill"></i>
+              <span>Crear mi Cuenta</span>
+            </button>
+          </form>
+
+          <div class="text-center mt-3 pt-2 border-top">
+            <span class="text-muted small">¿Ya tienes una cuenta registrada?</span>
+            <a href="javascript:void(0)" onclick="switchAuthTab('login')" class="small fw-bold text-primary text-decoration-none ms-1">
+              Inicia sesión aquí
+            </a>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- PANE 3: RECUPERAR CONTRASEÑA (OPCIONAL)    -->
+        <!-- ========================================== -->
+        <div id="authPaneForgot" class="auth-pane d-none">
+          <div class="text-center mb-3">
+            <h6 class="fw-bold text-dark mb-1">Recuperar Contraseña</h6>
+            <p class="text-muted small mb-0">Ingresa tu correo para recibir un enlace de recuperación</p>
+          </div>
+
+          <div id="authForgotAlert" class="alert d-none py-2 px-3 small rounded-3 mb-3" role="alert"></div>
+
+          <form id="formAuthForgot" onsubmit="handleAuthForgot(event)" novalidate>
+            <div class="mb-3">
+              <label for="authForgotEmail" class="form-label small fw-bold text-secondary mb-1">Correo Electrónico</label>
+              <div class="input-group auth-input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted">
+                  <i class="bi bi-envelope"></i>
+                </span>
+                <input type="email"
+                       id="authForgotEmail"
+                       class="form-control border-start-0 ps-0"
+                       placeholder="tu-correo@ejemplo.com"
+                       required>
+              </div>
+            </div>
+
+            <button type="submit" id="btnSubmitForgot" class="btn btn-warning text-dark w-100 py-2 fw-bold rounded-3 shadow-sm mb-3">
+              Enviar Instrucciones
+            </button>
+
+            <div class="text-center">
+              <a href="javascript:void(0)" onclick="switchAuthTab('login')" class="small fw-bold text-secondary text-decoration-none">
+                <i class="bi bi-arrow-left"></i> Volver a Iniciar Sesión
+              </a>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

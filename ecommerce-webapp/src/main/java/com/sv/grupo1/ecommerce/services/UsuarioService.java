@@ -1,36 +1,24 @@
 package com.sv.grupo1.ecommerce.services;
 
-import com.sv.grupo1.ecommerce.dao.UsuarioRepository;
+import com.sv.grupo1.ecommerce.dto.RegistroUsuarioDTO;
+import com.sv.grupo1.ecommerce.dto.UsuarioPerfilCompletoDTO;
 import com.sv.grupo1.ecommerce.entities.seguridad.Usuario;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
 
-@Service
-public class UsuarioService {
+/*
+ * @author alexemestica
+ * */
+public interface UsuarioService {
 
-    private final UsuarioRepository usuarioRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
+    Usuario registrarUsuario(RegistroUsuarioDTO dto);
 
-    public UsuarioService(UsuarioRepository usuarioRepository) {
-        this.usuarioRepository = usuarioRepository;
-        this.passwordEncoder = new BCryptPasswordEncoder();
-    }
+    void registrarUltimoInicioSesion(String correoInicioSesion);
 
-    public Usuario registrarUsuario(String correo, String contrasenia) {
+    UsuarioPerfilCompletoDTO obtenerPerfilCompletoPorCorreo(String correoInicioSesion);
 
-        String correoNormalizado = correo.trim().toLowerCase();
+    UsuarioPerfilCompletoDTO obtenerPerfilCompletoPorIdUsuario(Integer idUsuario);
 
-        if (usuarioRepository.existsByCorreoInicioSesionIgnoreCase(correoNormalizado)) {
-            throw new IllegalArgumentException("El correo electrónico ya está registrado.");
-        }
+    void guardarPerfilCompleto(String correoAutenticado, UsuarioPerfilCompletoDTO dto, String origen);
 
-        Usuario usuario = new Usuario();
+    void guardarPerfilCompletoPorIdUsuario(Integer idUsuario, UsuarioPerfilCompletoDTO dto, String usuarioAuditor, String origen);
 
-        usuario.setCorreoInicioSesion(correoNormalizado);
-        usuario.setContrasenia(passwordEncoder.encode(contrasenia));
-        usuario.setEliminado(false);
-        usuario.setEstado('A');
-
-        return usuarioRepository.save(usuario);
-    }
 }

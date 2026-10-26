@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{ecommerce/fragments/ecommerce-head :: head('Inicio')}">
+</head>
+
+<body class="store-body">
+
+  <div th:replace="~{ecommerce/layout/ecommerce-layout :: layout(~{::contenido})}">
+    <th:block th:fragment="contenido">
+
+      <!-- Hero Intro Banner -->
+      <section class="store-intro-banner">
+        <div class="container">
+          <div class="row justify-content-center">
+            <div class="col-lg-10 col-xl-9 text-center">
+
+              <div class="d-inline-flex align-items-center gap-2 px-3 py-1.5 rounded-pill bg-white bg-opacity-10 text-white border border-white border-opacity-25 small fw-bold mb-3 shadow-xs">
+                <i class="bi bi-stars text-warning"></i>
+                <span>Nuevas colecciones y ofertas de temporada</span>
+              </div>
+
+              <h1 class="intro-title">
+                MultiStore, tu tienda de confianza.
+              </h1>
+
+              <p class="intro-description">
+                Descubre miles de productos para tu día a día, con garantía oficial de entrega, precios accesibles y promociones listas para ti.
+              </p>
+
+              <div class="d-flex justify-content-center align-items-center gap-3 mt-4 flex-wrap">
+                <a th:href="@{/productos}" class="btn btn-mustard px-4 py-2 fw-bold d-inline-flex align-items-center gap-2">
+                  <span>Explorar Catálogo</span>
+                  <i class="bi bi-arrow-right"></i>
+                </a>
+                <a href="#categorias" class="btn btn-outline-light px-3 py-2 fw-semibold">
+                  <span>Ver Categorías</span>
+                </a>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Carrusel de Categorías -->
+      <section class="container category-carousel-section" id="categorias">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <div>
+            <span class="section-eyebrow">EXPLORA POR INTERÉS</span>
+            <h2 class="section-title mb-0">Nuestras Categorías</h2>
+          </div>
+
+          <div class="d-flex align-items-center gap-2">
+            <button class="category-nav-btn"
+                    type="button"
+                    data-bs-target="#carouselCategorias"
+                    data-bs-slide="prev"
+                    title="Categoría anterior">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <button class="category-nav-btn"
+                    type="button"
+                    data-bs-target="#carouselCategorias"
+                    data-bs-slide="next"
+                    title="Siguiente categoría">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <div id="carouselCategorias"
+             class="carousel slide"
+             data-bs-ride="carousel"
+             data-bs-interval="3500"
+             data-bs-pause="hover"
+             data-bs-wrap="true">
+
+          <div class="carousel-inner">
+
+            <!-- Slide 1 (Primeras 4 categorías) -->
+            <div class="carousel-item active">
+              <div class="row g-3">
+                <div class="col-6 col-md-3" th:each="cat, stat : ${categoriasCarousel}" th:if="${stat.index < 4}">
+                  <a th:href="${cat.enlace}" class="category-card-slide">
+                    <div class="category-img-container">
+                      <img th:src="${cat.imagenUrl}"
+                           th:alt="${cat.nombreCategoria}"
+                           class="category-slide-img"
+                           loading="lazy">
+                    </div>
+                    <div class="category-text-wrap">
+                      <span class="category-title" th:text="${cat.nombreCategoria}">Tecnología</span>
+                      <small class="category-subtitle" th:text="${cat.subtitulo}">Audio, computación y gadgets</small>
+                    </div>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Slide 2 (Siguientes categorías) -->
+            <div class="carousel-item">
+              <div class="row g-3">
+                <div class="col-6 col-md-3" th:each="cat, stat : ${categoriasCarousel}" th:if="${stat.index >= 4 and stat.index < 8}">
+                  <a th:href="${cat.enlace}" class="category-card-slide">
+                    <div class="category-img-container">
+                      <img th:src="${cat.imagenUrl}"
+                           th:alt="${cat.nombreCategoria}"
+                           class="category-slide-img"
+                           loading="lazy">
+                    </div>
+                    <div class="category-text-wrap">
+                      <span class="category-title" th:text="${cat.nombreCategoria}">Audio & Sonido</span>
+                      <small class="category-subtitle" th:text="${cat.subtitulo}">Auriculares y altavoces</small>
+                    </div>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Indicadores de slide -->
+          <div class="carousel-indicators position-relative mt-3 mb-0">
+            <button type="button" data-bs-target="#carouselCategorias" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+            <button type="button" data-bs-target="#carouselCategorias" data-bs-slide-to="1" aria-label="Slide 2"></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Productos Destacados (Adaptado con la estética de Iván en /productos) -->
+      <section id="productos" class="container store-section">
+
+        <div class="section-heading">
+          <div>
+            <span class="section-eyebrow">NUESTRA SELECCIÓN</span>
+            <h2 class="section-title">Productos Destacados</h2>
+            <p class="section-description">
+              Artículos seleccionados con disponibilidad inmediata para envío a tu puerta.
+            </p>
+          </div>
+
+          <a th:href="@{/productos}" class="btn btn-mustard btn-sm d-inline-flex align-items-center gap-1">
+            <span>Ver catálogo</span>
+            <i class="bi bi-arrow-up-right"></i>
+          </a>
+        </div>
+
+        <div class="row g-3 g-md-4">
+
+          <div class="col-12 col-sm-6 col-lg-4 col-xl-3" th:each="prod : ${productosDestacados}">
+            <div class="card h-100 border-0 producto-catalogo-card position-relative shadow-xs">
+
+              <!-- Badge Flotante Superior (Destacado / Popular / etc.) -->
+              <span class="product-badge" th:if="${prod.badge != null}" th:text="${prod.badge}">Destacado</span>
+
+              <!-- Contenedor de Imagen y Enlace -->
+              <a th:href="@{/productos/{id}(id=${prod.idProducto})}"
+                 class="product-card-img-link d-block text-decoration-none"
+                 th:title="${prod.nombreProducto}">
+                <div class="product-card-img-container">
+                  <img th:if="${prod.imagenPrincipalUrl != null and !#strings.isEmpty(prod.imagenPrincipalUrl)}"
+                       th:src="${prod.imagenPrincipalUrl}"
+                       th:alt="${prod.nombreProducto}"
+                       class="product-card-img"
+                       loading="lazy">
+
+                  <div th:unless="${prod.imagenPrincipalUrl != null and !#strings.isEmpty(prod.imagenPrincipalUrl)}"
+                       class="product-card-no-img text-center text-muted">
+                    <i class="bi bi-image fs-1 opacity-50"></i>
+                    <p class="mb-0 mt-1 small fw-medium">Sin imagen</p>
+                  </div>
+                </div>
+              </a>
+
+              <!-- Cuerpo de la tarjeta -->
+              <div class="card-body d-flex flex-column p-3">
+
+                <!-- Marca o Categoría -->
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                  <span class="product-card-brand text-uppercase fw-bold text-muted small"
+                        th:text="${prod.nombreMarca != null ? prod.nombreMarca : (prod.nombreCategoria != null ? prod.nombreCategoria : 'MultiStore')}">
+                    Marca
+                  </span>
+                </div>
+
+                <!-- Nombre del Producto con límite de altura para alineación perfecta -->
+                <h3 class="product-card-title mb-2"
+                    th:title="${prod.nombreProducto}"
+                    th:text="${prod.nombreProducto}">
+                  Nombre del producto
+                </h3>
+
+                <!-- Precio y Disponibilidad en fila alineada -->
+                <div class="product-card-price-row mt-auto pt-2 pb-2 d-flex align-items-baseline justify-content-between border-top mb-2">
+                  <div class="d-flex flex-column">
+                    <span class="text-muted" style="font-size: 0.70rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Precio</span>
+                    <span class="product-card-price"
+                          th:text="${prod.precioVenta != null ? '$' + #numbers.formatDecimal(prod.precioVenta, 1, 'COMMA', 2, 'POINT') : '$0.00'}">
+                      $0.00
+                    </span>
+                  </div>
+                  <div>
+                    <span th:if="${prod.stockDisponible != null and prod.stockDisponible > 0}"
+                          class="badge bg-success-subtle text-success border border-success-subtle fw-semibold rounded-pill px-2.5 py-1 small">
+                      <i class="bi bi-check-circle-fill me-1"></i>Disponible
+                    </span>
+                    <span th:unless="${prod.stockDisponible != null and prod.stockDisponible > 0}"
+                          class="badge bg-danger-subtle text-danger border border-danger-subtle fw-semibold rounded-pill px-2.5 py-1 small">
+                      <i class="bi bi-x-circle-fill me-1"></i>Agotado
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div class="product-card-actions d-grid gap-2 mt-1">
+                  <form th:action="@{/carrito/agregar}" method="post" class="d-grid m-0">
+                    <input type="hidden" name="idProducto" th:value="${prod.idProducto}">
+                    <input type="hidden" name="cantidad" value="1">
+                    <button type="submit"
+                            class="btn btn-mustard btn-sm fw-bold d-flex align-items-center justify-content-center gap-1.5 shadow-xs"
+                            th:disabled="${prod.stockDisponible != null and prod.stockDisponible <= 0}">
+                      <i class="bi bi-cart-plus fs-6"></i>
+                      <span>Agregar al carrito</span>
+                    </button>
+                  </form>
+                  <a th:href="@{/productos/{id}(id=${prod.idProducto})}"
+                     class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center gap-1">
+                    <i class="bi bi-eye"></i>
+                    <span>Ver detalle</span>
+                  </a>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Beneficios de Comprar en MultiStore -->
+      <section id="beneficios" class="container store-section mb-4">
+        <div class="row g-3 g-md-4">
+
+          <div class="col-md-4">
+            <div class="benefit-card">
+              <i class="bi bi-truck"></i>
+              <div>
+                <h3>Entregas a nivel nacional</h3>
+                <p>Recibe tus compras directamente en tu domicilio con empaque seguro y seguimiento en tiempo real.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="benefit-card">
+              <i class="bi bi-shield-check"></i>
+              <div>
+                <h3>Garantía y Seguridad</h3>
+                <p>Todos nuestros productos cuentan con garantía oficial y tus pagos están protegidos de punta a punta.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="benefit-card">
+              <i class="bi bi-headset"></i>
+              <div>
+                <h3>Atención Personalizada</h3>
+                <p>Equipo de soporte disponible para resolver tus dudas y dar seguimiento continuo a cada uno de tus pedidos.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Script de Inicialización de Bootstrap Carousel -->
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          const carouselElem = document.getElementById('carouselCategorias');
+          if (carouselElem && window.bootstrap) {
+            const carousel = bootstrap.Carousel.getOrCreateInstance(carouselElem, {
+              interval: 3500,
+              ride: 'carousel',
+              wrap: true
+            });
+            carousel.cycle();
+          }
+        });
+      </script>
+
+    </th:block>
+  </div>
+</body>
+</html>
