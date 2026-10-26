@@ -1,0 +1,133 @@
+<aside th:fragment="sidebar(activePage)"
+       xmlns:th="http://www.thymeleaf.org"
+       class="sidebar offcanvas-lg offcanvas-start"
+       tabindex="-1"
+       id="sidebar"
+       aria-label="Menú administrativo">
+
+    <div class="offcanvas-header border-bottom border-secondary">
+        <h5 class="offcanvas-title">Mi tienda</h5>
+
+        <button type="button"
+                class="btn-close btn-close-white d-lg-none"
+                data-bs-dismiss="offcanvas"
+                data-bs-target="#sidebar"
+                aria-label="Cerrar menú">
+        </button>
+    </div>
+
+    <div class="offcanvas-body d-flex flex-column p-3">
+
+        <a th:href="@{/backoffice/dashboard}"
+           class="brand text-decoration-none mb-4">
+            <i class="bi bi-bag-check-fill me-2"></i>
+            MultiStore Admin
+        </a>
+
+        <span class="menu-title">GENERAL</span>
+
+        <nav class="nav flex-column mt-2 mb-4">
+            <a th:href="@{/backoffice/dashboard}"
+               class="nav-link"
+               th:classappend="${activePage == 'dashboard'} ? ' active' : ''">
+                <i class="bi bi-grid-1x2-fill"></i>
+                Dashboard
+            </a>
+        </nav>
+
+        <span class="menu-title">GESTIÓN COMERCIAL</span>
+
+        <nav class="nav flex-column mt-2 mb-4">
+
+            <!-- Menú desplegable: Catálogo -->
+            <a href="javascript:void(0)"
+               class="nav-link submenu-trigger"
+               data-bs-toggle="collapse"
+               data-bs-target="#menuCatalogo"
+               role="button"
+               aria-controls="menuCatalogo"
+               th:attr="aria-expanded=${activePage == 'productos' or activePage == 'categorias' or activePage == 'marcas'}"
+               th:classappend="${(activePage == 'productos' or activePage == 'categorias' or activePage == 'marcas') ? ' active' : ' collapsed'}">
+                <i class="bi bi-collection"></i>
+                <span>Catálogo</span>
+                <i class="bi bi-chevron-down ms-auto submenu-arrow"></i>
+            </a>
+
+            <div class="collapse"
+                 id="menuCatalogo"
+                 th:classappend="${activePage == 'productos' or activePage == 'categorias' or activePage == 'marcas'} ? ' show' : ''">
+                <nav class="nav flex-column submenu-nav ps-4">
+                    <a th:href="@{/backoffice/productos}"
+                       class="nav-link submenu-link"
+                       th:classappend="${activePage == 'productos'} ? ' active' : ''">
+                        <i class="bi bi-box-seam"></i>
+                        Productos
+                    </a>
+
+                    <a th:href="@{/backoffice/categorias}"
+                       class="nav-link submenu-link"
+                       th:classappend="${activePage == 'categorias'} ? ' active' : ''">
+                        <i class="bi bi-tags"></i>
+                        Categorías
+                    </a>
+
+                    <a th:href="@{/backoffice/marcas}"
+                       class="nav-link submenu-link"
+                       th:classappend="${activePage == 'marcas'} ? ' active' : ''">
+                        <i class="bi bi-award"></i>
+                        Marcas
+                    </a>
+                </nav>
+            </div>
+
+            <a th:href="@{/backoffice/inventario}"
+               class="nav-link"
+               th:classappend="${activePage == 'inventario'} ? ' active' : ''">
+                <i class="bi bi-clipboard-data"></i>
+                Inventario
+            </a>
+
+            <a th:href="@{/backoffice/pedidos}"
+               class="nav-link"
+               th:classappend="${activePage == 'pedidos'} ? ' active' : ''">
+                <i class="bi bi-cart3"></i>
+                Pedidos
+            </a>
+
+            <a th:href="@{/backoffice/clientes}"
+               class="nav-link"
+               th:classappend="${activePage == 'clientes'} ? ' active' : ''">
+                <i class="bi bi-people"></i>
+                Clientes
+            </a>
+        </nav>
+
+        <span class="menu-title">SEGURIDAD Y ACCESOS</span>
+
+        <nav class="nav flex-column mt-2">
+            <a th:href="@{/backoffice/roles}"
+               class="nav-link"
+               th:classappend="${activePage == 'roles'} ? ' active' : ''">
+                <i class="bi bi-shield-lock"></i>
+                Roles
+            </a>
+
+            <a th:href="@{/backoffice/usuarios-roles}"
+               class="nav-link"
+               th:classappend="${activePage == 'usuarios-roles'} ? ' active' : ''">
+                <i class="bi bi-person-gear"></i>
+                Asignación de Roles
+            </a>
+        </nav>
+
+        <div class="mt-auto pt-4">
+            <hr class="border-secondary">
+
+            <a th:href="@{/admin/configuracion}" class="nav-link">
+                <i class="bi bi-gear"></i>
+                Configuración
+            </a>
+        </div>
+
+    </div>
+</aside>

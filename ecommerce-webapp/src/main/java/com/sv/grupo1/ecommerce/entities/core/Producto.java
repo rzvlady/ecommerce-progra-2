@@ -1,5 +1,6 @@
 package com.sv.grupo1.ecommerce.entities.core;
 
+import com.sv.grupo1.ecommerce.entities.catalogo.Categoria;
 import com.sv.grupo1.ecommerce.entities.catalogo.Marca;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -7,6 +8,8 @@ import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Entity
 @Table(name = "productos", schema = "core")
@@ -56,6 +59,18 @@ public class Producto {
     @Column(name = "precio_costo", precision = 12, scale = 2)
     private BigDecimal precioCosto;
 
+    @Transient
+    private String imagenPrincipalUrl;
+
+    @Transient
+    private Integer totalImagenes = 0;
+
+    @Transient
+    private String imagenesSlotsJson = "{}";
+
+    @Transient
+    private Map<Integer, String> imagenesSlots = new LinkedHashMap<>();
+
     public Producto() {}
 
     // Getters y Setters
@@ -86,4 +101,16 @@ public class Producto {
     public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
     public String getMetadata() { return metadata; }
     public void setMetadata(String metadata) { this.metadata = metadata; }
+    public String getImagenPrincipalUrl() { return imagenPrincipalUrl; }
+    public void setImagenPrincipalUrl(String imagenPrincipalUrl) { this.imagenPrincipalUrl = imagenPrincipalUrl; }
+    public Integer getTotalImagenes() { return totalImagenes; }
+    public void setTotalImagenes(Integer totalImagenes) { this.totalImagenes = totalImagenes; }
+    public String getImagenesSlotsJson() { return imagenesSlotsJson; }
+    public void setImagenesSlotsJson(String imagenesSlotsJson) { this.imagenesSlotsJson = imagenesSlotsJson; }
+    public Map<Integer, String> getImagenesSlots() { return imagenesSlots; }
+    public void setImagenesSlots(Map<Integer, String> imagenesSlots) { this.imagenesSlots = imagenesSlots != null ? imagenesSlots : new LinkedHashMap<>(); }
+    public boolean isTieneImagenes() {
+        return (imagenPrincipalUrl != null && !imagenPrincipalUrl.isBlank())
+                || (imagenesSlots != null && !imagenesSlots.isEmpty());
+    }
 }

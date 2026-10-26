@@ -1,0 +1,62 @@
+<header th:fragment="topbar(titulo)"
+        xmlns:th="http://www.thymeleaf.org"
+        xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+        class="topbar bg-white border-bottom px-3 px-lg-4">
+
+    <div class="d-flex align-items-center gap-3 h-100">
+
+        <button class="btn btn-outline-secondary d-lg-none"
+                type="button"
+                data-bs-toggle="offcanvas"
+                data-bs-target="#sidebar"
+                aria-controls="sidebar"
+                aria-label="Abrir menú">
+            <i class="bi bi-list fs-5"></i>
+        </button>
+
+        <h1 class="h5 mb-0" th:text="${titulo}">Dashboard</h1>
+
+        <div class="dropdown ms-auto">
+            <button class="btn btn-light border dropdown-toggle d-inline-flex align-items-center gap-2"
+                    type="button"
+                    id="backofficePerfilDropdown"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                <i class="bi bi-person-circle text-primary"></i>
+                <span th:text="${nombreMostradoUsuario != null ? nombreMostradoUsuario : (#authentication != null ? #authentication.name : 'Administrador')}">
+                    Administrador
+                </span>
+            </button>
+
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm mt-1" aria-labelledby="backofficePerfilDropdown">
+                <li>
+                    <h6 class="dropdown-header text-uppercase small text-secondary pb-0">Conectado como</h6>
+                    <div class="px-3 py-1 fw-bold text-dark small text-truncate"
+                         style="max-width: 240px;"
+                         th:text="${correoUsuarioAutenticado != null ? correoUsuarioAutenticado : (#authentication != null ? #authentication.name : 'admin@testing.com')}">
+                        admin@testing.com
+                    </div>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item d-flex align-items-center gap-2"
+                       th:href="@{/backoffice/perfil}">
+                        <i class="bi bi-person text-primary"></i>
+                        <span>Mi perfil</span>
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <form th:action="@{/cerrar-sesion}" method="post" class="m-0">
+                        <button type="submit"
+                                class="dropdown-item text-danger d-flex align-items-center gap-2 w-100 border-0 bg-transparent text-start">
+                            <i class="bi bi-box-arrow-right"></i>
+                            <span>Cerrar sesión</span>
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+</header>

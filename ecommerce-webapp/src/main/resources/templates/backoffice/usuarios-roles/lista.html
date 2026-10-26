@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{backoffice/fragments/head :: head('Asignación de Roles')}">
+</head>
+
+<body>
+<div th:replace="~{backoffice/layout/admin :: layout(
+            'Asignación de Roles',
+            'usuarios-roles',
+            ~{::pageContent}
+        )}">
+
+    <th:block th:fragment="pageContent">
+
+        <!-- Alertas flotantes con auto-cierre (timeout) -->
+        <div class="floating-alert-container">
+            <div th:if="${mensajeExito}"
+                 id="alertaFlotanteExito"
+                 class="alert alert-success alert-dismissible fade show border-0 floating-alert d-flex align-items-center mb-2"
+                 role="alert">
+                <i class="bi bi-check-circle-fill fs-5 me-2 text-success"></i>
+                <div class="small fw-medium" th:text="${mensajeExito}"></div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+
+            <div th:if="${mensajeError}"
+                 id="alertaFlotanteError"
+                 class="alert alert-danger alert-dismissible fade show border-0 floating-alert d-flex align-items-center mb-2"
+                 role="alert">
+                <i class="bi bi-exclamation-triangle-fill fs-5 me-2 text-danger"></i>
+                <div class="small fw-medium" th:text="${mensajeError}"></div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+        </div>
+
+        <!-- Encabezado de la página -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+            <div>
+                <h2 class="h4 fw-bold mb-1">Asignación de roles a usuarios</h2>
+                <p class="text-secondary mb-0">
+                    Gestiona el nivel de acceso de cada cuenta con trazabilidad de auditoría en <code>seguridad.usuarios_roles</code>.
+                </p>
+            </div>
+            <div>
+                <a th:href="@{/backoffice/roles}"
+                   class="btn btn-outline-primary d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-shield-lock"></i>
+                    <span>Catálogo de roles</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Indicadores KPI -->
+        <div class="row g-3 mb-4">
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-secondary small">
+                            Total de usuarios
+                        </div>
+                        <div class="fs-3 fw-bold" th:text="${totalUsuarios}">0</div>
+                        <i class="bi bi-people text-primary"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-secondary small">
+                            Administradores (ROLE_ADMIN)
+                        </div>
+                        <div class="fs-3 fw-bold" th:text="${totalAdmins}">0</div>
+                        <i class="bi bi-shield-fill-check text-primary"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-secondary small">
+                            Clientes (ROLE_CLIENTE)
+                        </div>
+                        <div class="fs-3 fw-bold" th:text="${totalClientes}">0</div>
+                        <i class="bi bi-person-check text-success"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-secondary small">
+                            Otros roles operativos
+                        </div>
+                        <div class="fs-3 fw-bold" th:text="${totalOtrosRoles}">0</div>
+                        <i class="bi bi-person-gear text-info"></i>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Tabla de usuarios y sus roles -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom py-3 px-4">
+                <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                    <div class="d-flex flex-wrap align-items-center gap-3">
+                        <h3 class="h6 fw-bold mb-0">
+                            Cuentas de usuario
+                            <span id="badgeTotalFiltrados"
+                                  class="badge bg-primary-subtle text-primary ms-2"
+                                  th:text="${#lists.size(usuarios)}">0</span>
+                        </h3>
+                        <div class="d-flex align-items-center gap-2 ms-md-2">
+                            <label for="selectorFilasPorPagina" class="small text-secondary mb-0">Mostrar</label>
+                            <select id="selectorFilasPorPagina" class="form-select form-select-sm" style="width: auto;">
+                                <option value="10" selected>10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2">
+                        <!-- Filtro por Rol Actual -->
+                        <select id="filtroRolActual" class="form-select form-select-sm" style="min-width: 195px;">
+                            <option value="">Todos los roles</option>
+                            <option th:each="r : ${rolesDisponibles}"
+                                    th:value="${r.nombre}"
+                                    th:text="${r.nombre}">
+                                ROLE_ADMIN
+                            </option>
+                        </select>
+
+                        <!-- Buscador integrado -->
+                        <div class="table-search-wrapper">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light border-end-0 text-secondary">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input type="search"
+                                       id="buscadorTabla"
+                                       class="form-control bg-light border-start-0"
+                                       placeholder="Buscar por correo, nombre o motivo...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-admin mb-0" id="tablaUsuariosRoles">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuario</th>
+                            <th class="text-center">Rol Actual</th>
+                            <th>Última Auditoría de Rol</th>
+                            <th class="text-center">Fecha Asignación</th>
+                            <th class="text-end">Acción</th>
+                        </tr>
+                        </thead>
+                        <tbody id="cuerpoTablaUsuariosRoles">
+                        <tr th:each="u : ${usuarios}"
+                            class="fila-usuario-rol"
+                            th:with="esSesionActual=${correoAdminEnSesion != null && correoAdminEnSesion.equalsIgnoreCase(u.correoInicioSesion)}"
+                            th:attr="
+                                data-id-usuario=${u.idUsuario},
+                                data-correo=${u.correoInicioSesion},
+                                data-nombre=${u.nombreCompleto},
+                                data-id-rol=${u.idRol != null ? u.idRol : ''},
+                                data-nombre-rol=${u.nombreRolActual},
+                                data-motivo=${u.motivoUltimaAuditoria != null ? u.motivoUltimaAuditoria : ''},
+                                data-asignado-por=${u.asignadoPor != null ? u.asignadoPor : ''}
+                            ">
+                            <td>
+                                <span class="sku-badge" th:text="'#' + ${u.idUsuario}">#1</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="fw-bold text-dark" th:text="${u.correoInicioSesion}">correo@ejemplo.com</span>
+                                            <span th:if="${esSesionActual}"
+                                                  class="badge bg-dark-subtle text-dark border"
+                                                  style="font-size: 0.7rem;">
+                                                Tú (Sesión activa)
+                                            </span>
+                                        </div>
+                                        <div class="small"
+                                             th:classappend="${u.tienePerfil} ? 'text-secondary' : 'text-muted fst-italic'"
+                                             th:text="${u.nombreCompleto}">
+                                            Nombre Apellido
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span th:if="${u.nombreRolActual == 'ROLE_ADMIN'}"
+                                      class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace">
+                                    <i class="bi bi-shield-lock-fill me-1"></i>
+                                    <span th:text="${u.nombreRolActual}">ROLE_ADMIN</span>
+                                </span>
+                                <span th:if="${u.nombreRolActual == 'ROLE_CLIENTE'}"
+                                      class="badge bg-success-subtle text-success border border-success-subtle font-monospace">
+                                    <i class="bi bi-person-fill me-1"></i>
+                                    <span th:text="${u.nombreRolActual}">ROLE_CLIENTE</span>
+                                </span>
+                                <span th:if="${u.nombreRolActual != 'ROLE_ADMIN' && u.nombreRolActual != 'ROLE_CLIENTE'}"
+                                      class="badge bg-info-subtle text-info-emphasis border border-info-subtle font-monospace">
+                                    <i class="bi bi-person-badge-fill me-1"></i>
+                                    <span th:text="${u.nombreRolActual}">ROLE_VENDEDOR</span>
+                                </span>
+                            </td>
+                            <td>
+                                <div class="small">
+                                    <div class="text-dark fw-medium">
+                                        <i class="bi bi-person-check text-secondary me-1"></i>
+                                        <span>Por: </span>
+                                        <span th:text="${u.asignadoPor}">Sistema</span>
+                                        <span th:if="${u.rolAnteriorAuditoria != null}"
+                                              class="text-secondary ms-1"
+                                              th:text="'(Anterior: ' + ${u.rolAnteriorAuditoria} + ')'">
+                                        </span>
+                                    </div>
+                                    <div class="text-secondary small text-truncate"
+                                         style="max-width: 310px;"
+                                         th:title="${u.motivoUltimaAuditoria}"
+                                         th:text="${u.motivoUltimaAuditoria}">
+                                        Motivo de asignación
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <div class="text-secondary small"
+                                     th:text="${u.fechaAsignacionRol != null ? #temporals.format(u.fechaAsignacionRol, 'dd/MM/yyyy HH:mm') : '—'}">
+                                    24/10/2026 16:00
+                                </div>
+                            </td>
+                            <td class="text-end">
+                                <button th:if="${!esSesionActual}"
+                                        type="button"
+                                        class="btn btn-sm btn-outline-primary btn-cambiar-rol d-inline-flex align-items-center gap-1"
+                                        title="Cambiar rol del usuario">
+                                    <i class="bi bi-arrow-left-right"></i>
+                                    <span>Cambiar rol</span>
+                                </button>
+                                <button th:if="${esSesionActual}"
+                                        type="button"
+                                        class="btn btn-sm btn-outline-secondary opacity-50 d-inline-flex align-items-center gap-1"
+                                        disabled
+                                        title="Por seguridad no puedes cambiar tu propio rol desde tu sesión activa">
+                                    <i class="bi bi-lock-fill"></i>
+                                    <span>Protegido</span>
+                                </button>
+                            </td>
+                        </tr>
+
+                        <!-- Fila cuando no hay resultados -->
+                        <tr id="filaSinResultados" class="d-none">
+                            <td colspan="6" class="p-5 text-center">
+                                <i class="bi bi-search fs-2 text-secondary d-block mb-2"></i>
+                                <div class="fw-bold">No se encontraron usuarios</div>
+                                <div class="text-secondary small">
+                                    Intenta ajustar el filtro de rol o el término de búsqueda.
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pie de tabla: Paginación -->
+            <div class="card-footer bg-white border-top py-3 px-4 d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2">
+                <div id="infoPaginacion" class="text-secondary small">
+                    Mostrando 0 de 0 usuarios
+                </div>
+                <nav aria-label="Paginación de usuarios">
+                    <ul id="controlesPaginacion" class="pagination pagination-sm mb-0">
+                    </ul>
+                </nav>
+            </div>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- MODAL: CAMBIAR ROL DE USUARIO                                  -->
+        <!-- ============================================================== -->
+        <div class="modal fade" id="modalCambiarRol" tabindex="-1" aria-labelledby="modalCambiarRolTitulo" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-producto-dialog">
+                <form id="formCambiarRol"
+                      class="modal-content border-0 shadow overflow-hidden"
+                      th:action="@{/backoffice/usuarios-roles/cambiar-rol}"
+                      th:object="${asignacionDTO}"
+                      method="post"
+                      novalidate>
+
+                    <div class="modal-header modal-header-admin py-3 px-4">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-person-gear fs-5 text-primary"></i>
+                            <h5 class="modal-title h6 fw-bold mb-0" id="modalCambiarRolTitulo">
+                                Cambiar rol de usuario
+                            </h5>
+                            <span id="badgeIdUsuarioModal"
+                                  class="sku-badge ms-2"
+                                  th:text="${asignacionDTO.idUsuario != null ? '#' + asignacionDTO.idUsuario : ''}">
+                            </span>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+
+                    <div class="modal-body modal-body-segmented">
+
+                        <!-- Alerta de error de negocio dentro del modal -->
+                        <div th:if="${mensajeErrorModal}" class="alert alert-danger py-2 px-3 small mb-3" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                            <span th:text="${mensajeErrorModal}"></span>
+                        </div>
+
+                        <input type="hidden" id="idUsuarioInput" th:field="*{idUsuario}">
+
+                        <!-- BLOQUE 1: RESUMEN DEL USUARIO -->
+                        <div class="modal-section-card">
+                            <div class="modal-section-title">
+                                <i class="bi bi-person-vcard"></i>
+                                <span>Cuenta seleccionada</span>
+                            </div>
+
+                            <div class="p-3 bg-light rounded border d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+                                <div>
+                                    <div class="fw-bold text-dark" id="correoUsuarioModal"
+                                         th:text="*{correoInicioSesion}">
+                                        usuario@ejemplo.com
+                                    </div>
+                                    <div class="text-secondary small" id="nombreUsuarioModal"
+                                         th:text="*{nombreCompleto}">
+                                        Nombre Completo
+                                    </div>
+                                </div>
+                                <div class="text-sm-end">
+                                    <span class="d-block text-secondary" style="font-size: 0.72rem;">ROL ACTUAL</span>
+                                    <span id="rolActualBadgeModal"
+                                          class="badge bg-secondary-subtle text-dark border font-monospace"
+                                          th:text="*{nombreRolActual}">
+                                        ROLE_CLIENTE
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BLOQUE 2: NUEVO ROL Y AUDITORÍA -->
+                        <div class="modal-section-card">
+                            <div class="modal-section-title">
+                                <i class="bi bi-shield-check"></i>
+                                <span>Nuevo rol y justificación de auditoría</span>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label for="selectNuevoRol" class="form-label small fw-bold mb-1">
+                                        Nuevo rol a asignar <span class="text-danger">*</span>
+                                    </label>
+                                    <select id="selectNuevoRol"
+                                            class="form-select"
+                                            th:classappend="${#fields.hasErrors('idRol')} ? 'is-invalid' : ''"
+                                            th:field="*{idRol}">
+                                        <option value="">— Seleccione el nuevo rol —</option>
+                                        <option th:each="rolDisp : ${rolesDisponibles}"
+                                                th:value="${rolDisp.idRol}"
+                                                th:text="${rolDisp.nombre} + (${rolDisp.descripcion != null && !rolDisp.descripcion.isEmpty()} ? ' — ' + ${rolDisp.descripcion} : '')">
+                                        </option>
+                                    </select>
+                                    <div class="invalid-feedback"
+                                         th:if="${#fields.hasErrors('idRol')}"
+                                         th:errors="*{idRol}"></div>
+                                    <div class="form-text small">
+                                        El nuevo rol reemplazará el rol actual del usuario de forma inmediata.
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="motivoInput" class="form-label small fw-bold mb-1">
+                                        Motivo o justificación del cambio <span class="text-danger">*</span>
+                                    </label>
+                                    <textarea id="motivoInput"
+                                              rows="3"
+                                              class="form-control"
+                                              th:classappend="${#fields.hasErrors('motivo')} ? 'is-invalid' : ''"
+                                              th:field="*{motivo}"
+                                              maxlength="255"
+                                              placeholder="Ej: Promoción a personal de ventas, asignación a soporte técnico, solicitud aprobada por gerencia..."></textarea>
+                                    <div class="invalid-feedback"
+                                         th:if="${#fields.hasErrors('motivo')}"
+                                         th:errors="*{motivo}"></div>
+                                    <div class="form-text small">
+                                        <i class="bi bi-journal-code text-primary me-1"></i>
+                                        Este motivo, junto con tu usuario y el rol anterior, quedará registrado en el campo JSONB <code>auditoria</code> de <code>seguridad.usuarios_roles</code>.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer modal-footer-sticky py-3 px-4">
+                        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-check2-circle"></i>
+                            <span>Confirmar cambio de rol</span>
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- SCRIPTS DE INTERACTIVIDAD, FILTROS Y PAGINACIÓN                -->
+        <!-- ============================================================== -->
+        <script th:inline="javascript">
+            document.addEventListener('DOMContentLoaded', function () {
+                const abrirModalAlCargar = /*[[${abrirModalFormulario}]]*/ false;
+
+                // Auto-cierre de alertas flotantes (4.5 segundos)
+                ['alertaFlotanteExito', 'alertaFlotanteError'].forEach(function (idAlerta) {
+                    const alertaEl = document.getElementById(idAlerta);
+                    if (alertaEl) {
+                        setTimeout(function () {
+                            const bsAlert = bootstrap.Alert.getOrCreateInstance(alertaEl);
+                            bsAlert.close();
+                        }, 4500);
+                    }
+                });
+
+                const modalEl = document.getElementById('modalCambiarRol');
+                const modalCambiarRol = new bootstrap.Modal(modalEl);
+                const formCambiarRol = document.getElementById('formCambiarRol');
+
+                const idUsuarioInput = document.getElementById('idUsuarioInput');
+                const badgeIdUsuarioModal = document.getElementById('badgeIdUsuarioModal');
+                const correoUsuarioModal = document.getElementById('correoUsuarioModal');
+                const nombreUsuarioModal = document.getElementById('nombreUsuarioModal');
+                const rolActualBadgeModal = document.getElementById('rolActualBadgeModal');
+                const selectNuevoRol = document.getElementById('selectNuevoRol');
+                const motivoInput = document.getElementById('motivoInput');
+
+                // Botones: Cambiar rol en cada fila
+                document.querySelectorAll('.btn-cambiar-rol').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        const fila = this.closest('.fila-usuario-rol');
+                        const idUsuario = fila.getAttribute('data-id-usuario');
+                        const correo = fila.getAttribute('data-correo') || '';
+                        const nombre = fila.getAttribute('data-nombre') || '';
+                        const idRolActual = fila.getAttribute('data-id-rol') || '';
+                        const nombreRolActual = fila.getAttribute('data-nombre-rol') || 'SIN_ROL';
+
+                        formCambiarRol.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+                        idUsuarioInput.value = idUsuario;
+                        badgeIdUsuarioModal.textContent = '#' + idUsuario;
+                        correoUsuarioModal.textContent = correo;
+                        nombreUsuarioModal.textContent = nombre;
+                        rolActualBadgeModal.textContent = nombreRolActual;
+                        selectNuevoRol.value = idRolActual;
+                        motivoInput.value = '';
+
+                        modalCambiarRol.show();
+                    });
+                });
+
+                if (abrirModalAlCargar) {
+                    modalCambiarRol.show();
+                }
+
+                // ==================== Buscador en tiempo real, Filtro y Paginación ====================
+                const filas = Array.from(document.querySelectorAll('.fila-usuario-rol'));
+                const buscador = document.getElementById('buscadorTabla');
+                const filtroRolActual = document.getElementById('filtroRolActual');
+                const selectorFilas = document.getElementById('selectorFilasPorPagina');
+                const filaSinResultados = document.getElementById('filaSinResultados');
+                const badgeTotalFiltrados = document.getElementById('badgeTotalFiltrados');
+                const infoPaginacion = document.getElementById('infoPaginacion');
+                const controlesPaginacion = document.getElementById('controlesPaginacion');
+
+                let paginaActual = 1;
+
+                function aplicarFiltrosYPaginacion() {
+                    const termino = (buscador.value || '').trim().toLowerCase();
+                    const rolSel = filtroRolActual.value;
+                    const porPagina = parseInt(selectorFilas.value, 10) || 10;
+
+                    const coincidencias = filas.filter(function (fila) {
+                        const correo = (fila.getAttribute('data-correo') || '').toLowerCase();
+                        const nombre = (fila.getAttribute('data-nombre') || '').toLowerCase();
+                        const nombreRol = fila.getAttribute('data-nombre-rol') || '';
+                        const motivo = (fila.getAttribute('data-motivo') || '').toLowerCase();
+                        const asignadoPor = (fila.getAttribute('data-asignado-por') || '').toLowerCase();
+
+                        const pasaTexto = !termino
+                            || correo.includes(termino)
+                            || nombre.includes(termino)
+                            || nombreRol.toLowerCase().includes(termino)
+                            || motivo.includes(termino)
+                            || asignadoPor.includes(termino);
+
+                        const pasaRol = !rolSel || nombreRol === rolSel;
+
+                        return pasaTexto && pasaRol;
+                    });
+
+                    badgeTotalFiltrados.textContent = coincidencias.length;
+                    const totalPaginas = Math.max(1, Math.ceil(coincidencias.length / porPagina));
+                    if (paginaActual > totalPaginas) {
+                        paginaActual = totalPaginas;
+                    }
+
+                    const inicio = (paginaActual - 1) * porPagina;
+                    const fin = inicio + porPagina;
+
+                    filas.forEach(f => f.classList.add('d-none'));
+                    coincidencias.slice(inicio, fin).forEach(f => f.classList.remove('d-none'));
+
+                    if (coincidencias.length === 0) {
+                        filaSinResultados.classList.remove('d-none');
+                        infoPaginacion.textContent = 'Mostrando 0 de 0 usuarios';
+                    } else {
+                        filaSinResultados.classList.add('d-none');
+                        infoPaginacion.textContent =
+                            'Mostrando ' + (inicio + 1) + ' a ' + Math.min(fin, coincidencias.length) +
+                            ' de ' + coincidencias.length + ' usuarios';
+                    }
+
+                    renderizarControlesPaginacion(totalPaginas);
+                }
+
+                function renderizarControlesPaginacion(totalPaginas) {
+                    controlesPaginacion.innerHTML = '';
+                    if (totalPaginas <= 1) {
+                        return;
+                    }
+                    for (let i = 1; i <= totalPaginas; i++) {
+                        const li = document.createElement('li');
+                        li.className = 'page-item' + (i === paginaActual ? ' active' : '');
+                        const a = document.createElement('a');
+                        a.className = 'page-link';
+                        a.href = '#';
+                        a.textContent = i;
+                        a.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            paginaActual = i;
+                            aplicarFiltrosYPaginacion();
+                        });
+                        li.appendChild(a);
+                        controlesPaginacion.appendChild(li);
+                    }
+                }
+
+                buscador.addEventListener('input', function () {
+                    paginaActual = 1;
+                    aplicarFiltrosYPaginacion();
+                });
+
+                filtroRolActual.addEventListener('change', function () {
+                    paginaActual = 1;
+                    aplicarFiltrosYPaginacion();
+                });
+
+                selectorFilas.addEventListener('change', function () {
+                    paginaActual = 1;
+                    aplicarFiltrosYPaginacion();
+                });
+
+                aplicarFiltrosYPaginacion();
+            });
+        </script>
+
+    </th:block>
+</div>
+
+</body>
+</html>

@@ -9,15 +9,18 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import com.sv.grupo1.ecommerce.entities.core.Envio;
 
-@Controller
+/*
+ * @author kattyfer
+ * */
+//@Controller
 public class DespachoController{
-    @Autowired
+    //@Autowired
     private DespachoService despachoService;
 
     @GetMapping("/despachos")
     public String verDespachos(Model model){
         List<Envio> listaEnvios = new ArrayList<>();
         despachoService.persistirDespachosEnBinario(listaEnvios);
-        return"admin/despachos/lista";
+        return"pages/admin/despachos/lista";
     }
 }
