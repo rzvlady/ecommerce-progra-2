@@ -2,7 +2,6 @@ package com.sv.grupo1.ecommerce.services;
 
 import com.sv.grupo1.ecommerce.dao.*;
 import com.sv.grupo1.ecommerce.entities.core.*;
-import com.sv.grupo1.ecommerce.enums.EstadoPedido;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,22 +9,22 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-//@Service
+@Service
 public class PedidoService {
 
-    //@Autowired
+    @Autowired
     private PedidoRepository pedidoRepository;
 
-    //@Autowired
+    @Autowired
     private DetallePedidoRepository detallePedidoRepository;
 
-    //@Autowired
+    @Autowired
     private EnvioRepository envioRepository;
 
-    //@Autowired
+    @Autowired
     private MovimientoInventarioRepository movimientoInventarioRepository;
 
-    //@Autowired
+    @Autowired
     private ProductoRepository productoRepository;
 
     /**
@@ -35,12 +34,12 @@ public class PedidoService {
     @Transactional
     public Envio despacharPedido(Integer idPedido, String empresaTransporte, String numeroSeguimiento) {
 
-        //Pedido pedido = pedidoRepository.findById(idPedido).orElseThrow(() -> new IllegalArgumentException("Pedido no encontrado: " + idPedido));
-        Pedido pedido = new Pedido();
+        Pedido pedido = pedidoRepository.findById(idPedido)
+                .orElseThrow(() -> new IllegalArgumentException("Pedido no encontrado: " + idPedido));
 
-        if (!pedido.getEstadoPedido().equals(EstadoPedido.CONFIRMADO.getCodigoEstado())) {
+        if (!"PAGADO".equalsIgnoreCase(pedido.getEstadoPedido())) {
             throw new IllegalStateException(
-                    "Solo se pueden despachar pedidos en estado CONFIRMADO. Estado actual: " + pedido.getEstadoPedido());
+                    "Solo se pueden despachar pedidos en estado PAGADO. Estado actual: " + pedido.getEstadoPedido());
         }
 
         List<DetallePedido> detalles = detallePedidoRepository.findByPedido_IdPedido(idPedido);
@@ -58,7 +57,7 @@ public class PedidoService {
             }
 
             producto.setStockDisponible(producto.getStockDisponible() - detalle.getCantidad());
-            //productoRepository.save(producto);
+            productoRepository.save(producto);
 
             MovimientoInventario movimiento = new MovimientoInventario();
             movimiento.setProducto(producto);
@@ -66,7 +65,7 @@ public class PedidoService {
             movimiento.setCantidad(detalle.getCantidad());
             movimiento.setMotivo("Despacho de pedido #" + idPedido);
             movimiento.setPedido(pedido);
-            //movimientoInventarioRepository.save(movimiento);
+            movimientoInventarioRepository.save(movimiento);
         }
 
         // Crear el registro de envío
@@ -76,11 +75,11 @@ public class PedidoService {
         envio.setNumeroSeguimiento(numeroSeguimiento);
         envio.setEstadoEnvio("DESPACHADO");
         envio.setFechaDespacho(OffsetDateTime.now());
-        //envioRepository.save(envio);
+        envioRepository.save(envio);
 
         // Actualizar estado del pedido
-        pedido.setEstadoPedido(EstadoPedido.ENVIADO.getCodigoEstado());
-        //pedidoRepository.save(pedido);
+        pedido.setEstadoPedido("DESPACHADO");
+        pedidoRepository.save(pedido);
 
         return envio;
     }

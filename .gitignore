@@ -38,14 +38,3 @@ out/
 # Virtual machine crash logs
 hs_err_pid*
 replay_pid*
-
-ecommerce-webapp/logs/
-mock-gateway-api/logs/
-
-.agents
-*.png
-!docs/*.png
-*.webp
-*.log
-.env
-*.gz

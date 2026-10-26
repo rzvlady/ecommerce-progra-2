@@ -8,7 +8,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Service
@@ -28,8 +27,7 @@ public class AuthService {
             throw new CredencialesInvalidasException("Correo o contraseña incorrectos");
         }
 
-        usuario.setUltimoInicioSesion(OffsetDateTime.now());
-        return usuarioRepository.save(usuario);
+        return usuario;
     }
 
     public String solicitarRecuperacion(String correo) {
@@ -37,14 +35,14 @@ public class AuthService {
                 .orElseThrow(() -> new CredencialesInvalidasException("No existe una cuenta con ese correo"));
 
         String token = UUID.randomUUID().toString();
-        //usuario.setTokenReinicio(token);
-        //usuario.setExpiracionToken(LocalDateTime.now().plusMinutes(15));
+        usuario.setTokenReinicio(token);
+        usuario.setExpiracionToken(LocalDateTime.now().plusMinutes(15));
         usuarioRepository.save(usuario);
 
         return token;
     }
 
-    /*public void resetearPassword(String token, String nuevaPassword) {
+    public void resetearPassword(String token, String nuevaPassword) {
         Usuario usuario = usuarioRepository.findByTokenReinicio(token)
                 .orElseThrow(() -> new CredencialesInvalidasException("Token inválido"));
 
@@ -56,7 +54,7 @@ public class AuthService {
         usuario.setTokenReinicio(null);
         usuario.setExpiracionToken(null);
         usuarioRepository.save(usuario);
-    }*/
+    }
 
     public PasswordEncoder getPasswordEncoder() {
         return passwordEncoder;
